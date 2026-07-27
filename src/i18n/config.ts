@@ -3,12 +3,13 @@ import { initReactI18next } from 'react-i18next';
 import id from '../locales/id';
 import en from '../locales/en';
 import jv from '../locales/jv';
+import slg from '../locales/slg';
 
 // ============================================================
 // CONSTANTS
 // ============================================================
 
-const SUPPORTED_LANGS = ['id', 'en', 'jv'] as const;
+const SUPPORTED_LANGS = ['id', 'en', 'jv', 'slg'] as const;
 type SupportedLang = typeof SUPPORTED_LANGS[number];
 
 // ============================================================
@@ -54,7 +55,7 @@ const getInitialLanguage = (): SupportedLang => {
 export const i18nInitPromise = i18n
   .use(initReactI18next)
   .init({
-    resources: { id, en, jv },
+    resources: { id, en, jv, slg },
 
     // ✅ FIXED: Pakai getInitialLanguage() bukan getSavedLanguage()
     //    agar browser language ikut dipertimbangkan

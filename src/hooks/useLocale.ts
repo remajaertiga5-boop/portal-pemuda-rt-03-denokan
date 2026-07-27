@@ -40,12 +40,20 @@ export const availableLanguages: Readonly<LanguageMetadata[]> = Object.freeze([
     flag      : '🌱',
     dir       : 'ltr',
   },
+  { 
+    code      : 'slg', 
+    name      : 'Gaul',      
+    nativeName: 'Bahasa Gaul 🔥',        
+    flag      : '💬',
+    dir       : 'ltr',
+  },
 ]);
 
 const LOCALE_MAP: Readonly<Record<string, string>> = Object.freeze({
   id: 'id-ID',
   en: 'en-US',
   jv: 'id-ID', // Jawa fallback ke id-ID (browser support terbatas)
+  slg: 'id-ID', // Gaul fallback ke id-ID
 });
 
 const DEFAULT_LOCALE    = 'id-ID';
