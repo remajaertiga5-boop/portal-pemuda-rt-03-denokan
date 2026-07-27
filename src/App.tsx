@@ -27,6 +27,7 @@ import LoginPage from "./components/LoginPage";
 import { AuthSession } from "./types";
 import { getAuthSession, clearAuthSession, addAccessLog } from "./utils/auth";
 import { loadAppData, saveAppData, AppData } from "./utils/dataStore";
+import { isApiConfigured } from "./components/ApiConfigPanel";
 import PandawaLogo from "./components/PandawaLogo";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -188,6 +189,15 @@ export default function App() {
   const [isLogoutModalOpen,setIsLogoutModalOpen]= useState(false);
   const [isLoggingOut,     setIsLoggingOut]     = useState(false);
   const [isGuestExploring, setIsGuestExploring] = useState(false);
+
+  // API Configuration state — cek API mana yang sudah dikonfigurasi
+  const apiStatus = useMemo(() => ({
+    geminiAI: isApiConfigured(appData, "Gemini AI"),
+    googleSheets: isApiConfigured(appData, "Google Sheets"),
+    telegramBot: isApiConfigured(appData, "Telegram Bot"),
+    cloudflareR2: isApiConfigured(appData, "Cloudflare R2 Storage"),
+    googleDrive: isApiConfigured(appData, "Google Drive"),
+  }), [appData]);
 
   // Toast State
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -356,11 +366,17 @@ export default function App() {
     { id: "agenda",     label: t("common.nav.agenda",       { defaultValue: "Agenda"      }), icon: <Calendar size={18} />,        roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
     { id: "keuangan",   label: t("common.nav.finance",      { defaultValue: "Keuangan"    }), icon: <Wallet size={18} />,          roles: ["ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
     { id: "absensi",    label: t("common.nav.attendance",   { defaultValue: "Absensi"     }), icon: <UserCheck size={18} />,       roles: ["ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
-    { id: "galeri",     label: t("common.nav.gallery",      { defaultValue: "Galeri"      }), icon: <ImageIcon size={18} />,       roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
+    // Galeri hanya tampil jika Telegram ATAU Cloudflare R2 sudah dikonfigurasi
+    ...(apiStatus.telegramBot || apiStatus.cloudflareR2 ? [
+      { id: "galeri",     label: t("common.nav.gallery",      { defaultValue: "Galeri"      }), icon: <ImageIcon size={18} />,       roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] }
+    ] : []),
     { id: "anggota",    label: t("common.nav.member",       { defaultValue: "Anggota"     }), icon: <Users size={18} />,           roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
     { id: "voting",     label: t("common.nav.voting",       { defaultValue: "Voting"      }), icon: <Vote size={18} />,            roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
     { id: "aspirasi",   label: t("common.nav.aspiration",   { defaultValue: "Aspirasi"    }), icon: <Lightbulb size={18} />,       roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
-    { id: "chat",       label: "AI Assistant",                                                 icon: <MessageSquare size={18} />,   roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
+    // Chat AI hanya tampil jika Gemini API sudah dikonfigurasi
+    ...(apiStatus.geminiAI ? [
+      { id: "chat",       label: "AI Assistant",                                                 icon: <MessageSquare size={18} />,   roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] }
+    ] : []),
     { id: "pengaturan", label: t("common.nav.settings",     { defaultValue: "Pengaturan"  }), icon: <Settings size={18} />,        roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
     ...(session.role === "SUPER_ADMIN" ? [
       { id: "super-admin", label: "Super Admin", icon: <Crown size={18} className="text-amber-400" />, roles: ["SUPER_ADMIN"] }
@@ -1031,12 +1047,37 @@ export default function App() {
             )}
 
             {activeTab === "galeri" && (
-              <Galeri
-                appData={appData} setAppData={setAppData}
-                userRole={session.role}
-                currentUserName={session.nama_lengkap}
-                showToast={showToast}
-              />
+              (apiStatus.telegramBot || apiStatus.cloudflareR2) ? (
+                <Galeri
+                  appData={appData} setAppData={setAppData}
+                  userRole={session.role}
+                  currentUserName={session.nama_lengkap}
+                  showToast={showToast}
+                />
+              ) : (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-lg mx-auto text-center space-y-4 shadow-xl mt-10">
+                  <div className="w-16 h-16 bg-purple-500/20 text-purple-500 rounded-2xl flex items-center justify-center mx-auto">
+                    <ImageIcon size={32} />
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">Galeri Belum Dikonfigurasi</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Fitur Galeri memerlukan <strong>Telegram Bot</strong> atau <strong>Cloudflare R2</strong> untuk penyimpanan foto/video.
+                    Super Admin dapat mengaturnya di Panel <strong>🔌 API & Integrasi</strong>.
+                  </p>
+                  <div className="pt-2 flex justify-center gap-3">
+                    <button onClick={() => setActiveTab("dashboard")}
+                      className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                      Kembali ke Beranda
+                    </button>
+                    {session.role === "SUPER_ADMIN" && (
+                      <button onClick={() => setActiveTab("super-admin" as TabId)}
+                        className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-black transition-all shadow-md cursor-pointer">
+                        Buka API & Integrasi
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
             )}
 
             {activeTab === "voting" && (
@@ -1050,12 +1091,41 @@ export default function App() {
             )}
 
             {activeTab === "chat" && (
-              <Chatbot
-                appData={appData}
-                setAppData={setAppData}
-                session={session}
-                showToast={showToast}
-              />
+              apiStatus.geminiAI ? (
+                <Chatbot
+                  appData={appData}
+                  setAppData={setAppData}
+                  session={session}
+                  showToast={showToast}
+                />
+              ) : (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-lg mx-auto text-center space-y-4 shadow-xl mt-10">
+                  <div className="w-16 h-16 bg-teal-500/20 text-teal-500 rounded-2xl flex items-center justify-center mx-auto">
+                    <MessageSquare size={32} />
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">AI Assistant Belum Aktif</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Fitur AI Chatbot memerlukan <strong>Gemini API Key</strong> dari Google AI Studio.
+                    Super Admin dapat mengaturnya di Panel <strong>🔌 API & Integrasi</strong>.
+                  </p>
+                  <div className="pt-2 flex justify-center gap-3">
+                    <button
+                      onClick={() => setActiveTab("dashboard")}
+                      className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Kembali ke Beranda
+                    </button>
+                    {session.role === "SUPER_ADMIN" && (
+                      <button
+                        onClick={() => setActiveTab("super-admin" as TabId)}
+                        className="px-5 py-2.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-black transition-all shadow-md cursor-pointer"
+                      >
+                        Buka API & Integrasi
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
             )}
 
             {activeTab === "pengaturan" && (

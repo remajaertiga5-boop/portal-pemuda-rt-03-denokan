@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Crown, UserPlus, Users, Copy, Share2, Printer, Shield, Key, History, FileText, 
-  Database, Archive, RefreshCw, CheckCircle2, Search, Trash2, Edit3, Lock, Eye, AlertTriangle, Image
+  Database, Archive, RefreshCw, CheckCircle2, Search, Trash2, Edit3, Lock, Eye, AlertTriangle, Image, Plug
 } from "lucide-react";
 import { AppData, saveAppData, addLogAkses, generateIdAnggotaUnik } from "../utils/dataStore";
 import { setStoredPIN, getStoredPINs, verifikasiPINDinamis, generatePINDinamis, getInfoWaktuSekarang } from "../utils/auth";
@@ -9,6 +9,7 @@ import PINField from "./PINField";
 import ManajemenAnggotaSA from "./ManajemenAnggotaSA";
 import GaleriSuperAdmin from "./GaleriSuperAdmin";
 import MatriksHakAksesModal from "./MatriksHakAksesModal";
+import ApiConfigPanel from "./ApiConfigPanel";
 
 interface SuperAdminDashboardProps {
   appData: AppData;
@@ -17,7 +18,7 @@ interface SuperAdminDashboardProps {
 }
 
 export default function SuperAdminDashboard({ appData, setAppData, showToast }: SuperAdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<"manajemen_anggota" | "galeri_sa" | "pin" | "log" | "akses" | "arsip">("manajemen_anggota");
+  const [activeTab, setActiveTab] = useState<"manajemen_anggota" | "galeri_sa" | "pin" | "log" | "akses" | "arsip" | "api_config">("manajemen_anggota");
 
   // Realtime clock for dynamic Super Admin PIN info
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -752,6 +753,10 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
       )}
 
       {/* TAB 6: PENGATURAN AKSES & MATRIKS JABATAN */}
+      {activeTab === "api_config" && (
+        <ApiConfigPanel appData={appData} setAppData={setAppData} showToast={showToast} />
+      )}
+
       {activeTab === "akses" && (
         <div className="space-y-6">
           {!isAksesSettingsUnlocked ? (
