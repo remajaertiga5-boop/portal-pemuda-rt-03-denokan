@@ -336,12 +336,12 @@ export default function Galeri({
         </div>
 
         {/* 50. Tombol Upload */}
-        {userRole !== "TAMU" && (
+        {(
           <button
             onClick={() => setShowForm(!showForm)}
             className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md dark:shadow-none transition-all"
           >
-            {showForm ? "Batal" : <><Plus size={16} /> + Upload Foto</>}
+            {showForm ? "Batal" : <><Plus size={16} /> + Upload Foto/Video</>}
           </button>
         )}
       </div>
@@ -423,7 +423,7 @@ export default function Galeri({
           {/* File Input */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Pilih File Media (Foto/Video) * (Foto maks 5MB, Video maks 25MB)
+              Pilih File (Foto/Video) — Foto maks 5MB, Video maks 25MB
             </label>
             <input
               required

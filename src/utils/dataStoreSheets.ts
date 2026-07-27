@@ -74,7 +74,17 @@ export async function loadFromSheets(): Promise<AppData | null> {
     const appData: AppData = {
       ...existingData,
       // Overwrite hanya 6 tabel dari Sheets:
-      Anggota     : safeArray(anggota.data),
+      // Anggota: merge Sheets + local — jangan overwrite data yang sudah terdaftar
+      Anggota: (() => {
+        const anggotaSheets = safeArray(anggota.data);
+        if (anggotaSheets.length > 0) {
+          const localAnggota = existingData.Anggota || [];
+          const sheetsIds = new Set(anggotaSheets.map((s: any) => s.ID));
+          // Sheets priority, local sebagai pelengkap
+          return [...anggotaSheets, ...localAnggota.filter((l: any) => !sheetsIds.has(l.ID))];
+        }
+        return existingData.Anggota || [];
+      })(),
       Agenda      : safeArray(agenda.data),
       Pengumuman  : safeArray(pengumuman.data),
       Kas         : safeArray(kas.data),
