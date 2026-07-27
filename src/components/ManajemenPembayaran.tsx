@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { AppData } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { PaymentInfoItem, PaymentProofItem } from "../types";
 import { Plus, Trash2, CheckCircle2, XCircle, Banknote, QrCode } from "lucide-react";
 

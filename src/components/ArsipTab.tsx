@@ -1,6 +1,7 @@
 import React from "react";
 import { Archive, RefreshCw, Search } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";
 
@@ -92,10 +93,10 @@ export default function ArsipTab({
           <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
             <thead className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 uppercase font-bold text-[10px]">
               <tr>
-                <th className="p-3">ID Anggota</th>
-                <th className="p-3">Nama Lengkap</th>
-                <th className="p-3 hidden sm:table-cell">Diarsip Oleh</th>
-                <th className="p-3 hidden sm:table-cell">Tanggal Arsip</th>
+                <th className="p-3">t("anggota.idAnggota")</th>
+                <th className="p-3">t("anggota.namaLengkap")</th>
+                <th className="p-3 hidden sm:table-cell">t("anggota.diarsipOleh")</th>
+                <th className="p-3 hidden sm:table-cell">t("anggota.tanggalArsip")</th>
                 <th className="p-3 text-right">Aksi</th>
               </tr>
             </thead>

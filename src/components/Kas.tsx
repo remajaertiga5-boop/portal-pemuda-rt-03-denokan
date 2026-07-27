@@ -8,6 +8,7 @@ import {
   Settings, Check, Slash, AlertTriangle, Building2, Layers,
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { compressImage } from "../utils/imageUtils";
 import { uploadToR2 } from "../utils/apiClient";
 import { KasItem, UserRole } from "../types";
@@ -84,6 +85,7 @@ export default function Kas({
 }: KasProps) {
 
   // Navigation
+  const { t } = useLocale();
   const [activeTab, setActiveTab] = useState<ActiveTab>("TRANSAKSI");
 
   // Filters
@@ -1407,7 +1409,7 @@ export default function Kas({
                 {getItemMasuk(selectedTx) > 0 ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
               </div>
               <div>
-                <h3 className="font-black text-slate-900 dark:text-slate-100 text-base">Detail Transaksi Kas</h3>
+                <h3 className="font-black text-slate-900 dark:text-slate-100 text-base">t("kas.detailTransaksi")</h3>
                 <p className="text-[11px] text-slate-500 font-mono">No. Bukti: {getItemNomorBukti(selectedTx)}</p>
               </div>
             </div>

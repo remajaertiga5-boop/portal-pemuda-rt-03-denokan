@@ -12,6 +12,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { AppData, addLogAkses, generateIdAnggotaUnik } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { compressImage, validateFile } from "../utils/imageUtils";
 import { uploadToR2 } from "../utils/apiClient";
 import { AnggotaItem, UserRole } from "../types";
@@ -39,6 +40,7 @@ export default function Anggota({
   userRole,
   showToast,
 }: AnggotaProps) {
+  const { t } = useLocale();
   const [showForm, setShowForm]               = useState(false);
   const [filterAktifOnly, setFilterAktifOnly] = useState(false);
   const [searchQuery, setSearchQuery]         = useState("");

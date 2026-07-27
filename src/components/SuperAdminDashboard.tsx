@@ -4,6 +4,7 @@ import {
   Lock, Image, Printer, Plug, Loader2, Cloud, CloudOff, RefreshCw
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { saveToSheets, onSyncChange, getSyncStatus } from "../utils/dataStoreSheets";
 import type { SyncStatus } from "../utils/dataStoreSheets";
 import { verifikasiPINDinamis } from "../utils/auth";
@@ -53,6 +54,7 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
   const [syncMsg, setSyncMsg] = useState("");
 
   // Realtime clock
+  const { t } = useLocale();
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -104,7 +106,7 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
             <Crown size={14} /> Panel Utama Super Admin
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Dashboard Super Admin</h1>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">t("superAdmin.title")</h1>
           <p className="text-purple-200 text-xs sm:text-sm mt-1">Pendaftaran massal, manajemen ketua, kelola PIN, log aktivitas & arsip.</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
@@ -255,7 +257,7 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
             {!state.isAksesSettingsUnlocked ? (
               <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-purple-200 shadow-md dark:shadow-none text-center max-w-md mx-auto space-y-4 my-8">
                 <div className="w-16 h-16 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">🔒</div>
-                <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base">Pengaturan Terkunci</h3>
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base">t("superAdmin.pengaturanTerkunci")</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Masukkan PIN Super Admin untuk mengakses pengaturan sistem.</p>
                 <form onSubmit={e => {
                   e.preventDefault();
@@ -325,7 +327,7 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 uppercase font-bold text-[10px]">
-                        <tr><th className="p-3">Jabatan</th><th className="p-3 text-center">Input Kas Masuk</th><th className="p-3 text-center">Input Kas Keluar</th><th className="p-3 text-center">Detail</th><th className="p-3 text-center">Iuran</th><th className="p-3 text-center">Batas Maks</th></tr>
+                        <tr><th className="p-3">Jabatan</th><th className="p-3 text-center">t("superAdmin.inputKasMasuk")</th><th className="p-3 text-center">t("superAdmin.inputKasKeluar")</th><th className="p-3 text-center">Detail</th><th className="p-3 text-center">Iuran</th><th className="p-3 text-center">Batas Maks</th></tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {(appData.Settings.KasAccess?.jabatanPermissions || []).map(perm => {

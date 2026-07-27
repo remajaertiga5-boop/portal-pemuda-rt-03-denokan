@@ -8,6 +8,7 @@ import {
   Loader2, Image, Upload, X
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { IuranItem, UserRole, AuthSession, AnggotaItem } from "../types";
 import { compressImage, validateFile } from "../utils/imageUtils";
 import { uploadToDrive } from "../utils/driveClient";
@@ -1870,7 +1871,7 @@ export default function Iuran({
               </div>
 
               <div>
-                <label className="block text-slate-400 font-bold mb-1">Metode Bayar</label>
+                <label className="block text-slate-400 font-bold mb-1">t("kas.metodeBayar")</label>
                 <input
                   type="text"
                   value={editingIuran.Metode_Bayar || "Tunai"}

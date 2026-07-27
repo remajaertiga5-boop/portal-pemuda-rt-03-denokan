@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Megaphone, Plus, Pin, Edit3, Trash2, X, AlertCircle, Eye, Lock } from "lucide-react";
 import { AppData, addLogAkses, filterKontenByAkses } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { PengumumanItem, UserRole, ContentVisibility } from "../types";
 
 interface PengumumanProps {
@@ -12,6 +13,7 @@ interface PengumumanProps {
 }
 
 export default function Pengumuman({ appData, setAppData, userRole, currentUserName, showToast }: PengumumanProps) {
+  const { t } = useLocale();
   const [showForm, setShowForm] = useState(false);
   const [editingPengumuman, setEditingPengumuman] = useState<PengumumanItem | null>(null);
   const [selectedPengumuman, setSelectedPengumuman] = useState<PengumumanItem | null>(null);
@@ -327,7 +329,7 @@ export default function Pengumuman({ appData, setAppData, userRole, currentUserN
               <AlertCircle size={32} />
             </div>
 
-            <h3 className="font-black text-slate-900 dark:text-slate-100 text-lg">Hapus pengumuman ini?</h3>
+            <h3 className="font-black text-slate-900 dark:text-slate-100 text-lg">t("pengumuman.hapusPengumuman")</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">"{deleteConfirmItem.Judul}" akan dihapus permanen.</p>
 
             <div className="flex gap-2 pt-2">

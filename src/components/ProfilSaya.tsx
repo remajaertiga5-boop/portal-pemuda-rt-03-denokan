@@ -405,7 +405,7 @@ export default function ProfilSaya({ session, appData, setAppData, onClose, show
         {/* Progress Kelengkapan */}
         <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
           <div className="flex justify-between text-sm mb-2">
-            <span className="font-bold text-slate-700 dark:text-slate-300">Kelengkapan Profil</span>
+            <span className="font-bold text-slate-700 dark:text-slate-300">t("profil.kelengkapan")</span>
             <span className={`font-bold ${completionPercentage === 100 ? 'text-emerald-600' : 'text-blue-600'}`}>{completionPercentage}%</span>
           </div>
           <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
@@ -708,7 +708,7 @@ export default function ProfilSaya({ session, appData, setAppData, onClose, show
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 dark:text-slate-200">Preview Foto Profil</h3>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200">t("profil.previewFoto")</h3>
               <button onClick={cancelPhotoUpload} className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 dark:bg-slate-800 rounded-full">
                 <ChevronLeft size={20} className="rotate-180" />
               </button>

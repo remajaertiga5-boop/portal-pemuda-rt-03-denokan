@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AppData, addLogAkses, filterKontenByAkses } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { AgendaItem, UserRole, ContentVisibility } from "../types";
 
 // ----------------------------------------------------------
@@ -56,6 +57,7 @@ export default function Agenda({
   currentUserName,
   showToast,
 }: AgendaProps) {
+  const { t } = useLocale();
   const [showForm, setShowForm]                       = useState(false);
   const [editingAgenda, setEditingAgenda]             = useState<AgendaItem | null>(null);
   const [selectedAgenda, setSelectedAgenda]           = useState<AgendaItem | null>(null);

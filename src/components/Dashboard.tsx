@@ -667,7 +667,7 @@ export default function Dashboard({
             className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-sm dark:shadow-none flex items-center gap-1.5 cursor-pointer"
           >
             <Crown size={14} />
-            <span>Buka Super Admin Panel</span>
+            <span>t("dashboard.superAdminPanel")</span>
           </button>
         </div>
       )}
@@ -966,7 +966,7 @@ export default function Dashboard({
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm dark:shadow-none"
                 >
                   <MessageCircle size={13} />
-                  <span>Chat WA</span>
+                  <span>t("dashboard.chatWA")</span>
                 </a>
               </div>
             ))}

@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { compressImage } from "../utils/imageUtils";
 import { uploadToR2 } from "../utils/apiClient";
 import { GaleriItem, UserRole } from "../types";
@@ -48,6 +49,7 @@ export default function Galeri({
   currentUserName,
   showToast,
 }: GaleriProps) {
+  const { t } = useLocale();
   const [showForm, setShowForm]                   = useState(false);
   const [selectedCategory, setSelectedCategory]   = useState<string>("SEMUA");
   const [selectedPhoto, setSelectedPhoto]         = useState<GaleriItem | null>(null);

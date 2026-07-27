@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { useLocale } from "../hooks/useLocale";
 import { AspirasiItem, UserRole } from "../types";
 
 // ----------------------------------------------------------
@@ -44,6 +45,7 @@ export default function Aspirasi({
   currentUserName,
   showToast,
 }: AspirasiProps) {
+  const { t } = useLocale();
   const [showForm, setShowForm]                   = useState(false);
   const [selectedCategory, setSelectedCategory]   = useState<string>("SEMUA");
   const [replyItem, setReplyItem]                 = useState<AspirasiItem | null>(null);

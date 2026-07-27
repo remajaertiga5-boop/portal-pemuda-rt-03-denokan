@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { X, Download, FileText, MessageCircle, ShieldCheck, QrCode as QrIcon } from "lucide-react";
+import { useLocale } from "../hooks/useLocale";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { AnggotaItem, UserRole } from "../types";
@@ -167,7 +168,7 @@ export default function KartuAnggotaModal({
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <ShieldCheck size={18} className="text-amber-400" />
-            <h3 className="font-extrabold text-sm text-white">Kartu Anggota Digital Resmi</h3>
+            <h3 className="font-extrabold text-sm text-white">t("profil.kartuDigital")</h3>
           </div>
           <button
             type="button"

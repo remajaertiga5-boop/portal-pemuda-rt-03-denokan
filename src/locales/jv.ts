@@ -277,22 +277,6 @@ const jv = {
     viewAll       : 'Deleng Kabeh Transaksi',
   },
 
-  agenda: {
-    title         : 'Agenda Kegiatan',
-    subtitle      : 'Tanggalan lan jadwal kegiatan pemuda',
-    upcoming      : 'Kegiatan Mendatang',
-    past          : 'Kegiatan Lampau',
-    addAgenda     : 'Tambah Agenda Anyar',
-    time          : 'Wektu',
-    location      : 'Panggonan',
-    description   : 'Katrangan',
-    organizer     : 'Penyelenggara',
-    noAgenda      : 'Ora ana agenda kegiatan saiki.',
-    attend        : 'Teka',
-    absent        : 'Ora Teka',
-    maybe         : 'Izin',
-    attendanceList: 'Daftar Sing Teka',
-  },
 
   attendance: {
     title          : 'Absensi Kegiatan',
@@ -357,7 +341,117 @@ const jv = {
     latestGallery: "Galeri Enggal",
     viewAll: "Deleng Sedanten",
     noAnnouncements: "Dereng wonten pengumuman.",
-    noDescription: "Mboten wonten keterangan."
+    noDescription: "Mboten wonten keterangan.",
+    welcome: "Sugeng Rawuh ing Portal Remaja Legok 03",
+    subtitle: "Mugi dados pemuda produktif, transparan, lan inovatif.",
+    chatWA: "Chat WA",
+    superAdminPanel: "Bukak Panel Super Admin",
+    dashboardSekretaris: "Dashboard Sekretaris",
+    daftarTugas: "Daftar Tugas Saben Dinten"
+  },
+  anggota: {
+    title: "Kaca Anggota",
+    namaLengkap: "Nama Jangkep",
+    namaPanggilan: "Nama Celukan",
+    jenisKelamin: "Jenis Kelamin",
+    noWA: "No WhatsApp",
+    minatBakat: "Minat & Bakat",
+    lihatProfil: "Deleng Profil",
+    pengaturanPrivasi: "Pengaturan Privasi",
+    idAnggota: "ID Anggota",
+    jabatan: "Jabatan",
+    alamat: "Alamat",
+    statusAktif: "Status Aktif",
+    arsipAnggota: "Arsip Anggota",
+    kembalikan: "Balekaken",
+    diarsipOleh: "Diarsip Dening",
+    tanggalArsip: "Tanggal Arsip"
+  },
+  agenda: {
+    title: "Agenda Kegiatan",
+    kategori: "Kategori",
+    daftarHadir: "Daftar Rawuh",
+    kirimIzin: "Kirim Panyuwunan Izin",
+    lokasi: "Balai RT 03 Legok",
+    keterangan: "Keterangan",
+    namaKegiatan: "Nama Kegiatan",
+    hapusAgenda: "Suda agenda niki?",
+    yaHapus: "Nggih, Suda"
+  },
+  kas: {
+    title: "Kas Remaja",
+    income: "Pemasukan",
+    expense: "Pangeluaran",
+    balance: "Saldo",
+    detailTransaksi: "Detail Transaksi",
+    cetakLaporan: "Cetak Laporan",
+    bagikanWA: "Bagi WA",
+    metodeBayar: "Carane Bayar",
+    buktiNota: "Bukti Nota",
+    petugas: "Petugas",
+    kategori: "Kategori",
+    aksi: "Aksi",
+    aktor: "Aktor",
+    transaksi: "Transaksi"
+  },
+  aspirasi: {
+    title: "Aspirasi & Usulan",
+    kategori: "Kategori",
+    kirimTanggapan: "Kirim Tanggapan",
+    setujui: "Setujuni",
+    tanggapi: "Tanggepi",
+    hapusAspirasi: "Suda aspirasi niki?"
+  },
+  pengumuman: {
+    title: "Kaca Pengumuman",
+    hapusPengumuman: "Suda pengumuman niki?",
+    yaHapus: "Nggih, Suda"
+  },
+  galeri: {
+    title: "Galeri Kegiatan",
+    noData: "Mboten wonten media",
+    hapusFoto: "Suda foto niki?",
+    yaHapus: "Nggih, Suda",
+    setujui: "Setujuni",
+    lihatFullscreen: "Deleng Fullscreen"
+  },
+  profil: {
+    title: "Profil Kulo",
+    kartuDigital: "Kartu Anggota Digital Resmi",
+    kelengkapan: "Jangkepipun Profil",
+    terakhirDiubah: "Pungkasan Diowahi",
+    previewFoto: "Preview Foto Profil"
+  },
+  superAdmin: {
+    title: "Dashboard Super Admin",
+    panelUtama: "Panel Utama",
+    inputKasMasuk: "Kas Mlebet",
+    inputKasKeluar: "Kas Medal",
+    matriksHakAkses: "Matriks Hak Akses",
+    pengaturanTerkunci: "Pengaturan Dikunci",
+    manajemenAnggota: "Manajemen Anggota",
+    manajemenPembayaran: "Manajemen Bayaran",
+    integrasiSistem: "Integrasi Sistem",
+    simpanKonfigurasi: "Simpen Konfigurasi",
+    terhubung: "Nyambung",
+    tidakTerhubung: "Mboten Nyambung"
+  },
+  iuran: {
+    title: "Bayaran Iuran",
+    statusLunas: "Lunas",
+    statusBelum: "Dereng Bayar",
+    cicil: "Cicil",
+    dibebaskan: "Dibebasaken",
+    bulan: "Sasi",
+    tahun: "Taun",
+    nominal: "Nominal",
+    metode: "Carane",
+    tanggalBayar: "Tanggal Bayar",
+    buktiBayar: "Bukti Bayar",
+    catatan: "Cathetan",
+    simpanPembayaran: "Simpen Bayaran",
+    bagikanWA: "Bagikaken WA",
+    salinBukti: "Salin Bukti"
   },
 } as const;
 
