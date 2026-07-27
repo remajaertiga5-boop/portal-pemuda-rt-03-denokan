@@ -1,246 +1,127 @@
 // ============================================================
 // VERCEL SERVERLESS — GOOGLE SHEETS DATABASE (DIRECT API)
-// Uses service account to read/write Google Sheets directly
+// Uses service account JWT — pure crypto + fetch, no googleapis
 // ============================================================
 
-import { google } from "googleapis";
+import { createSign } from "crypto";
 
-const SPREADSHEET_ID = "1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8";
-const SHEETS_LIST   = ["Anggota","Agenda","Pengumuman","Kas","Aspirasi","Galeri"];
-const API_KEY       = process.env.SHEETS_API_KEY || "remaja-legok-03-2026";
+const SID = "1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8";
+const SHEETS = ["Anggota","Agenda","Pengumuman","Kas","Aspirasi","Galeri"];
+const KEY = process.env.SHEETS_API_KEY || "remaja-legok-03-2026";
 
-// ── Helpers ──────────────────────────────────────────────
+let _token = null, _tokenExpiry = 0, _sheetIds = null;
 
-function getAuth() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON not configured");
-  const sa = JSON.parse(raw);
-  return new google.auth.JWT(
-    sa.client_email, null, sa.private_key,
-    ["https://www.googleapis.com/auth/spreadsheets"]
-  );
+function auth(req) { return (req.headers["x-api-key"]||"") === KEY; }
+
+async function getToken() {
+  if (_token && Date.now() < _tokenExpiry) return _token;
+  const sa = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+  const now = Math.floor(Date.now()/1000);
+  const b64 = o => Buffer.from(JSON.stringify(o)).toString("base64url");
+  const seg = b64({alg:"RS256",typ:"JWT"}) + "." + b64({iss:sa.client_email,scope:"https://www.googleapis.com/auth/spreadsheets",aud:sa.token_uri,exp:now+3600,iat:now});
+  const jwt = seg + "." + createSign("RSA-SHA256").update(seg).sign(sa.private_key,"base64url");
+  const r = await fetch(sa.token_uri,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion="+encodeURIComponent(jwt)});
+  const d = await r.json();
+  _token = d.access_token;
+  _tokenExpiry = Date.now() + (d.expires_in-60)*1000;
+  return _token;
 }
 
-function checkAuth(req) {
-  const key = req.headers["x-api-key"] || "";
-  return key === API_KEY;
+async function api(method, path, body) {
+  const t = await getToken();
+  const opts = {method, headers:{Authorization:"Bearer "+t,"Content-Type":"application/json"}};
+  if (body) opts.body = JSON.stringify(body);
+  return (await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+SID+path,opts)).json();
 }
 
-async function getValues(sheetName, range) {
-  const auth = getAuth();
-  const srv = google.sheets({ version: "v4", auth });
-  const res = await srv.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: range || sheetName,
-  });
-  return res.data.values || [];
-}
+async function getValues(sheet) { const d = await api("GET","/values/"+encodeURIComponent(sheet)); return d.values||[]; }
 
-async function getSheetIds() {
-  const auth = getAuth();
-  const srv = google.sheets({ version: "v4", auth });
-  const meta = await srv.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-  const map = {};
-  for (const sh of meta.data.sheets) {
-    map[sh.properties.title] = sh.properties.sheetId;
-  }
-  return map;
+async function getIds() {
+  if (_sheetIds) return _sheetIds;
+  const d = await api("GET","");
+  _sheetIds = {};
+  for (const s of d.sheets||[]) _sheetIds[s.properties.title] = s.properties.sheetId;
+  return _sheetIds;
 }
-
-function valuesToObjects(values) {
-  if (!values || values.length < 2) return [];
-  const headers = values[0].map(String);
-  return values.slice(1).map(row =>
-    headers.reduce((obj, h, i) => ({ ...obj, [h]: row[i] ?? "" }), {})
-  );
-}
-
-// ── Main Handler ─────────────────────────────────────────
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Api-Key");
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-
-  if (!checkAuth(req)) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  res.setHeader("Access-Control-Allow-Origin","*");
+  res.setHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers","Content-Type, Authorization, X-Api-Key");
+  if (req.method==="OPTIONS") return res.status(200).end();
+  if (!auth(req)) return res.status(401).json({error:"Unauthorized"});
 
   try {
-    if (req.method === "GET") {
-      return handleGet(req, res);
-    }
-    if (req.method === "POST") {
-      return handlePost(req, res);
-    }
-    return res.status(405).json({ error: "Method not allowed" });
-  } catch (err) {
-    console.error("[sheets-db]", err.message);
-    return res.status(500).json({ error: err.message });
-  }
-}
-
-// ── GET handlers ─────────────────────────────────────────
-
-async function handleGet(req, res) {
-  const { table, id, idColumn } = req.query || {};
-
-  if (!table) {
-    return res.status(200).json({ status: "ok", sheets: SHEETS_LIST, time: new Date().toISOString() });
-  }
-
-  if (!SHEETS_LIST.includes(table)) {
-    return res.status(400).json({ error: `Table '${table}' tidak valid. Gunakan: ${SHEETS_LIST.join(",")}` });
-  }
-
-  const values = await getValues(table);
-
-  if (id) {
-    const col = idColumn || "ID";
-    const headers = values[0]?.map(String) || [];
-    const colIdx = headers.indexOf(col);
-    if (colIdx < 0) return res.status(400).json({ error: `Kolom '${col}' tidak ditemukan` });
-    const row = values.slice(1).find(r => String(r[colIdx]) === String(id));
-    if (!row) return res.status(404).json({ error: "Not found" });
-    const obj = {};
-    headers.forEach((h, i) => { obj[h] = row[i] ?? ""; });
-    return res.status(200).json(obj);
-  }
-
-  const data = valuesToObjects(values);
-  return res.status(200).json({ data, total: data.length });
-}
-
-// ── POST handlers ────────────────────────────────────────
-
-async function handlePost(req, res) {
-  const { action, table, id, idColumn, data } = req.body || {};
-
-  if (!table || !SHEETS_LIST.includes(table)) {
-    return res.status(400).json({ error: `Table '${table}' tidak valid` });
-  }
-
-  const values = await getValues(table);
-  const headers = values[0]?.map(String) || [];
-  const idCol = idColumn || "ID";
-  const idColIdx = headers.indexOf(idCol);
-
-  const auth = getAuth();
-  const srv = google.sheets({ version: "v4", auth });
-
-  switch (action) {
-
-    case "create":
-    case "insert": {
-      if (!data) return res.status(400).json({ error: "Field 'data' wajib" });
-      const row = headers.map(h => data[h] ?? "");
-      await srv.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: table,
-        valueInputOption: "USER_ENTERED",
-        insertDataOption: "INSERT_ROWS",
-        requestBody: { values: [row] },
-      });
-      const updated = await getValues(table);
-      return res.status(201).json({ success: true, row: updated.length });
+    if (req.method==="GET") {
+      const {table, id, idColumn} = req.query||{};
+      if (!table) return res.json({status:"ok",sheets:SHEETS,time:new Date().toISOString()});
+      if (!SHEETS.includes(table)) return res.status(400).json({error:"Invalid table"});
+      const v = await getValues(table);
+      if (id) {
+        const col = idColumn||"ID", h = v[0].map(String), ci = h.indexOf(col);
+        if (ci<0) return res.status(400).json({error:"Column not found"});
+        const row = v.slice(1).find(r=>String(r[ci])===String(id));
+        if (!row) return res.status(404).json({error:"Not found"});
+        return res.json(h.reduce((o,k,i)=>({...o,[k]:row[i]??""}),{}));
+      }
+      const h = v[0].map(String), rows = v.slice(1).map(r=>h.reduce((o,k,i)=>({...o,[k]:r[i]??""}),{}));
+      return res.json({data:rows, total:rows.length});
     }
 
-    case "update": {
-      if (!id) return res.status(400).json({ error: "Field 'id' wajib" });
-      if (idColIdx < 0) return res.status(400).json({ error: `Kolom '${idCol}' tidak ditemukan` });
-      const rowIdx = values.slice(1).findIndex(r => String(r[idColIdx]) === String(id));
-      if (rowIdx < 0) return res.status(404).json({ error: "Data tidak ditemukan" });
-      const row = headers.map((h, i) => (h === idCol ? id : (data?.[h] ?? values[rowIdx + 1]?.[i] ?? "")));
-      await srv.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${table}!A${rowIdx + 2}`,
-        valueInputOption: "USER_ENTERED",
-        requestBody: { values: [row] },
-      });
-      return res.status(200).json({ success: true, row: rowIdx + 2 });
-    }
+    if (req.method==="POST") {
+      const {action, table, id, idColumn, data} = req.body||{};
+      if (!table||!SHEETS.includes(table)) return res.status(400).json({error:"Invalid table"});
+      const v = await getValues(table);
+      const h = v[0]?.map(String)||[], col = idColumn||"ID", ci = h.indexOf(col);
 
-    case "delete": {
-      if (!id) return res.status(400).json({ error: "Field 'id' wajib" });
-      if (idColIdx < 0) return res.status(400).json({ error: `Kolom '${idCol}' tidak ditemukan` });
-      const rowIdx = values.slice(1).findIndex(r => String(r[idColIdx]) === String(id));
-      if (rowIdx < 0) return res.status(404).json({ error: "Data tidak ditemukan" });
-      const sheetIds = await getSheetIds();
-      const sheetId = sheetIds[table];
-      if (sheetId === undefined) return res.status(500).json({ error: "Sheet ID not found" });
-      await srv.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        requestBody: {
-          requests: [{
-            deleteDimension: {
-              range: { sheetId, dimension: "ROWS", startIndex: rowIdx + 1, endIndex: rowIdx + 2 }
-            }
-          }]
+      const A = action;
+      if (A==="create"||A==="insert") {
+        if (!data) return res.status(400).json({error:"data required"});
+        await api("POST","/values/"+encodeURIComponent(table)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:[h.map(k=>data[k]??"")]});
+        const u = await getValues(table);
+        return res.status(201).json({success:true,row:u.length});
+      }
+      if (A==="update") {
+        if (!id||ci<0) return res.status(400).json({error:"id required"});
+        const ri = v.slice(1).findIndex(r=>String(r[ci])===String(id));
+        if (ri<0) return res.status(404).json({error:"Not found"});
+        const row = h.map((k,i)=>k===col?id:(data?.[k]??v[ri+1]?.[i]??""));
+        await api("PUT","/values/"+encodeURIComponent(table)+"!A"+(ri+2)+"?valueInputOption=USER_ENTERED",{values:[row]});
+        return res.json({success:true,row:ri+2});
+      }
+      if (A==="delete") {
+        if (!id||ci<0) return res.status(400).json({error:"id required"});
+        const ri = v.slice(1).findIndex(r=>String(r[ci])===String(id));
+        if (ri<0) return res.status(404).json({error:"Not found"});
+        const ids = await getIds(), sid = ids[table];
+        await api("POST",":batchUpdate",{requests:[{deleteDimension:{range:{sheetId:sid,dimension:"ROWS",startIndex:ri+1,endIndex:ri+2}}}]});
+        return res.json({success:true});
+      }
+      if (A==="upsert") {
+        if (!id||ci<0) return res.status(400).json({error:"id required"});
+        const ri = v.slice(1).findIndex(r=>String(r[ci])===String(id));
+        if (ri>=0) {
+          const row = h.map((k,i)=>k===col?id:(data?.[k]??v[ri+1]?.[i]??""));
+          await api("PUT","/values/"+encodeURIComponent(table)+"!A"+(ri+2)+"?valueInputOption=USER_ENTERED",{values:[row]});
+          return res.json({success:true,row:ri+2});
         }
-      });
-      return res.status(200).json({ success: true });
+        await api("POST","/values/"+encodeURIComponent(table)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:[h.map(k=>data?.[k]??"")]});
+        const u = await getValues(table);
+        return res.status(201).json({success:true,row:u.length});
+      }
+      if (A==="sync") {
+        if (!Array.isArray(data)) return res.status(400).json({error:"data must be array"});
+        const ids = await getIds(), sid = ids[table];
+        if (v.length>1) await api("POST",":batchUpdate",{requests:[{deleteDimension:{range:{sheetId:sid,dimension:"ROWS",startIndex:1,endIndex:v.length}}}]});
+        if (data.length) await api("POST","/values/"+encodeURIComponent(table)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:data.map(d=>h.map(k=>d[k]??""))});
+        return res.json({success:true,rows:data.length});
+      }
+      return res.status(400).json({error:`Unknown action: ${A}`});
     }
 
-    case "upsert": {
-      if (!id) return res.status(400).json({ error: "Field 'id' wajib" });
-      if (idColIdx < 0) return res.status(400).json({ error: `Kolom '${idCol}' tidak ditemukan` });
-      const rowIdx = values.slice(1).findIndex(r => String(r[idColIdx]) === String(id));
-      if (rowIdx >= 0) {
-        const row = headers.map((h, i) => (h === idCol ? id : (data?.[h] ?? values[rowIdx + 1]?.[i] ?? "")));
-        await srv.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `${table}!A${rowIdx + 2}`,
-          valueInputOption: "USER_ENTERED",
-          requestBody: { values: [row] },
-        });
-        return res.status(200).json({ success: true, row: rowIdx + 2 });
-      } else {
-        const row = headers.map(h => data?.[h] ?? "");
-        await srv.spreadsheets.values.append({
-          spreadsheetId: SPREADSHEET_ID,
-          range: table,
-          valueInputOption: "USER_ENTERED",
-          insertDataOption: "INSERT_ROWS",
-          requestBody: { values: [row] },
-        });
-        const updated = await getValues(table);
-        return res.status(201).json({ success: true, row: updated.length });
-      }
-    }
-
-    case "sync": {
-      if (!Array.isArray(data)) return res.status(400).json({ error: "data harus array" });
-      const sheetIds = await getSheetIds();
-      const sheetId = sheetIds[table];
-      if (sheetId === undefined) return res.status(500).json({ error: "Sheet ID not found" });
-      if (values.length > 1) {
-        await srv.spreadsheets.batchUpdate({
-          spreadsheetId: SPREADSHEET_ID,
-          requestBody: {
-            requests: [{
-              deleteDimension: {
-                range: { sheetId, dimension: "ROWS", startIndex: 1, endIndex: values.length }
-              }
-            }]
-          }
-        });
-      }
-      if (data.length > 0) {
-        const rows = data.map(item => headers.map(h => item[h] ?? ""));
-        await srv.spreadsheets.values.append({
-          spreadsheetId: SPREADSHEET_ID,
-          range: table,
-          valueInputOption: "USER_ENTERED",
-          insertDataOption: "INSERT_ROWS",
-          requestBody: { values: rows },
-        });
-      }
-      return res.status(200).json({ success: true, rows: data.length });
-    }
-
-    default:
-      return res.status(400).json({ error: `Action '${action}' tidak dikenal` });
+    return res.status(405).json({error:"Method not allowed"});
+  } catch(e) {
+    console.error("[sheets-db]",e.message);
+    return res.status(500).json({error:e.message});
   }
 }
