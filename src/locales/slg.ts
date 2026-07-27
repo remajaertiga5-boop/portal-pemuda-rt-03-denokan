@@ -336,24 +336,6 @@ const slg = {
     },
   },
 
-  dashboard: {
-    greeting           : 'Halo, {{name}}!',
-    welcome            : 'Welcome di Portal Pemuda RT 03 Denokan.',
-    activeRole         : 'Level: {{role}}',
-    quickAccess        : 'Akses Kilat',
-    latestAnnouncements: 'Info Terbaru',
-    upcomingAgenda     : 'Agenda Deket',
-    noAgenda           : 'Belom ada agenda.',
-    stat: {
-      balance   : 'Saldo Duit',
-      agenda    : 'Agenda Deket',
-      members   : 'Total Member',
-      attendance: 'Rata-rata Hadir',
-    },
-    viewAll   : 'Liat Semua',
-    seeDetail : 'Liat Detail',
-    noActivity: 'Belom ada aktivitas.',
-  },
 
   finance: {
     title         : 'Laporan Duit',
@@ -531,6 +513,13 @@ const slg = {
     copyId       : 'Copy ID',
     idCopied     : 'ID kecopy!',
     welcomeMsg   : 'Welcome di Remaja Legok 03!',
+  },
+  dashboard: {
+    latestAnnouncements: "Pengumuman Terbaru 📢",
+    latestGallery: "Galeri Terbaru 🖼️",
+    viewAll: "Lihat Semua 👀",
+    noAnnouncements: "Belum ada pengumuman nih",
+    noDescription: "Ga ada deskripsi."
   },
 } as const;
 

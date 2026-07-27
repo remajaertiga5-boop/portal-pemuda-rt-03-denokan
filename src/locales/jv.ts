@@ -256,23 +256,6 @@ const jv = {
     },
   },
 
-  dashboard: {
-    greeting           : 'Halo, {{name}}!',
-    // ✅ Fix Bug 1: Typo "Pemudha" → "Pemuda"
-    welcome            : 'Sugeng rawuh ing Portal Pemuda RT 03 Denokan.',
-    activeRole         : 'Akses Aktif: {{role}}',
-    quickAccess        : 'Akses Cepet',
-    latestAnnouncements: 'Wara-wara Anyar',
-    upcomingAgenda     : 'Agenda Sing Bakal Teka',
-    noAgenda           : 'Durung ana agenda cerak.',
-    stat: {
-      balance   : 'Saldo Kas',
-      // ✅ Fix Bug 6: Typo "Terakhet" → "Paling Cerak"
-      agenda    : 'Agenda Paling Cerak',
-      members   : 'Kabeh Anggota',
-      attendance: 'Kehadiran Rata-rata',
-    },
-  },
 
   finance: {
     title         : 'Laporan Keuangan',
@@ -368,6 +351,13 @@ const jv = {
     searchMember: 'Golek jeneng utawa ID...',
     totalMembers: 'Kabeh Terdaftar: {{count}} pemuda',
     noMembers   : 'Anggota ora ditemokake.',
+  },
+  dashboard: {
+    latestAnnouncements: "Pengumuman Enggal",
+    latestGallery: "Galeri Enggal",
+    viewAll: "Deleng Sedanten",
+    noAnnouncements: "Dereng wonten pengumuman.",
+    noDescription: "Mboten wonten keterangan."
   },
 } as const;
 

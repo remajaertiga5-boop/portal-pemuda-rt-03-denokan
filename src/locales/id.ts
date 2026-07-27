@@ -346,25 +346,6 @@ const id = {
     },
   },
 
-  dashboard: {
-    greeting           : 'Halo, {{name}}!',
-    welcome            : 'Selamat datang di Portal Pemuda RT 03 Denokan.',
-    activeRole         : 'Akses Aktif: {{role}}',
-    quickAccess        : 'Akses Cepat',
-    latestAnnouncements: 'Pengumuman Terbaru',
-    upcomingAgenda     : 'Agenda Mendatang',
-    noAgenda           : 'Belum ada agenda terdekat.',
-    stat: {
-      balance   : 'Saldo Kas',
-      agenda    : 'Agenda Terdekat',
-      members   : 'Total Anggota',
-      attendance: 'Kehadiran Rata-rata',
-    },
-    // ✅ ADDED: Sinkron dengan en.ts
-    viewAll   : 'Lihat Semua',
-    seeDetail : 'Lihat Detail',
-    noActivity: 'Belum ada aktivitas terbaru.',
-  },
 
   finance: {
     title         : 'Laporan Keuangan',
@@ -552,6 +533,13 @@ const id = {
     copyId       : 'Salin ID',
     idCopied     : 'ID berhasil disalin!',
     welcomeMsg   : 'Selamat datang di Remaja Legok 03!',
+  },
+  dashboard: {
+    latestAnnouncements: "Pengumuman Terbaru",
+    latestGallery: "Galeri Kegiatan Terbaru",
+    viewAll: "Lihat Semua",
+    noAnnouncements: "Belum ada pengumuman publik saat ini.",
+    noDescription: "Tidak ada keterangan tambahan."
   },
 } as const;
 

@@ -79,7 +79,7 @@ export default function Dashboard({
   setTab,
   onOpenAuthModal,
 }: DashboardProps) {
-  const { formatCurrency } = useLocale();
+  const { formatCurrency, t } = useLocale();
   const currentData = appData || data || {} as AppData;
   const settings = currentData.Settings || {};
   const actualWaKetua = settings.WA_Ketua || "6281234567890";
@@ -727,20 +727,20 @@ export default function Dashboard({
           <div className="flex justify-between items-center">
             <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Megaphone className="text-purple-600" size={20} />
-              Pengumuman Terbaru
+              {t("dashboard.latestAnnouncements", "Pengumuman Terbaru")}
             </h2>
             <button
               onClick={() => setTab("pengumuman")}
               className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1"
             >
-              Lihat Semua <ArrowRight size={14} />
+              {t("dashboard.viewAll", "Lihat Semua")} <ArrowRight size={14} />
             </button>
           </div>
 
           <div className="space-y-3">
             {pengumumanTerbaru.length === 0 ? (
               <p className="text-slate-500 dark:text-slate-400 text-xs italic py-4 text-center">
-                Belum ada pengumuman publik saat ini.
+                {t("dashboard.noAnnouncements", "Belum ada pengumuman publik saat ini.")}
               </p>
             ) : (
               // ✅ Pakai item.ID bukan index
@@ -782,7 +782,7 @@ export default function Dashboard({
               onClick={() => setTab("agenda")}
               className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1"
             >
-              Lihat Semua <ArrowRight size={14} />
+              {t("dashboard.viewAll", "Lihat Semua")} <ArrowRight size={14} />
             </button>
           </div>
 
@@ -857,7 +857,7 @@ export default function Dashboard({
           <div>
             <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <ImageIcon className="text-amber-500" size={20} />
-              Galeri Kegiatan Terbaru
+              {t("dashboard.latestGallery", "Galeri Kegiatan Terbaru")}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Dokumentasi kegiatan dan kebersamaan pemuda RT 03 Denokan
@@ -1011,7 +1011,7 @@ export default function Dashboard({
             <div>
               <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200">Keterangan:</label>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl mt-1">
-                {selectedAgendaModal.Keterangan || "Tidak ada keterangan tambahan."}
+                {selectedAgendaModal.Keterangan || t("dashboard.noDescription", "Tidak ada keterangan tambahan.")}
               </p>
             </div>
 

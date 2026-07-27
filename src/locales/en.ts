@@ -345,25 +345,6 @@ const en = {
     },
   },
 
-  dashboard: {
-    greeting           : 'Hello, {{name}}!',
-    welcome            : 'Welcome to RT 03 Denokan Youth Portal.',
-    activeRole         : 'Active Access: {{role}}',
-    quickAccess        : 'Quick Access',
-    latestAnnouncements: 'Latest Announcements',
-    upcomingAgenda     : 'Upcoming Agenda',
-    noAgenda           : 'No upcoming agenda listed.',
-    stat: {
-      balance   : 'Cash Balance',
-      agenda    : 'Next Agenda',
-      members   : 'Total Members',
-      attendance: 'Average Attendance',
-    },
-    // ✅ ADDED: Key dashboard yang sering dipakai
-    viewAll    : 'View All',
-    seeDetail  : 'See Detail',
-    noActivity : 'No recent activity.',
-  },
 
   finance: {
     title         : 'Financial Report',
@@ -550,6 +531,13 @@ const en = {
     copyId       : 'Copy ID',
     idCopied     : 'ID copied to clipboard!',
     welcomeMsg   : 'Welcome to Remaja Legok 03!',
+  },
+  dashboard: {
+    latestAnnouncements: "Latest Announcements",
+    latestGallery: "Latest Gallery",
+    viewAll: "View All",
+    noAnnouncements: "No public announcements yet.",
+    noDescription: "No additional description."
   },
 } as const;
 
