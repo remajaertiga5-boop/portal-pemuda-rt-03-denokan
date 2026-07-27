@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n/config';
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 // ============================================================
@@ -134,14 +135,9 @@ const getRelativeTimeArgs = (
 // ============================================================
 
 export function useLocale() {
-  const { t, i18n } = useTranslation();
+  const { t, i18n: i18nInstance } = useTranslation();
 
-  // ✅ FIX #3: Simpan i18n.changeLanguage di ref agar stabil
-  // Tidak pakai i18n object langsung sebagai dependency
-  const changeLanguageRef = useRef(i18n.changeLanguage.bind(i18n));
-  useEffect(() => {
-    changeLanguageRef.current = i18n.changeLanguage.bind(i18n);
-  }, [i18n]);
+
 
   // ✅ FIX #3: Inisialisasi dengan prioritas localStorage → i18n → default
   const [currentLanguage, setCurrentLanguageState] = useState<string>(() => {
@@ -156,7 +152,6 @@ export function useLocale() {
     return DEFAULT_LANG;
   });
 
-  // ✅ FIX #2 & #3: useCallback tanpa i18n sebagai dependency
   const setLanguage = useCallback((langCode: string): void => {
     const isValid = availableLanguages.some(l => l.code === langCode);
     if (!isValid) {
@@ -164,22 +159,23 @@ export function useLocale() {
       return;
     }
 
-    // Pakai ref agar tidak perlu i18n di dependency
-    changeLanguageRef.current(langCode);
+    // Gunakan i18n singleton langsung — paling reliable
+    i18n.changeLanguage(langCode).then(() => {
+      console.log(`[useLocale] Language changed to: ${langCode}, i18n.language: ${i18n.language}`);
+    });
     setStorage(STORAGE_KEY_LANG, langCode);
     setCurrentLanguageState(langCode);
 
     if (typeof document !== 'undefined') {
       document.documentElement.lang = langCode;
-      // ✅ FIX #9: Apply dir attribute untuk RTL support
       document.documentElement.dir = isRTLLanguage(langCode) ? 'rtl' : 'ltr';
     }
-  }, []); // ← dependency kosong, stabil selamanya
+  }, []);
 
   // ✅ FIX #1: Effect sync i18n → state, tidak ada loop
   // Hanya jalan saat i18n.language berubah dari LUAR hook
   useEffect(() => {
-    const i18nLang = i18n.language?.split('-')[0];
+    const i18nLang = i18nInstance.language?.split('-')[0];
     if (!i18nLang) return;
 
     const isValid = availableLanguages.some(l => l.code === i18nLang);
@@ -191,7 +187,7 @@ export function useLocale() {
       if (prev !== i18nLang) return i18nLang;
       return prev; // return sama → tidak trigger re-render
     });
-  }, [i18n.language]); // ← hanya i18n.language, bukan currentLanguage
+  }, [i18nInstance.language]); // ← hanya i18nInstance.language, bukan currentLanguage
 
   // Sync lang & dir attribute saat mount & bahasa berubah
   useEffect(() => {
@@ -202,11 +198,11 @@ export function useLocale() {
       : 'ltr';
   }, [currentLanguage]);
 
-  // ✅ FIX #3: Sync i18n saat pertama mount jika belum sinkron
+  // Sync i18n saat pertama mount
   useEffect(() => {
-    const i18nLang = i18n.language?.split('-')[0];
-    if (i18nLang !== currentLanguage) {
-      changeLanguageRef.current(currentLanguage);
+    const i18nLang = i18nInstance.language?.split('-')[0];
+    if (i18nLang !== currentLanguage && currentLanguage) {
+      i18n.changeLanguage(currentLanguage);
     }
   }, []); // hanya sekali saat mount
 

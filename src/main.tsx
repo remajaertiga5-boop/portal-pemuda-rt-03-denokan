@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 // ✅ FIXED: Import i18n duluan sebelum App
 // agar terjemahan sudah siap saat komponen pertama render
 import './i18n/config';
+import { i18nInitPromise } from './i18n/config';
 
 // ✅ FIXED: Import CSS sebelum komponen
 // agar style sudah ter-apply saat hydration
@@ -76,7 +77,13 @@ if (import.meta.env.DEV) {
   );
 }
 
-createRoot(rootElement).render(
+// ✅ FIX: Tunggu i18n init selesai sebelum render
+// agar useTranslation() langsung punya resources lengkap
+i18nInitPromise.then(() => {
+  if (import.meta.env.DEV) {
+    console.info('[main] i18n ready, rendering App');
+  }
+  createRoot(rootElement).render(
   <StrictMode>
     {/*
       ThemeProvider harus paling luar
@@ -90,4 +97,18 @@ createRoot(rootElement).render(
       </AuthProvider>
     </ThemeProvider>
   </StrictMode>,
-);
+  );
+}).catch((err: Error) => {
+  console.error('[main] i18n init failed, rendering anyway:', err);
+  createRoot(rootElement).render(
+    <StrictMode>
+      <ThemeProvider>
+        <AuthProvider>
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
+        </AuthProvider>
+      </ThemeProvider>
+    </StrictMode>,
+  );
+});
