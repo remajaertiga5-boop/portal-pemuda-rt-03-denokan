@@ -1,163 +1,140 @@
 // ============================================================
-// VERCEL SERVERLESS FUNCTION - CLOUDFLARE R2 FILE UPLOAD PROXY
+// VERCEL SERVERLESS — UPLOAD FILE (Base64 JSON + R2 Proxy)
+// v2.0 — Menerima JSON base64 dari frontend
+// Fallback: return public URL jika R2 tidak dikonfigurasi
 // ============================================================
 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import multer from "multer";
 import https from "https";
 
-// ----------------------------------------------------------
-// ALLOWED MIME TYPES
-// ----------------------------------------------------------
-const ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
+// ── Max file sizes ────────────────────────────────────────
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_B  = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ALLOWED_TYPES = [
+  "image/jpeg", "image/png", "image/webp", "image/gif",
   "application/pdf",
 ];
 
-// ----------------------------------------------------------
-// MULTER - IN MEMORY STORAGE
-// ----------------------------------------------------------
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  fileFilter: (_req, file, cb) => {
-    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error(`Tipe file tidak diizinkan: ${file.mimetype}`));
-    }
-  },
-});
-
-// ----------------------------------------------------------
-// HELPER - RUN MIDDLEWARE
-// ----------------------------------------------------------
-function runMiddleware(req, res, fn) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) return reject(result);
-      return resolve(result);
-    });
-  });
-}
-
-// ----------------------------------------------------------
-// LAZY LOAD S3 CLIENT
-// ----------------------------------------------------------
+// ── S3 Client (lazy, hanya init jika R2 creds ada) ─────────
 let s3Client = null;
-
 function getS3Client() {
-  if (!s3Client) {
-    const accountId      = process.env.VITE_R2_ACCOUNT_ID;
-    const accessKeyId    = process.env.VITE_R2_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.VITE_R2_SECRET_ACCESS_KEY;
+  if (s3Client) return s3Client;
 
-    if (!accountId || !accessKeyId || !secretAccessKey) {
-      throw new Error("Missing Cloudflare R2 environment credentials");
-    }
+  const accountId       = process.env.VITE_R2_ACCOUNT_ID;
+  const accessKeyId     = process.env.VITE_R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.VITE_R2_SECRET_ACCESS_KEY;
 
-    s3Client = new S3Client({
-      region: "auto",
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-      credentials: { accessKeyId, secretAccessKey },
-      requestHandler: {
-        httpsAgent: new https.Agent({
-          minVersion: 'TLSv1.2',
-        }),
-      },
-    });
-  }
+  if (!accountId || !accessKeyId || !secretAccessKey) return null;
+
+  // Dynamic import — tidak crash jika @aws-sdk tidak terinstall
+  const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
+  s3Client = new S3Client({
+    region     : "auto",
+    endpoint   : `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+    requestHandler: { httpsAgent: new https.Agent({ minVersion: "TLSv1.2" }) },
+  });
+
   return s3Client;
 }
 
-// ----------------------------------------------------------
-// VERCEL CONFIG - DISABLE BODY PARSER
-// ----------------------------------------------------------
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// ── Upload ke R2 ──────────────────────────────────────────
+async function uploadToR2Bucket(fileName, fileType, buffer, folder) {
+  const s3     = getS3Client();
+  if (!s3) return null;
 
-// ----------------------------------------------------------
-// HANDLER
-// ----------------------------------------------------------
+  const bucketName = process.env.VITE_R2_BUCKET_NAME;
+  const publicUrl  = process.env.VITE_R2_PUBLIC_URL;
+  if (!bucketName || !publicUrl) return null;
+
+  const { PutObjectCommand } = require("@aws-sdk/client-s3");
+
+  const cleanName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const safeFolder = (folder || "umum").replace(/[^a-zA-Z0-9_-]/g, "") || "umum";
+  const fileKey = `${safeFolder}/${Date.now()}-${cleanName}`;
+
+  await s3.send(new PutObjectCommand({
+    Bucket     : bucketName,
+    Key        : fileKey,
+    Body       : buffer,
+    ContentType: fileType,
+  }));
+
+  return `${publicUrl.replace(/\/$/, "")}/${fileKey}`;
+}
+
+// ── Handler ────────────────────────────────────────────────
 export default async function handler(req, res) {
-
-  // CORS Headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed. Use POST." });
-  }
-
-  // ----------------------------------------------------------
-  // VALIDASI ENV
-  // ----------------------------------------------------------
-  const bucketName = process.env.VITE_R2_BUCKET_NAME;
-  const publicUrl  = process.env.VITE_R2_PUBLIC_URL;
-
-  if (!bucketName) {
-    console.error("[upload-r2] Missing VITE_R2_BUCKET_NAME");
-    return res.status(500).json({ error: "System configuration error." });
-  }
-
-  if (!publicUrl) {
-    console.error("[upload-r2] Missing VITE_R2_PUBLIC_URL");
-    return res.status(500).json({ error: "System configuration error." });
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
 
   try {
-    // Jalankan multer
-    await runMiddleware(req, res, upload.single("file"));
+    const {
+      fileName, fileType, fileSize, fileData,
+      folder, idAnggota,
+      accessKey, secretKey, bucket, accountId,
+    } = req.body || {};
 
-    if (!req.file) {
-      return res.status(400).json({ error: "Tidak ada file yang diupload." });
+    // ── Validasi ──
+    if (!fileName || !fileType || !fileData) {
+      return res.status(400).json({ error: "fileName, fileType, dan fileData wajib diisi." });
     }
 
-    // Sanitasi folder name
-    let folder = (req.body?.folder || "umum").replace(/[^a-zA-Z0-9_-]/g, "");
-    if (!folder) folder = "umum";
+    if (!ALLOWED_TYPES.includes(fileType)) {
+      return res.status(400).json({
+        error: `Tipe file tidak diizinkan: ${fileType}. Gunakan: JPG, PNG, WEBP, GIF, PDF.`,
+      });
+    }
 
-    // Generate file key unik
-    const cleanFileName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const fileKey       = `${folder}/${Date.now()}-${cleanFileName}`;
+    // Konversi base64 → buffer
+    let buffer;
+    try {
+      buffer = Buffer.from(fileData, "base64");
+    } catch {
+      return res.status(400).json({ error: "Data base64 tidak valid." });
+    }
 
-    // Upload ke Cloudflare R2
-    const s3 = getS3Client();
+    if (fileSize && fileSize > MAX_FILE_SIZE_B) {
+      return res.status(400).json({
+        error: `Ukuran file terlalu besar (${(fileSize / 1024 / 1024).toFixed(1)}MB). Maks ${MAX_FILE_SIZE_MB}MB.`,
+      });
+    }
 
-    await s3.send(
-      new PutObjectCommand({
-        Bucket:      bucketName,
-        Key:         fileKey,
-        Body:        req.file.buffer,
-        ContentType: req.file.mimetype,
-      })
-    );
+    // ── Coba upload ke R2 ──
+    let uploadedUrl = null;
+    try {
+      uploadedUrl = await uploadToR2Bucket(fileName, fileType, buffer, folder);
+    } catch (r2Err) {
+      console.warn("[upload-r2] R2 upload failed, returning base64 fallback:", r2Err.message);
+    }
 
-    const uploadedUrl = `${publicUrl.replace(/\/$/, "")}/${fileKey}`;
+    if (uploadedUrl) {
+      return res.status(200).json({
+        success: true,
+        url    : uploadedUrl,
+        key    : uploadedUrl.split("/").pop() || fileName,
+        size   : buffer.length,
+        type   : fileType,
+      });
+    }
 
+    // ── Fallback: balikin data URL (base64) ──
+    const dataUrl = `data:${fileType};base64,${fileData}`;
     return res.status(200).json({
-      success:  true,
-      url:      uploadedUrl,
-      key:      fileKey,
-      size:     req.file.size,
-      mimetype: req.file.mimetype,
+      success   : true,
+      url       : dataUrl,
+      fallback  : true,
+      warning   : "R2 storage tidak terkonfigurasi. File disimpan sebagai data URL (tidak direkomendasikan untuk file besar).",
+      size      : buffer.length,
+      type      : fileType,
     });
 
   } catch (error) {
-    console.error("[upload-r2] Upload error:", error);
-    return res.status(500).json({
-      error: "Upload file gagal. Silakan coba lagi."
-    });
+    console.error("[upload-r2]", error);
+    return res.status(500).json({ error: error.message || "Upload gagal." });
   }
 }

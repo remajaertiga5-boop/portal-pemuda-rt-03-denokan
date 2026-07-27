@@ -8,6 +8,8 @@ import {
   Settings, Check, Slash, AlertTriangle, Building2, Layers,
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { compressImage } from "../utils/imageUtils";
+import { uploadToR2 } from "../utils/apiClient";
 import { KasItem, UserRole } from "../types";
 import { getStoredPINs, verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";

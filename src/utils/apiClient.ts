@@ -226,7 +226,7 @@ export async function uploadToR2(
   secretKey?: string,
   bucket   ?: string,
   accountId?: string
-): Promise<ApiResult<{ url: string; key: string }>> {
+): Promise<ApiResult<{ url: string; key: string; size?: number; fallback?: boolean; warning?: string }>> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = async () => {

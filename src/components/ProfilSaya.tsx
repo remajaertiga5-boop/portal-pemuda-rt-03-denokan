@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AuthSession, AnggotaItem, PengunduranDiriItem } from '../types';
 import { User, Save, UploadCloud, ChevronLeft, CheckCircle2, AlertTriangle, RefreshCw, FileText, Send, Shield, QrCode } from 'lucide-react';
 import { AppData, addLogAkses } from '../utils/dataStore';
+import { compressImage, validateFile } from '../utils/imageUtils';
+import { uploadToR2 } from '../utils/apiClient';
 import { useLocale } from '../hooks/useLocale';
 import { getApprovalRoleForResignation } from '../utils/resignationHelper';
 import KartuAnggotaModal from './KartuAnggotaModal';
@@ -267,31 +269,40 @@ export default function ProfilSaya({ session, appData, setAppData, onClose, show
 
   const handleUploadPhoto = async () => {
     if (!photoFile) return;
-
     setUploading(true);
-    try {
-      // In a real implementation we would convert/resize locally or on backend
-      // and upload to Cloudflare R2
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', photoFile);
-      formDataUpload.append('folder', 'foto-profil');
-      formDataUpload.append('idAnggota', session.id_anggota || '');
 
-      const response = await fetch('/api/upload-r2', {
-        method: 'POST',
-        body: formDataUpload
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok && result.url) {
-        handleChange('Foto_Profil', result.url);
-        showToast("✅ Foto profil berhasil diunggah. Jangan lupa Simpan Perubahan.", "success");
+    try {
+      let fileToUpload = photoFile;
+
+      // Kompres gambar dulu
+      if (photoFile.type.startsWith("image/")) {
+        showToast("Mengompres foto...", "info");
+        const compressed = await compressImage(photoFile, {
+          maxWidth: 400, maxHeight: 400, quality: 0.7, maxSizeMB: 0.2
+        });
+        fileToUpload = new File([compressed.blob], photoFile.name, { type: "image/jpeg" });
+      }
+
+      // Upload ke R2 via JSON
+      const result = await uploadToR2(
+        fileToUpload,
+        "foto-profil",
+        session?.id_anggota || ""
+      );
+
+      if (result.ok && result.data?.url) {
+        handleChange("Foto_Profil", result.data.url);
+        const isCloud = !(result.data as any).fallback;
+        showToast(
+          isCloud ? "✅ Foto diupload ke cloud!" : "✅ Foto profil diperbarui.",
+          "success"
+        );
       } else {
         showToast(result.error || "Gagal upload foto", "error");
       }
-    } catch (e) {
-      showToast("Kesalahan saat mengunggah foto", "error");
+    } catch (e: any) {
+      console.error("[ProfilSaya] Upload error:", e);
+      showToast("Kesalahan saat mengunggah foto: " + (e.message || ""), "error");
     } finally {
       setUploading(false);
       cancelPhotoUpload();

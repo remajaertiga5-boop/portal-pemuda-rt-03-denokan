@@ -7,6 +7,8 @@ import {
   ExternalLink, Layers, CheckCheck, RotateCcw
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { compressImage } from "../utils/imageUtils";
+import { uploadToR2 } from "../utils/apiClient";
 import { GaleriItem, AlbumItem, UserRole, ContentVisibility } from "../types";
 import { verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";
@@ -499,21 +501,50 @@ export default function GaleriSuperAdmin({
         showToast(isVideo ? `Video ${file.name} melebihi batas 25MB!` : `File ${file.name} melebihi batas ${settingsForm.maxFileSizeMB} MB!`, "warning");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadFiles((prev) => [
-          ...prev,
-          {
-            id     : `UPL-${Date.now()}-${index}`,
-            url    : reader.result as string,
-            title  : file.name.replace(/\.[^/.]+$/, ""),
-            caption: "",
-            sizeKB : Math.round(file.size / 1024),
-            isVideo: isVideo,
-          },
-        ]);
+      // Kompres gambar sebelum disimpan (hemat localStorage)
+      const processFile = async () => {
+        try {
+          let dataUrl: string;
+          let fileSizeKB: number;
+          if (!isVideo && file.type.startsWith("image/")) {
+            const compressed = await compressImage(file, {
+              maxWidth: 1200, maxHeight: 1200, quality: 0.7, maxSizeMB: 1
+            });
+            dataUrl = compressed.dataUrl;
+            fileSizeKB = Math.round(compressed.blob.size / 1024);
+          } else {
+            dataUrl = await new Promise<string>((resolve) => {
+              const r = new FileReader();
+              r.onloadend = () => resolve(r.result as string);
+              r.readAsDataURL(file);
+            });
+            fileSizeKB = Math.round(file.size / 1024);
+          }
+          setUploadFiles((prev) => [
+            ...prev,
+            {
+              id     : `UPL-${Date.now()}-${index}`,
+              url    : dataUrl,
+              title  : file.name.replace(/\.[^/.]+$/, ""),
+              caption: "",
+              sizeKB : fileSizeKB,
+              isVideo: isVideo,
+            },
+          ]);
+        } catch {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setUploadFiles((prev) => [...prev, {
+              id: `UPL-${Date.now()}-${index}`,
+              url: reader.result as string,
+              title: file.name.replace(/\.[^/.]+$/, ""),
+              caption: "", sizeKB: Math.round(file.size / 1024), isVideo,
+            }]);
+          };
+          reader.readAsDataURL(file);
+        }
       };
-      reader.readAsDataURL(file);
+      processFile();
     });
   };
 

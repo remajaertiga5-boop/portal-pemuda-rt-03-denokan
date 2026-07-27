@@ -12,6 +12,8 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { AppData, addLogAkses, generateIdAnggotaUnik } from "../utils/dataStore";
+import { compressImage, validateFile } from "../utils/imageUtils";
+import { uploadToR2 } from "../utils/apiClient";
 import { AnggotaItem, UserRole } from "../types";
 
 // ----------------------------------------------------------
@@ -124,25 +126,52 @@ export default function Anggota({
   // ----------------------------------------------------------
   // 8. Ganti Foto Profil
   // ----------------------------------------------------------
-  const handleGantiFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGantiFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editProfileData) return;
 
-    // ✅ Validasi ukuran file maks 2MB
-    if (file.size > 2 * 1024 * 1024) {
-      showToast("Ukuran foto maksimal 2MB!", "error");
+    const validation = validateFile(file, 2);
+    if (!validation.valid) {
+      showToast(validation.error || "File tidak valid!", "error");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
+    try {
+      showToast("Mengompres foto...", "info");
+      const compressed = await compressImage(file, {
+        maxWidth: 400, maxHeight: 400, quality: 0.7, maxSizeMB: 0.2
+      });
+
+      // Upload ke R2
+      const uploadResult = await uploadToR2(
+        new File([compressed.blob], file.name, { type: "image/jpeg" }),
+        "profil",
+        editProfileData.ID_Anggota || "anggota"
+      );
+
+      const finalUrl = (uploadResult.ok && uploadResult.data?.url)
+        ? uploadResult.data.url
+        : compressed.dataUrl;
+
       setEditProfileData({
         ...editProfileData,
-        Foto_Profil: reader.result as string,
+        Foto_Profil: finalUrl,
       });
-      showToast("Foto profil diperbarui (Pratinjau)!", "info");
-    };
-    reader.readAsDataURL(file);
+      showToast(
+        uploadResult.ok && !uploadResult.data?.fallback
+          ? "Foto diupload ke cloud! ☁️"
+          : "Foto profil diperbarui (pratinjau)",
+        "info"
+      );
+    } catch {
+      // Fallback: baca tanpa kompres
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditProfileData({ ...editProfileData, Foto_Profil: reader.result as string });
+        showToast("Foto profil diperbarui (pratinjau)!", "info");
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // ----------------------------------------------------------

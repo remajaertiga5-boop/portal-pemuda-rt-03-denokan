@@ -9,6 +9,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { compressImage } from "../utils/imageUtils";
+import { uploadToR2 } from "../utils/apiClient";
 import { GaleriItem, UserRole } from "../types";
 import { sendMediaToTelegram } from "../utils/apiConfigHelper";
 import PandawaLogo from "./PandawaLogo";
@@ -134,7 +136,7 @@ export default function Galeri({
   // ----------------------------------------------------------
   // 50. Upload Foto
   // ----------------------------------------------------------
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -147,15 +149,37 @@ export default function Galeri({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFotoUrl(reader.result as string);
-      showToast(isVideo ? "Video berhasil dimuat ke pratinjau! 📹" : "Foto berhasil dimuat ke pratinjau! 📷", "info");
-    };
-    reader.readAsDataURL(file);
+    try {
+      if (!isVideo && file.type.startsWith("image/")) {
+        // Kompres gambar sebelum preview
+        showToast("Mengompres gambar...", "info");
+        const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
+        setFotoUrl(compressed.dataUrl);
+        // Simpan blob untuk upload nanti
+        (window as any).__uploadBlob = compressed.blob;
+        const ratio = compressed.blob.size / file.size;
+        showToast(
+          `Gambar dikompres ${ratio < 0.5 ? (ratio * 100).toFixed(0) + "%" : "ke " + (compressed.blob.size / 1024).toFixed(0) + "KB"} 📷`,
+          "info"
+        );
+      } else {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFotoUrl(reader.result as string);
+          showToast(isVideo ? "Video dimuat ke pratinjau 📹" : "File dimuat 📄", "info");
+        };
+        reader.readAsDataURL(file);
+        (window as any).__uploadBlob = file;
+      }
+    } catch {
+      // Fallback: baca tanpa kompres
+      const reader = new FileReader();
+      reader.onloadend = () => setFotoUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleSubmitGaleri = (e: React.FormEvent) => {
+  const handleSubmitGaleri = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!judulKegiatan.trim() || !fotoUrl) {
@@ -168,13 +192,38 @@ export default function Galeri({
     const initialApproval: ApprovalStatus =
       isPengurus || !needsApproval ? "DISETUJUI" : "MENUNGGU";
 
-    // ✅ ID pakai full timestamp — tidak collision
+    // Upload ke R2 (atau fallback data URL kalau R2 tidak tersedia)
+    let finalUrl = fotoUrl;
+    try {
+      const blob = (window as any).__uploadBlob as File | undefined;
+      const fileToUpload = blob || new File(
+        [fotoUrl.split(",")[1] ? atob(fotoUrl.split(",")[1]) : ""],
+        `${judulKegiatan.trim().slice(0, 30)}.jpg`,
+        { type: isVideo ? "video/mp4" : "image/jpeg" }
+      );
+      
+      const result = await uploadToR2(
+        fileToUpload,
+        "galeri",
+        currentUserName || "Anggota"
+      );
+      
+      if (result.ok && result.data?.url) {
+        finalUrl = result.data.url;
+        if (!result.data.fallback) {
+          showToast("Media berhasil diupload ke cloud! ☁️", "info");
+        }
+      }
+    } catch (uploadErr) {
+      console.warn("[Galeri] Upload R2 gagal, pakai data URL:", uploadErr);
+    }
+
     const newItem: GaleriItem = {
       ID              : `GLR-${Date.now()}`,
       Tanggal         : new Date().toISOString().split("T")[0],
       Judul_Kegiatan  : judulKegiatan.trim(),
       Kategori        : kategori,
-      Foto_URL        : fotoUrl,
+      Foto_URL        : finalUrl,
       Deskripsi       : deskripsi.trim(),
       Uploader        : currentUserName || "Anggota",
       Nama_Upload     : currentUserName || "Anggota",
@@ -197,7 +246,7 @@ export default function Galeri({
 
     sendMediaToTelegram(
       appData,
-      fotoUrl,
+      finalUrl,
       `📱 Remaja Legok 03 - Galeri ${isVideo ? "Video" : "Foto"}\n📌 Kegiatan: ${judulKegiatan.trim()}\n👤 Uploader: ${currentUserName || "Anggota"}`,
       isVideo
     );
