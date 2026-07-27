@@ -666,13 +666,33 @@ export function loadAppData(): AppData {
   }
 }
 
+// Table name mapping (frontend → Google Sheet)
+const _TABLE_MAP: Record<string, string> = {
+  anggota: "anggota", agenda: "agenda", pengumuman: "pengumuman",
+  kas: "kas", aspirasi: "aspirasi", galeri: "galeri"
+};
 let _saveSheetsTimer: any = null;
 function autoSaveToSheets(appData: AppData) {
   clearTimeout(_saveSheetsTimer);
-  _saveSheetsTimer = setTimeout(() => {
-    import("./dataStoreSheets").then(m => {
-      m.saveToSheets(appData).catch(() => {});
-    });
+  _saveSheetsTimer = setTimeout(async () => {
+    try {
+      // Sync each table directly via fetch (no dynamic imports)
+      const tables: Array<{key: string, data: any[]}> = [
+        {key: "anggota", data: appData.Anggota || []},
+        {key: "agenda", data: appData.Agenda || []},
+        {key: "pengumuman", data: appData.Pengumuman || []},
+        {key: "kas", data: appData.Kas || []},
+        {key: "aspirasi", data: appData.Aspirasi || []},
+        {key: "galeri", data: appData.Galeri || []},
+      ];
+      for (const t of tables) {
+        await fetch("/api/sheets-db", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({table: t.key, action: "sync", data: t.data}),
+        }).catch(() => {});
+      }
+    } catch {}
   }, 2000);
 }
 
