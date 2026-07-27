@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Megaphone, Plus, Pin, Edit3, Trash2, X, AlertCircle, Eye, Lock } from "lucide-react";
 import { AppData, addLogAkses, filterKontenByAkses } from "../utils/dataStore";
 import { useLocale } from "../hooks/useLocale";
@@ -25,6 +25,14 @@ export default function Pengumuman({ appData, setAppData, userRole, currentUserN
   const [penulis, setPenulis] = useState("Pengurus Harian");
   const [isPenting, setIsPenting] = useState(false);
   const [visibilitas, setVisibilitas] = useState<ContentVisibility>("PUBLIK");
+
+
+  // ── Refresh data Pengumuman dari Google Sheets tiap buka menu ──
+  useEffect(() => {
+    refreshSingleSheet("pengumuman").then(result => {
+      if (result?.Pengumuman) setAppData((prev: AppData) => ({ ...prev, Pengumuman: result.Pengumuman! }));
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const rawList = appData.Pengumuman || [];
   const list = filterKontenByAkses(rawList, userRole);

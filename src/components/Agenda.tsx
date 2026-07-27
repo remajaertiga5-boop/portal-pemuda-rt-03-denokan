@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Plus,
@@ -78,6 +78,14 @@ export default function Agenda({
   // ----------------------------------------------------------
   // DATA
   // ----------------------------------------------------------
+
+  // ── Refresh data Agenda dari Google Sheets tiap buka menu ──
+  useEffect(() => {
+    refreshSingleSheet("agenda").then(result => {
+      if (result?.Agenda) setAppData((prev: AppData) => ({ ...prev, Agenda: result.Agenda! }));
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const rawList         = appData.Agenda   || [];
   const absensiList     = (appData.Absensi || []) as AbsensiRecord[];
   const accessibleAgenda = filterKontenByAkses(rawList, userRole);

@@ -114,6 +114,35 @@ export async function loadFromSheets(): Promise<AppData | null> {
   }
 }
 
+
+// ── Refresh single sheet from Google Sheets (dipanggil tiap buka menu) ──
+export async function refreshSingleSheet(table: string): Promise<Partial<AppData> | null> {
+  if (!isOnline()) return null;
+
+  try {
+    const result = await (sheets as any).readSheet(table);
+    const rawData = safeArray(result.data);
+
+    // Map table name to AppData key (lowercase → camelCase)
+    const keyMap: Record<string, keyof AppData> = {
+      anggota: "Anggota", agenda: "Agenda", pengumuman: "Pengumuman",
+      kas: "Kas", aspirasi: "Aspirasi", galeri: "Galeri"
+    };
+
+    const appKey = keyMap[table];
+    if (!appKey) return null;
+
+    // Merge: Sheets data overwrites localStorage
+    const existing = loadAppData();
+    const updated = { ...existing, [appKey]: rawData };
+    saveAppData(updated);
+    return { [appKey]: rawData };
+  } catch (err: any) {
+    console.error("[SheetsDB] Refresh single sheet error:", table, err);
+    return null;
+  }
+}
+
 // ── Save all data to Google Sheets ────────────────────────
 export async function saveToSheets(appData: AppData): Promise<SyncResult> {
   if (!isOnline()) {

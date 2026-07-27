@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MessageSquare,
   Plus,
@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { refreshSingleSheet } from "../utils/dataStoreSheets";
 import { useLocale } from "../hooks/useLocale";
 import { AspirasiItem, UserRole } from "../types";
 
@@ -62,6 +63,14 @@ export default function Aspirasi({
   // ----------------------------------------------------------
   // DATA
   // ----------------------------------------------------------
+
+  // ── Refresh data Aspirasi dari Google Sheets tiap buka menu ──
+  useEffect(() => {
+    refreshSingleSheet("aspirasi").then(result => {
+      if (result?.Aspirasi) setAppData((prev: AppData) => ({ ...prev, Aspirasi: result.Aspirasi! }));
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const list = appData.Aspirasi || [];
 
   const isPengurus =

@@ -134,6 +134,13 @@ export default function Kas({
   // ----------------------------------------------------------
   // DATA
   // ----------------------------------------------------------
+
+  // ── Refresh data Kas dari Google Sheets tiap buka menu ──
+  useEffect(() => {
+    refreshSingleSheet("kas").then(result => {
+      if (result?.Kas) setAppData((prev: AppData) => ({ ...prev, Kas: result.Kas! }));
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const kasList      = appData.Kas || [];
   const activeKasList = kasList.filter((k) => k.Status !== "DIHAPUS");
 

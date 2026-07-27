@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Image as ImageIcon,
   Plus,
@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { refreshSingleSheet } from "../utils/dataStoreSheets";
 import { useLocale } from "../hooks/useLocale";
 import { GaleriItem, UserRole } from "../types";
 import { sendMediaToTelegram, uploadMediaToTelegram } from "../utils/apiConfigHelper";
@@ -60,6 +61,14 @@ export default function Galeri({
   // ----------------------------------------------------------
   // DATA
   // ----------------------------------------------------------
+
+  // ── Refresh data Galeri dari Google Sheets tiap buka menu ──
+  useEffect(() => {
+    refreshSingleSheet("galeri").then(result => {
+      if (result?.Galeri) setAppData((prev: AppData) => ({ ...prev, Galeri: result.Galeri! }));
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const list = appData.Galeri || [];
 
   const isPengurus =

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   Plus,
@@ -59,6 +59,14 @@ export default function Anggota({
   // ----------------------------------------------------------
   // DATA
   // ----------------------------------------------------------
+
+  // ── Refresh data Anggota dari Google Sheets tiap buka menu ──
+  useEffect(() => {
+    refreshSingleSheet("anggota").then(result => {
+      if (result?.Anggota) setAppData((prev: AppData) => ({ ...prev, Anggota: result.Anggota! }));
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const anggotaList = appData.Anggota || [];
 
   const isPengurus =
