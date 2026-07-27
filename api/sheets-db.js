@@ -7,11 +7,9 @@ import { createSign } from "crypto";
 
 const SID = "1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8";
 const SHEETS = ["Anggota","Agenda","Pengumuman","Kas","Aspirasi","Galeri"];
-const KEY = process.env.SHEETS_API_KEY || "remaja-legok-03-2026";
 
 let _token = null, _tokenExpiry = 0, _sheetIds = null;
 
-function auth(req) { return (req.headers["x-api-key"]||"") === KEY; }
 
 async function getToken() {
   if (_token && Date.now() < _tokenExpiry) return _token;
@@ -49,7 +47,6 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers","Content-Type, Authorization, X-Api-Key");
   if (req.method==="OPTIONS") return res.status(200).end();
-  if (!auth(req)) return res.status(401).json({error:"Unauthorized"});
 
   try {
     if (req.method==="GET") {
