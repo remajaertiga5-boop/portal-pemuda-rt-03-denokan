@@ -10,7 +10,6 @@ import {
 import { AppData, addLogAkses } from "../utils/dataStore";
 import { useLocale } from "../hooks/useLocale";
 import { compressImage } from "../utils/imageUtils";
-import { uploadToR2 } from "../utils/apiClient";
 import { KasItem, UserRole } from "../types";
 import { getStoredPINs, verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";

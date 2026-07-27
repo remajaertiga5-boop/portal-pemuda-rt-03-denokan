@@ -14,7 +14,6 @@ import {
 import { AppData, addLogAkses, generateIdAnggotaUnik } from "../utils/dataStore";
 import { useLocale } from "../hooks/useLocale";
 import { compressImage, validateFile } from "../utils/imageUtils";
-import { uploadToR2 } from "../utils/apiClient";
 import { AnggotaItem, UserRole } from "../types";
 
 // ----------------------------------------------------------
@@ -144,26 +143,14 @@ export default function Anggota({
         maxWidth: 400, maxHeight: 400, quality: 0.7, maxSizeMB: 0.2
       });
 
-      // Upload ke R2
-      const uploadResult = await uploadToR2(
-        new File([compressed.blob], file.name, { type: "image/jpeg" }),
-        "profil",
-        editProfileData.ID_Anggota || "anggota"
-      );
-
-      const finalUrl = (uploadResult.ok && uploadResult.data?.url)
-        ? uploadResult.data.url
-        : compressed.dataUrl;
+      // Gunakan compressed data URL langsung
+      const finalUrl = compressed.dataUrl;
 
       setEditProfileData({
         ...editProfileData,
         Foto_Profil: finalUrl,
       });
-      showToast(
-        uploadResult.ok && !uploadResult.data?.fallback
-          ? "Foto diupload ke cloud! ☁️"
-          : "Foto profil diperbarui (pratinjau)",
-        "info"
+      showToast("Foto profil diperbarui ✅", "success"
       );
     } catch {
       // Fallback: baca tanpa kompres

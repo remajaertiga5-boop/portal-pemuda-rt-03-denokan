@@ -1239,7 +1239,7 @@ export default function Pengaturan({ session, appData, setAppData, onOpenAuthMod
                 <button type="button" onClick={() => { if (showToast) showToast("Koneksi Google Sheets berhasil!", "success"); }} className="text-xs text-blue-600 font-bold mt-2 hover:underline">Test Koneksi</button>
               </div>
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2"><UploadCloud size={18}/> Cloudflare R2</h3>
+                
                 <input type="text" placeholder="Bucket Name" className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-mono bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300" defaultValue="remaja-legok-03" readOnly />
               </div>
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -1427,7 +1427,7 @@ export default function Pengaturan({ session, appData, setAppData, onOpenAuthMod
                       <input
                         type="text"
                         required
-                        placeholder="Contoh: Gemini AI, Cloudflare R2, Midjourney"
+                        placeholder="Contoh: Gemini AI, Midjourney"
                         value={apiFormNama}
                         onChange={e => setApiFormNama(e.target.value)}
                         className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-amber-400 outline-none"
@@ -1929,8 +1929,8 @@ export default function Pengaturan({ session, appData, setAppData, onOpenAuthMod
               <Server size={14} className="text-purple-400" /> Kontrol Sistem (Super Admin)
             </h3>
             <div className="bg-slate-800/80 rounded-2xl overflow-hidden p-1">
-              {matchSearch("integrasi layanan api google sheets drive cloudflare", searchQuery) && (
-                <SectionItem id="sa_sistem" icon={LinkIcon} title="Integrasi Layanan & API" desc="Google Sheets, Drive, Cloudflare R2" onSelect={setActiveSection} t={t} />
+              {matchSearch("integrasi layanan api google sheets drive telegram", searchQuery) && (
+                <SectionItem id="sa_sistem" icon={LinkIcon} title="Integrasi Layanan & API" desc="Google Sheets, Drive, Telegram Bot" onSelect={setActiveSection} t={t} />
               )}
               {matchSearch("keamanan pin rotasi sesi batas", searchQuery) && (
                 <SectionItem id="sa_keamanan" icon={KeyRound} title="Keamanan & PIN" desc="Rotasi PIN akses, batas sesi" onSelect={setActiveSection} t={t} />

@@ -3,7 +3,6 @@ import { AuthSession, AnggotaItem, PengunduranDiriItem } from '../types';
 import { User, Save, UploadCloud, ChevronLeft, CheckCircle2, AlertTriangle, RefreshCw, FileText, Send, Shield, QrCode } from 'lucide-react';
 import { AppData, addLogAkses } from '../utils/dataStore';
 import { compressImage, validateFile } from '../utils/imageUtils';
-import { uploadToR2 } from '../utils/apiClient';
 import { useLocale } from '../hooks/useLocale';
 import { getApprovalRoleForResignation } from '../utils/resignationHelper';
 import KartuAnggotaModal from './KartuAnggotaModal';
@@ -283,22 +282,20 @@ export default function ProfilSaya({ session, appData, setAppData, onClose, show
         fileToUpload = new File([compressed.blob], photoFile.name, { type: "image/jpeg" });
       }
 
-      // Upload ke R2 via JSON
-      const result = await uploadToR2(
-        fileToUpload,
-        "foto-profil",
-        session?.id_anggota || ""
-      );
+      // Gunakan data URL langsung (base64)
+      const reader = new FileReader();
+      await new Promise<void>((resolve, reject) => {
+        reader.onload = () => resolve();
+        reader.onerror = () => reject(new Error("Gagal membaca file"));
+        reader.readAsDataURL(fileToUpload);
+      });
+      const dataUrl = reader.result as string;
 
-      if (result.ok && result.data?.url) {
-        handleChange("Foto_Profil", result.data.url);
-        const isCloud = !(result.data as any).fallback;
-        showToast(
-          isCloud ? "✅ Foto diupload ke cloud!" : "✅ Foto profil diperbarui.",
-          "success"
-        );
+      if (dataUrl) {
+        handleChange("Foto_Profil", dataUrl);
+        showToast("✅ Foto profil diperbarui.", "success");
       } else {
-        showToast(result.error || "Gagal upload foto", "error");
+        showToast("Gagal upload foto", "error");
       }
     } catch (e: any) {
       console.error("[ProfilSaya] Upload error:", e);

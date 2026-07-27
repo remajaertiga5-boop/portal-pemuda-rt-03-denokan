@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
 import { compressImage } from "../utils/imageUtils";
-import { uploadToR2 } from "../utils/apiClient";
 import { GaleriItem, AlbumItem, UserRole, ContentVisibility } from "../types";
 import { verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";

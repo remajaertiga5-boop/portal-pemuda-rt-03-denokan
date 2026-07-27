@@ -246,44 +246,7 @@ export async function sendToTelegram(
 }
 
 /** Upload file ke Cloudflare R2 */
-export async function uploadToR2(
-  file     : File,
-  folder   : string,
-  idAnggota: string,
-  accessKey?: string,
-  secretKey?: string,
-  bucket   ?: string,
-  accountId?: string
-): Promise<ApiResult<{ url: string; key: string; size?: number; fallback?: boolean; warning?: string }>> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = (reader.result as string)?.split(",")[1] || "";
-      const result = await apiRequest("/upload-r2", {
-        method : "POST",
-        body   : {
-          fileName  : file.name,
-          fileType  : file.type,
-          fileSize  : file.size,
-          fileData  : base64,
-          folder,
-          idAnggota,
-          accessKey,
-          secretKey,
-          bucket,
-          accountId,
-        },
-        timeout: 30000,
-        retry  : 1,
-      });
-      resolve(result);
-    };
-    reader.onerror = () => {
-      resolve({ ok: false, error: "Gagal membaca file.", status: 0 });
-    };
-    reader.readAsDataURL(file);
-  });
-}
+
 
 /** Proxy ke Google Sheets (read/write) */
 export async function sheetsProxy(
@@ -413,7 +376,6 @@ const apiClient = {
   chatAI,
   sendToTelegram,
   uploadToTelegram,
-  uploadToR2,
   sheetsProxy,
   verifyAuth,
   checkApiHealth,

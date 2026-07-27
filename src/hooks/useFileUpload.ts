@@ -5,7 +5,6 @@
 
 import { useState, useCallback } from "react";
 import { compressImage, validateFile, sanitizeFileName } from "../utils/imageUtils";
-import { uploadToR2 } from "../utils/apiClient";
 
 // ── Types ─────────────────────────────────────────────────
 interface UploadResult {
@@ -91,24 +90,21 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
         processedFile = file;
       }
 
-      // 3. Upload ke R2
-      setProgress("Mengupload ke server...");
-      const result = await uploadToR2(
-        processedFile,
-        folder,
-        idAnggota || "anonymous",
-      );
-
-      if (!result.ok) {
-        throw new Error(result.error || "Upload gagal.");
-      }
+      // 3. Convert ke base64 data URL
+      setProgress("Memproses file...");
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Gagal membaca file"));
+        reader.readAsDataURL(processedFile);
+      });
 
       const uploadResult: UploadResult = {
-        url      : result.data?.url || "",
+        url      : dataUrl,
         fileName : processedFile.name,
         fileType : processedFile.type,
-        size     : (result.data as any)?.size || processedFile.size,
-        isDataUrl: (result.data as any)?.fallback || false,
+        size     : processedFile.size,
+        isDataUrl: true,
       };
 
       setLastResult(uploadResult);

@@ -192,11 +192,11 @@ export default function App() {
   const [isGuestExploring, setIsGuestExploring] = useState(false);
 
   // API Configuration state — cek API mana yang sudah dikonfigurasi
+
   const apiStatus = useMemo(() => ({
     geminiAI: isApiConfigured(appData, "Gemini AI"),
     googleSheets: isApiConfigured(appData, "Google Sheets"),
     telegramBot: isApiConfigured(appData, "Telegram Bot"),
-    cloudflareR2: isApiConfigured(appData, "Cloudflare R2 Storage"),
     googleDrive: isApiConfigured(appData, "Google Drive"),
   }), [appData]);
 
@@ -372,8 +372,8 @@ export default function App() {
     { id: "agenda",     label: t("common.nav.agenda",       { defaultValue: "Agenda"      }), icon: <Calendar size={18} />,        roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
     { id: "keuangan",   label: t("common.nav.finance",      { defaultValue: "Keuangan"    }), icon: <Wallet size={18} />,          roles: ["ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
     { id: "absensi",    label: t("common.nav.attendance",   { defaultValue: "Absensi"     }), icon: <UserCheck size={18} />,       roles: ["ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
-    // Galeri hanya tampil jika Telegram ATAU Cloudflare R2 sudah dikonfigurasi
-    ...(apiStatus.telegramBot || apiStatus.cloudflareR2 ? [
+    // Galeri hanya tampil jika Telegram Bot sudah dikonfigurasi
+    ...(apiStatus.telegramBot ? [
       { id: "galeri",     label: t("common.nav.gallery",      { defaultValue: "Galeri"      }), icon: <ImageIcon size={18} />,       roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] }
     ] : []),
     { id: "anggota",    label: t("common.nav.member",       { defaultValue: "Anggota"     }), icon: <Users size={18} />,           roles: ["TAMU","ANGGOTA","PENGURUS","ADMIN","SUPER_ADMIN"] },
@@ -1053,7 +1053,7 @@ export default function App() {
             )}
 
             {activeTab === "galeri" && (
-              (apiStatus.telegramBot || apiStatus.cloudflareR2) ? (
+              apiStatus.telegramBot ? (
                 <Galeri
                   appData={appData} setAppData={setAppData}
                   userRole={session.role}
@@ -1067,7 +1067,7 @@ export default function App() {
                   </div>
                   <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">Galeri Belum Dikonfigurasi</h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Fitur Galeri memerlukan <strong>Telegram Bot</strong> atau <strong>Cloudflare R2</strong> untuk penyimpanan foto/video.
+                    Fitur Galeri memerlukan <strong>Telegram Bot</strong> untuk penyimpanan foto/video.
                     Super Admin dapat mengaturnya di Panel <strong>🔌 API & Integrasi</strong>.
                   </p>
                   <div className="pt-2 flex justify-center gap-3">

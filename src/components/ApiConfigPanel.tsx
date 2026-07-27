@@ -60,22 +60,6 @@ const API_DEFINITIONS: ApiDefinition[] = [
     docsUrl: "https://core.telegram.org/bots"
   },
   {
-    id: "cloudflare-r2",
-    nama: "Cloudflare R2 Storage",
-    kategori: "Penyimpanan",
-    icon: "☁️",
-    deskripsi: "Penyimpanan cloud untuk upload foto profil, dokumen, dan file lainnya. Alternatif penyimpanan selain Telegram.",
-    fiturTerkait: ["Upload Foto", "Foto Profil", "Dokumen"],
-    fields: [
-      { key: "ACCOUNT_ID", label: "Account ID", placeholder: "a1b2c3d4e5f6...", type: "text", hint: "Cloudflare Account ID dari dashboard" },
-      { key: "ACCESS_KEY", label: "Access Key ID", placeholder: "abc123...", type: "text", hint: "R2 API Token Access Key" },
-      { key: "SECRET_KEY", label: "Secret Access Key", placeholder: "••••••••", type: "password", hint: "R2 API Token Secret — jangan dishare!" },
-      { key: "BUCKET_NAME", label: "Bucket Name", placeholder: "remaja-legok-03", type: "text", hint: "Nama bucket R2" },
-      { key: "PUBLIC_URL", label: "Public URL", placeholder: "https://pub-xxx.r2.dev", type: "text", hint: "URL publik bucket (dengan custom domain jika ada)" }
-    ],
-    docsUrl: "https://developers.cloudflare.com/r2/"
-  },
-  {
     id: "google-drive",
     nama: "Google Drive",
     kategori: "Penyimpanan",
@@ -181,17 +165,7 @@ export default function ApiConfigPanel({ appData, setAppData, showToast }: ApiCo
       ValueField3: def.fields[2] ? (formValues[def.fields[2].key] || "") : "",
     };
 
-    // For R2, we need to handle fields 4 and 5 specially
-    // We'll store them in a custom way — append to ValueField3 with separator
-    if (def.id === "cloudflare-r2" && def.fields.length > 3) {
-      const extras: string[] = [];
-      def.fields.slice(3).forEach(f => {
-        if (formValues[f.key]) extras.push(`${f.key}=${formValues[f.key]}`);
-      });
-      if (extras.length > 0) {
-        newConfig.ValueField3 = (newConfig.ValueField3 || "") + "|||" + extras.join("|||");
-      }
-    }
+    // (R2 extras handling removed)
 
     // Save to appData
     const updatedKonfigurasi = (appData.KonfigurasiAPI || []).filter(
@@ -246,20 +220,6 @@ export default function ApiConfigPanel({ appData, setAppData, showToast }: ApiCo
     showToast(`🗑️ Konfigurasi ${def.nama} dihapus`, "info");
   };
 
-  // Get R2 extra fields
-  const getR2Extras = (appData: AppData): Record<string, string> => {
-    const config = getApiConfig(appData, "Cloudflare R2 Storage");
-    const extras: Record<string, string> = {};
-    if (config?.ValueField3) {
-      const parts = config.ValueField3.split("|||");
-      parts.forEach(p => {
-        const [k, v] = p.split("=");
-        if (k && v) extras[k] = v;
-      });
-    }
-    return extras;
-  };
-
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
       {/* Header */}
@@ -289,7 +249,6 @@ export default function ApiConfigPanel({ appData, setAppData, showToast }: ApiCo
           const configured = isApiConfigured(appData, def.nama);
           const isEditing = editingApi === def.nama;
           const isSaving = savingApi === def.nama;
-          const r2Extras = def.id === "cloudflare-r2" ? getR2Extras(appData) : {};
 
           return (
             <div 
@@ -334,10 +293,7 @@ export default function ApiConfigPanel({ appData, setAppData, showToast }: ApiCo
                   /* EDIT MODE */
                   <div className="space-y-3">
                     {def.fields.map((field, idx) => {
-                      const isR2Extra = def.id === "cloudflare-r2" && idx >= 3;
-                      const fieldValue = isR2Extra 
-                        ? (formValues[field.key] || r2Extras[field.key] || "")
-                        : (formValues[field.key] || "");
+                      const fieldValue = formValues[field.key] || "";
                       
                       return (
                         <div key={field.key}>

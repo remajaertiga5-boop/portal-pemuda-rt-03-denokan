@@ -11,7 +11,6 @@ import {
 import { AppData, addLogAkses } from "../utils/dataStore";
 import { useLocale } from "../hooks/useLocale";
 import { compressImage } from "../utils/imageUtils";
-import { uploadToR2 } from "../utils/apiClient";
 import { GaleriItem, UserRole } from "../types";
 import { sendMediaToTelegram, uploadMediaToTelegram } from "../utils/apiConfigHelper";
 import PandawaLogo from "./PandawaLogo";
@@ -213,25 +212,7 @@ export default function Galeri({
       }
     } catch {}
 
-    // 2. FALLBACK: Cloudflare R2 (jika Telegram gagal/tidak dikonfigurasi)
-    if (storageMethod === "local") {
-      try {
-        const blob = (window as any).__uploadBlob as File | undefined;
-        const fileToUpload = blob || new File(
-          [fotoUrl.split(",")[1] ? atob(fotoUrl.split(",")[1]) : ""],
-          `${judulKegiatan.trim().slice(0, 30)}.jpg`,
-          { type: isVideo ? "video/mp4" : "image/jpeg" }
-        );
-        const r2Result = await uploadToR2(fileToUpload, "galeri", currentUserName || "Anggota");
-        if (r2Result.ok && r2Result.data?.url && !(r2Result.data as any).fallback) {
-          finalUrl = r2Result.data.url;
-          storageMethod = "r2";
-          showToast("☁️ Disimpan di Cloudflare R2!", "info");
-        }
-      } catch {}
-    }
-
-    // 3. LAST RESORT: base64 data URL (tetap di localStorage)
+    // 2. LAST RESORT: base64 data URL (tetap di localStorage)
     if (storageMethod === "local") {
       showToast("⚠️ Disimpan lokal (Telegram & R2 tidak tersedia)", "warning");
     }
