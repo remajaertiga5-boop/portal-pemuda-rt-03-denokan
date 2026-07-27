@@ -513,7 +513,7 @@ const defaultInitialData: AppData = {
     Nama_Komunitas      : "Remaja Legok 03",
     Alamat_Komunitas    : "RT 03 Legok RW 04 Denokan, Kel. Gondoryo, Kec. Jambu, Kab. Semarang, Jawa Tengah",
     Deskripsi_Komunitas : "Wadah silaturahmi, gotong royong, dan kreasi pemuda pemudi RT 03 Legok RW 04 Denokan.",
-    Logo_URL            : "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=120&auto=format&fit=crop&q=80",
+    Logo_URL            : "/logo-pandawa.png",
     Banner_URL          : "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&auto=format&fit=crop&q=80",
     Fitur_AI_Aktif      : true,
     Fitur_Kas_Aktif     : true,

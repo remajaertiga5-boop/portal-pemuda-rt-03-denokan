@@ -1,23 +1,30 @@
 {
   "id": "/",
-  "name": "Remaja Legok 03",
-  "short_name": "Legok 03",
+  "name": "Pandawa Ertiga",
+  "short_name": "Pandawa Ertiga",
   "description": "Aplikasi Komunitas Remaja RT 03 RW 04 Denokan, Gondoryo, Jambu, Semarang",
   "lang": "id",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui", "browser"],
+  "display_override": [
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
   "background_color": "#ffffff",
   "theme_color": "#16a34a",
   "orientation": "portrait",
-  "categories": ["social", "community", "utilities"],
-
+  "categories": [
+    "social",
+    "community",
+    "utilities"
+  ],
   "icons": [
     {
-      "src": "/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/logo-pandawa.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     },
     {
@@ -39,7 +46,6 @@
       "purpose": "maskable"
     }
   ],
-
   "shortcuts": [
     {
       "name": "Pengumuman",
@@ -78,7 +84,6 @@
       ]
     }
   ],
-
   "screenshots": [
     {
       "src": "/screenshots/home-mobile.png",
