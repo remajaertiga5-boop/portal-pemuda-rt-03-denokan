@@ -666,9 +666,21 @@ export function loadAppData(): AppData {
   }
 }
 
+let _saveSheetsTimer: any = null;
+function autoSaveToSheets(appData: AppData) {
+  clearTimeout(_saveSheetsTimer);
+  _saveSheetsTimer = setTimeout(() => {
+    import("./dataStoreSheets").then(m => {
+      m.saveToSheets(appData).catch(() => {});
+    });
+  }, 2000);
+}
+
 export function saveAppData(data: AppData): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // Auto-save ke Google Sheets (debounced 2 detik)
+    autoSaveToSheets(data);
   } catch (e) {
     // ✅ FIXED: Pesan error lebih informatif
     console.error("[dataStore] Gagal menyimpan data:", e);

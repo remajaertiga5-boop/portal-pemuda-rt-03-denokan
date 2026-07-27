@@ -71,9 +71,9 @@ export async function createRow(
   const sheetName = SHEET_NAMES[table] || table;
   return apiRequest("/sheets-db", {
     method: "POST",
-    body  : JSON.stringify({
+    body  : {
       table, action: "create", idColumn, data,
-    }),
+    },
   }) as unknown as DbResponse;
 }
 
@@ -87,9 +87,9 @@ export async function updateRow(
   const sheetName = SHEET_NAMES[table] || table;
   return apiRequest("/sheets-db", {
     method: "POST",
-    body  : JSON.stringify({
+    body  : {
       table, action: "update", idColumn, id, data,
-    }),
+    },
   }) as unknown as DbResponse;
 }
 
@@ -102,9 +102,9 @@ export async function deleteRow(
   const sheetName = SHEET_NAMES[table] || table;
   return apiRequest("/sheets-db", {
     method: "POST",
-    body  : JSON.stringify({
+    body  : {
       table, action: "delete", idColumn, id,
-    }),
+    },
   }) as unknown as DbResponse;
 }
 
@@ -118,9 +118,9 @@ export async function upsertRow(
   const sheetName = SHEET_NAMES[table] || table;
   return apiRequest("/sheets-db", {
     method: "POST",
-    body  : JSON.stringify({
+    body  : {
       table, action: "upsert", idColumn, id, data,
-    }),
+    },
   }) as unknown as DbResponse;
 }
 
@@ -132,9 +132,9 @@ export async function syncSheet(
   const sheetName = SHEET_NAMES[table] || table;
   return apiRequest("/sheets-db", {
     method: "POST",
-    body  : JSON.stringify({
+    body  : {
       table, action: "sync", data,
-    }),
+    },
   }) as unknown as DbResponse;
 }
 
