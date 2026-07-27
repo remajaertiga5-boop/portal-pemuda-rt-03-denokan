@@ -117,6 +117,59 @@ export default async function handler(req, res) {
         if (data.length) await api("POST","/values/"+encodeURIComponent(tbl)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:data.map(d=>h.map(k=>d[k]??""))});
         return res.json({success:true,rows:data.length});
       }
+
+    // ── Format sheet: bold header, colored background, freeze row, auto-resize ──
+    if (req.method === "POST" && action === "format") {
+      const ids = await getIds();
+      const sid = ids[tbl];
+      if (!sid && sid !== 0) return res.status(404).json({ error: "Sheet not found: " + tbl });
+
+      const config = req.body.config || {};
+      const headerBg = config.headerBg || { red: 0.2, green: 0.6, blue: 0.9 };  // blue
+      const headerFg = config.headerFg || { red: 1, green: 1, blue: 1 };          // white
+      const altRowBg = config.altRowBg  || { red: 0.95, green: 0.95, blue: 0.95 }; // light gray
+      const colCount  = config.colCount || 10;
+
+      // Build bold + background for header row
+      const requests = [];
+
+      // Freeze header row
+      requests.push({ updateSheetProperties: {
+        properties: { sheetId: sid, gridProperties: { frozenRowCount: 1 } },
+        fields: "gridProperties.frozenRowCount"
+      }});
+
+      // Header formatting: bold, white text, blue background, center aligned
+      requests.push({ repeatCell: {
+        range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: colCount },
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: headerBg,
+            textFormat: { bold: true, foregroundColor: headerFg, fontSize: 11 },
+            horizontalAlignment: "CENTER",
+            verticalAlignment: "MIDDLE",
+            padding: { top: 4, right: 8, bottom: 4, left: 8 }
+          }
+        },
+        fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,verticalAlignment,padding)"
+      }});
+
+      // Alternating row colors (skip header)
+      requests.push({ repeatCell: {
+        range: { sheetId: sid, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: colCount },
+        cell: { userEnteredFormat: { verticalAlignment: "MIDDLE" } },
+        fields: "userEnteredFormat.verticalAlignment"
+      }});
+
+      // Auto-resize columns
+      requests.push({ autoResizeDimensions: {
+        dimensions: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: colCount }
+      }});
+
+      await api("POST", ":batchUpdate", { requests });
+      return res.json({ success: true, sheet: tbl });
+    }
+
       return res.status(400).json({error:`Unknown action: ${A}`});
     }
 
