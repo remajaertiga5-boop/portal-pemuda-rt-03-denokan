@@ -12,7 +12,10 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const scriptUrl = process.env.GOOGLE_SCRIPT_URL || process.env.VITE_GOOGLE_SCRIPT_URL || process.env.VITE_API_URL;
+  const scriptUrl = process.env.GOOGLE_SCRIPT_URL 
+  || process.env.VITE_GOOGLE_SCRIPT_URL 
+  || process.env.VITE_API_URL 
+  || "https://script.google.com/macros/s/AKfycbx0iBGbgvU_2es_ibVKxbu979oelO21sfZNCySUCE3InykXyP8MOMzt-46yshRq8T-93w/exec";
 
   if (!scriptUrl) {
     return res.status(500).json({

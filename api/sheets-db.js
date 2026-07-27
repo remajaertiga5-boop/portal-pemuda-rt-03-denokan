@@ -3,7 +3,9 @@
 // Proxies CRUD requests to Google Apps Script backend
 // ============================================================
 
-const APPS_SCRIPT_URL = process.env.GOOGLE_SCRIPT_DB_URL || process.env.VITE_SHEETS_DB_URL || "";
+const APPS_SCRIPT_URL = process.env.GOOGLE_SCRIPT_DB_URL 
+  || process.env.VITE_SHEETS_DB_URL 
+  || "https://script.google.com/macros/s/AKfycbx0iBGbgvU_2es_ibVKxbu979oelO21sfZNCySUCE3InykXyP8MOMzt-46yshRq8T-93w/exec";
 const API_KEY         = process.env.SHEETS_API_KEY || "remaja-legok-03-2026";
 
 export default async function handler(req, res) {
