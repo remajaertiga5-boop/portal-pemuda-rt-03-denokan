@@ -1,0 +1,39 @@
+# ============================================================
+# GITHUB ACTIONS - INTEGRATION & BUILD VALIDATION
+# ============================================================
+
+name: CI/CD Build & Lint Validation
+
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Verify Compilation
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'      # ✅ Diperbaiki dari node-size
+        cache: 'npm'
+
+    - name: Install Project Dependencies
+      run: npm ci
+
+    - name: Run Code Linter Check
+      run: npm run lint
+
+    - name: Compile & Build Frontend Bundle
+      run: npm run build
+      env:
+        # Prevent Vite or esbuild warning failures
+        CI: false                # ✅ Ditambahkan agar warning tidak dianggap error
+        NODE_ENV: production     # ✅ Set environment ke production

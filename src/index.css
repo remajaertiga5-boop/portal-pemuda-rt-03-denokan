@@ -1,0 +1,203 @@
+/* ============================================================
+   TAILWIND CSS - IMPORT
+   Gunakan sesuai versi Tailwind yang dipakai:
+   - v4: @import "tailwindcss"
+   - v3: @tailwind base; @tailwind components; @tailwind utilities;
+   ============================================================ */
+@import "tailwindcss";
+
+/* ============================================================
+   DARK MODE VARIANT
+   ============================================================ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+@layer base {
+
+  /* ----------------------------------------------------------
+     ROOT & HTML
+     ---------------------------------------------------------- */
+  html {
+    color-scheme: light;
+    /* ✅ Smooth scroll default, akan di-override oleh reduce-motion */
+    scroll-behavior: smooth;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* ----------------------------------------------------------
+     BODY
+     ---------------------------------------------------------- */
+  body {
+    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+    /* ✅ Fix Bug 2: Gunakan @media prefers-reduced-motion
+       agar transition otomatis mati jika OS setting reduce motion aktif */
+    @media (prefers-reduced-motion: no-preference) {
+      transition-property: background-color, color, border-color,
+                           text-decoration-color, fill, stroke;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 200ms;
+    }
+  }
+
+  /* ----------------------------------------------------------
+     SCROLLBAR - Webkit (Chrome, Safari, Edge)
+     ---------------------------------------------------------- */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100 dark:bg-slate-900/50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 dark:bg-slate-600;
+  }
+
+  /* ✅ Fix Bug 4: Tambahkan scrollbar styling untuk Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.slate.300') theme('colors.slate.100');
+  }
+
+  .dark * {
+    scrollbar-color: theme('colors.slate.700') transparent;
+  }
+
+  /* ----------------------------------------------------------
+     TEXT SELECTION
+     ---------------------------------------------------------- */
+  ::selection {
+    @apply bg-emerald-200 text-emerald-900
+           dark:bg-emerald-900/50 dark:text-emerald-100;
+  }
+
+  /* ----------------------------------------------------------
+     FOCUS VISIBLE
+     ---------------------------------------------------------- */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-emerald-500 ring-offset-2
+           dark:ring-offset-slate-950;
+  }
+
+  /* ----------------------------------------------------------
+     REDUCE MOTION
+     Mendukung: 
+     1. class .reduce-motion (via ThemeContext)
+     2. OS-level prefers-reduced-motion
+     ---------------------------------------------------------- */
+  .reduce-motion *,
+  html.reduce-motion *,
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-delay: -1ms !important;
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      background-attachment: scroll !important;
+      scroll-behavior: auto !important;
+      transition-delay: 0s !important;
+      transition-duration: 0s !important;
+    }
+  }
+
+  /* ----------------------------------------------------------
+     HIGH CONTRAST MODE
+     ---------------------------------------------------------- */
+  .high-contrast {
+    --contrast-border: #000000;
+    --contrast-text  : #000000;
+    --contrast-bg    : #ffffff;
+  }
+
+  .high-contrast.dark,
+  .dark .high-contrast {
+    --contrast-border: #ffffff;
+    --contrast-text  : #ffffff;
+    --contrast-bg    : #000000;
+  }
+
+  .high-contrast * {
+    border-color: var(--contrast-border) !important;
+    text-shadow : none !important;
+    box-shadow  : none !important;
+  }
+
+  /* ✅ Fix Bug 3: Tambahkan kontras minimum untuk teks */
+  .high-contrast p,
+  .high-contrast span,
+  .high-contrast h1,
+  .high-contrast h2,
+  .high-contrast h3,
+  .high-contrast h4,
+  .high-contrast h5,
+  .high-contrast h6,
+  .high-contrast label,
+  .high-contrast li,
+  .high-contrast td,
+  .high-contrast th {
+    color: var(--contrast-text) !important;
+  }
+
+  /* ----------------------------------------------------------
+     FORM ELEMENTS
+     ---------------------------------------------------------- */
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select {
+    @apply text-slate-900 bg-white
+           dark:text-slate-100 dark:bg-slate-900;
+  }
+
+  /* ✅ Fix Bug 5: Tambahkan placeholder styling */
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-slate-400 dark:text-slate-500;
+  }
+
+  /* Disabled state */
+  input:disabled,
+  textarea:disabled,
+  select:disabled,
+  button:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* ----------------------------------------------------------
+     TYPOGRAPHY - Heading default
+     ---------------------------------------------------------- */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-slate-900 dark:text-slate-100;
+  }
+
+  /* ----------------------------------------------------------
+     LINK default
+     ---------------------------------------------------------- */
+  a {
+    @apply text-emerald-600 dark:text-emerald-400
+           hover:text-emerald-700 dark:hover:text-emerald-300
+           underline-offset-2;
+  }
+
+  /* ----------------------------------------------------------
+     IMAGE - prevent overflow
+     ---------------------------------------------------------- */
+  img, video {
+    @apply max-w-full;
+  }
+}

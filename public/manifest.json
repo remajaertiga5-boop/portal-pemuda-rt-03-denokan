@@ -1,0 +1,98 @@
+{
+  "id": "/",
+  "name": "Remaja Legok 03",
+  "short_name": "Legok 03",
+  "description": "Aplikasi Komunitas Remaja RT 03 RW 04 Denokan, Gondoryo, Jambu, Semarang",
+  "lang": "id",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "categories": ["social", "community", "utilities"],
+
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "Pengumuman",
+      "short_name": "Pengumuman",
+      "description": "Lihat pengumuman terbaru",
+      "url": "/pengumuman",
+      "icons": [
+        {
+          "src": "/icons/shortcut-pengumuman.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Agenda",
+      "short_name": "Agenda",
+      "description": "Lihat agenda kegiatan",
+      "url": "/agenda",
+      "icons": [
+        {
+          "src": "/icons/shortcut-agenda.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Kas Umum",
+      "short_name": "Kas",
+      "description": "Lihat laporan kas umum",
+      "url": "/kas",
+      "icons": [
+        {
+          "src": "/icons/shortcut-kas.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "/screenshots/home-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Halaman Utama Remaja Legok 03"
+    },
+    {
+      "src": "/screenshots/home-desktop.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Halaman Utama Remaja Legok 03 - Desktop"
+    }
+  ]
+}

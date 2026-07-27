@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    // Default: tolak semua akses langsung dari client
+    // Semua operasi WAJIB lewat backend (Cloud Functions) yang sudah cek JWT+role
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

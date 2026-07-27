@@ -1,0 +1,8 @@
+{
+  "name": "PANDAWA ERTIGA",
+  "description": "Aplikasi Portal & Dokumentasi Karang Taruna / Remaja RT 03 - Pemuda Andalan Warga RT 3 Legok, Gondoriyo, Jambu, Semarang. Fitur: agenda kegiatan, kas & iuran, absensi, galeri foto, pengumuman, voting, dan aspirasi anggota.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

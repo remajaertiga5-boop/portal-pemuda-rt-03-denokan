@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="id" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- ============================================================
+         VIEWPORT
+         ✅ viewport-fit=cover untuk safe area iPhone notch
+         ============================================================ -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
+    <!-- ============================================================
+         SEO & DESKRIPSI
+         ============================================================ -->
+    <title>Remaja Legok 03 — Portal Pemuda RT 03 RW 04 Denokan</title>
+    <meta
+      name="description"
+      content="Aplikasi Komunitas Remaja RT 03 RW 04 Denokan, Gondoryo, Jambu, Semarang. Portal agenda, kas, absensi, dan pengumuman."
+    />
+    <meta name="keywords" content="remaja, legok, denokan, RT03, RW04, gondoryo, jambu, semarang, pemuda" />
+    <meta name="author" content="Remaja Legok 03" />
+    <meta name="robots" content="index, follow" />
+    <!-- ✅ ADDED: Canonical URL agar tidak ada duplikat di mesin pencari -->
+    <link rel="canonical" href="https://remaja-legok-03.vercel.app" />
+
+    <!-- ============================================================
+         PWA & MOBILE
+         ============================================================ -->
+    <meta name="theme-color" content="#16a34a" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#064e3b" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Remaja Legok 03" />
+    <meta name="application-name" content="Remaja Legok 03" />
+    <meta name="msapplication-TileColor" content="#16a34a" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <!-- ✅ ADDED: Format detection — cegah iOS auto-link nomor HP & tanggal -->
+    <meta name="format-detection" content="telephone=no, date=no, email=no" />
+
+    <!-- ============================================================
+         OPEN GRAPH (Facebook, WhatsApp, Telegram, Discord)
+         ============================================================ -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Remaja Legok 03 — Portal Pemuda RT 03 RW 04" />
+    <meta property="og:description" content="Aplikasi Komunitas Remaja RT 03 RW 04 Denokan, Gondoryo, Jambu, Semarang." />
+    <meta property="og:image" content="https://remaja-legok-03.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Logo Remaja Legok 03" />
+    <meta property="og:url" content="https://remaja-legok-03.vercel.app" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:site_name" content="Remaja Legok 03" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Remaja Legok 03 — Portal Pemuda RT 03 RW 04" />
+    <meta name="twitter:description" content="Aplikasi Komunitas Remaja RT 03 RW 04 Denokan, Gondoryo, Jambu, Semarang." />
+    <meta name="twitter:image" content="https://remaja-legok-03.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="Logo Remaja Legok 03" />
+
+    <!-- ============================================================
+         PRECONNECT & DNS PREFETCH — Performa
+         ✅ Hanya domain yang benar-benar dipakai
+         ============================================================ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Google Apps Script / Sheets API -->
+    <link rel="dns-prefetch" href="https://script.google.com" />
+    <link rel="dns-prefetch" href="https://googleapis.com" />
+    <!-- Cloudflare R2 (jika dipakai untuk foto) -->
+    <link rel="dns-prefetch" href="https://r2.dev" />
+    <!-- Unsplash (foto placeholder di data default) -->
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
+    <!-- ============================================================
+         ICONS & MANIFEST
+         ============================================================ -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/icons/icon-32x32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/icons/icon-16x16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/icons/icon-180x180.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png" sizes="152x152" />
+    <link rel="apple-touch-icon" href="/icons/icon-144x144.png" sizes="144x144" />
+    <link rel="apple-touch-icon" href="/icons/icon-120x120.png" sizes="120x120" />
+
+    <!-- ============================================================
+         THEME INIT SCRIPT
+         ✅ Dijalankan SEBELUM React mount — cegah Flash of Wrong Theme
+         ✅ Sinkron dengan ThemeContext.tsx & main.tsx
+         ============================================================ -->
+    <script>
+      (function () {
+        try {
+          var root       = document.documentElement;
+          var store      = localStorage;
+
+          // ── TEMA ──────────────────────────────────────────────
+          var theme      = store.getItem('app-theme') || 'system';
+          var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark     = theme === 'dark' || (theme === 'system' && systemDark);
+
+          if (isDark) {
+            root.classList.add('dark');
+            root.style.colorScheme = 'dark';
+          } else {
+            root.classList.remove('dark');
+            root.style.colorScheme = 'light';
+          }
+
+          // ── FONT SIZE ─────────────────────────────────────────
+          var fontSizeMap = {
+            'Kecil'       : '14px',
+            'Normal'      : '16px',
+            'Besar'       : '18px',
+            'Sangat Besar': '20px'
+          };
+          var fontSize = store.getItem('app-font-size') || 'Normal';
+          root.style.fontSize = fontSizeMap[fontSize] || '16px';
+
+          // ── AKSESIBILITAS ─────────────────────────────────────
+          if (store.getItem('app-high-contrast') === 'true') {
+            root.classList.add('high-contrast');
+          }
+          if (store.getItem('app-reduce-motion') === 'true') {
+            root.classList.add('reduce-motion');
+          }
+
+          // ── ACCENT COLOR ──────────────────────────────────────
+          var validAccents = ['green', 'blue', 'rose', 'amber', 'purple'];
+          var accent = store.getItem('app-accent-color') || 'green';
+          root.setAttribute('data-accent', validAccents.indexOf(accent) !== -1 ? accent : 'green');
+
+          // ── BAHASA & ARAH TEKS ────────────────────────────────
+          var validLangs = ['id', 'en', 'jv'];
+          var lang = store.getItem('app-language') || 'id';
+          root.setAttribute('lang', validLangs.indexOf(lang) !== -1 ? lang : 'id');
+
+        } catch (e) {
+          // localStorage tidak tersedia
+        }
+      })();
+    </script>
+  </head>
+
+  <body class="bg-slate-50 text-slate-900 antialiased">
+
+    <!-- ✅ Fallback jika JavaScript dinonaktifkan -->
+    <noscript>
+      <style>
+        .noscript-container {
+          display         : flex;
+          align-items     : center;
+          justify-content : center;
+          min-height      : 100vh;
+          font-family     : system-ui, -apple-system, sans-serif;
+          text-align      : center;
+          padding         : 2rem;
+          background      : #f8fafc;
+          color           : #0f172a;
+        }
+        .noscript-box {
+          max-width: 400px;
+        }
+        .noscript-icon {
+          font-size     : 3rem;
+          margin-bottom : 1rem;
+        }
+        .noscript-title {
+          font-size     : 1.5rem;
+          font-weight   : 700;
+          margin-bottom : 0.75rem;
+          color         : #0f172a;
+        }
+        .noscript-desc {
+          color        : #64748b;
+          line-height  : 1.6;
+          font-size    : 0.9rem;
+        }
+        .noscript-badge {
+          display         : inline-block;
+          margin-top      : 1.5rem;
+          padding         : 0.5rem 1rem;
+          background      : #dcfce7;
+          color           : #166534;
+          border-radius   : 9999px;
+          font-size       : 0.75rem;
+          font-weight     : 700;
+        }
+      </style>
+      <div class="noscript-container">
+        <div class="noscript-box">
+          <div class="noscript-icon">⚠️</div>
+          <h1 class="noscript-title">JavaScript Diperlukan</h1>
+          <p class="noscript-desc">
+            Aplikasi <strong>Remaja Legok 03</strong> memerlukan JavaScript
+            untuk berjalan dengan baik.<br /><br />
+            Silakan aktifkan JavaScript di pengaturan browser Anda,
+            lalu muat ulang halaman ini.
+          </p>
+          <span class="noscript-badge">🌿 Remaja Legok 03 — RT 03/RW 04 Denokan</span>
+        </div>
+      </div>
+    </noscript>
+
+    <!-- ✅ Root React App -->
+    <div id="root"></div>
+
+    <!-- ✅ Entry Point Vite -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

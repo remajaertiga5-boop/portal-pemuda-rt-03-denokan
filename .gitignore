@@ -1,0 +1,123 @@
+# ============================================================
+# DEPENDENCIES
+# ============================================================
+node_modules/
+.pnp
+.pnp.js
+
+# ============================================================
+# ENVIRONMENT FILES (SANGAT PENTING - JANGAN PERNAH COMMIT!)
+# ============================================================
+# ✅ Fix Bug 1: Cover semua varian .env sekaligus
+.env*
+!.env.example
+
+# Firebase & App Configs
+firebase-applet-config.json
+*.config.json
+
+# Temporary patch & fix scripts
+fix_*.cjs
+fix_*.js
+fix_*.mjs
+patch_*.cjs
+patch_*.js
+temp_*.js
+temp_*.cjs
+inject_*.js
+
+# ============================================================
+# BUILD OUTPUT
+# ============================================================
+dist/
+build/
+.output/
+.next/
+.nuxt/
+out/
+
+# ============================================================
+# VERCEL
+# ============================================================
+.vercel/
+.vercel
+
+# ============================================================
+# CACHE
+# ============================================================
+.cache/
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# ✅ Fix Bug 4: TypeScript cache
+*.tsbuildinfo
+
+# Vite cache
+.vite/
+
+# ============================================================
+# LOGS
+# ============================================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ============================================================
+# TESTING
+# ============================================================
+coverage/
+.nyc_output/
+
+# ============================================================
+# OS FILES
+# ============================================================
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ✅ Fix Bug 3: Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============================================================
+# IDE / EDITOR
+# ============================================================
+# VSCode
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# JetBrains (IntelliJ, WebStorm, dll)
+.idea/
+*.iml
+
+# ✅ Fix Bug 2: Vim/Nano swap files
+*.swp
+*.swo
+*.swn
+.*.swp
+
+# ============================================================
+# GOOGLE APPS SCRIPT (CLASP)
+# ============================================================
+.clasp.json
+.claspignore
+
+# ============================================================
+# MISC
+# ============================================================
+*.zip
+*.tar.gz
+*.pem
+*.key
