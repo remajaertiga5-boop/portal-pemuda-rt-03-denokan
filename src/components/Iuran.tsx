@@ -344,6 +344,7 @@ export default function Iuran({
   // HANDLER - Hapus iuran
   // ----------------------------------------------------------
   const handleDeleteIuranConfirm = () => {
+    try {
     if (!itemToDelete) return;
 
     if (userRole === "SUPER_ADMIN") {
@@ -375,6 +376,10 @@ export default function Iuran({
     setShowDeleteModal(false);
     setItemToDelete(null);
     setSaPinInput("");
+    } catch (err: any) {
+      console.error("[Iuran] Delete gagal:", err);
+      showToast(`Gagal menghapus iuran: ${err.message || "Error"}`, "error");
+    }
   };
 
   // ----------------------------------------------------------

@@ -275,6 +275,7 @@ export default function Kas({
   // ----------------------------------------------------------
   const handleSubmitKas = (e: React.FormEvent) => {
     e.preventDefault();
+    try {
 
     const nominal = parseInt(formNominal, 10);
     if (isNaN(nominal) || nominal <= 0) {
@@ -354,12 +355,17 @@ export default function Kas({
     setFormSubKategori("");
     setFormBuktiNota("");
     setFormPin("");
+    } catch (err: any) {
+      console.error("[Kas] Submit gagal:", err);
+      showToast(`Gagal mencatat transaksi: ${err.message || "Error"}`, "error");
+    }
   };
 
   // ----------------------------------------------------------
   // HANDLER - Approve transaksi
   // ----------------------------------------------------------
   const handleApproveTx = (tx: KasItem) => {
+    try {
     const targetId   = getItemId(tx);
     const updated    = appData.Kas.map((k) =>
       getItemId(k) === targetId
@@ -370,12 +376,17 @@ export default function Kas({
     const loggedData  = addLogAkses(updatedData, currentUserName || "Ketua", userRole, "APPROVAL_KAS", `Menyetujui transaksi ${targetId}`);
     setAppData(loggedData);
     showToast(`Transaksi ${targetId} berhasil DISETUJUI!`, "success");
+    } catch (err: any) {
+      console.error("[Kas] Approve gagal:", err);
+      showToast(`Gagal menyetujui: ${err.message}`, "error");
+    }
   };
 
   // ----------------------------------------------------------
   // HANDLER - Reject transaksi
   // ----------------------------------------------------------
   const handleRejectTx = (tx: KasItem) => {
+    try {
     const targetId   = getItemId(tx);
     const updated    = appData.Kas.map((k) =>
       getItemId(k) === targetId
@@ -386,12 +397,17 @@ export default function Kas({
     const loggedData  = addLogAkses(updatedData, currentUserName || "Ketua", userRole, "REJECT_KAS", `Menolak transaksi ${targetId}`);
     setAppData(loggedData);
     showToast(`Transaksi ${targetId} DITOLAK!`, "info");
+    } catch (err: any) {
+      console.error("[Kas] Reject gagal:", err);
+      showToast(`Gagal menolak: ${err.message}`, "error");
+    }
   };
 
   // ----------------------------------------------------------
   // HANDLER - Soft delete
   // ----------------------------------------------------------
   const handleSoftDelete = () => {
+    try {
     if (!deleteConfirmTx) return;
     const targetId   = getItemId(deleteConfirmTx);
     const updated    = appData.Kas.map((k) =>
@@ -405,12 +421,17 @@ export default function Kas({
     showToast(`Transaksi ${targetId} berhasil diarsip.`, "success");
     setDeleteConfirmTx(null);
     setDeleteReason("");
+    } catch (err: any) {
+      console.error("[Kas] Soft delete gagal:", err);
+      showToast(`Gagal menghapus: ${err.message}`, "error");
+    }
   };
 
   // ----------------------------------------------------------
   // HANDLER - Permanent delete
   // ----------------------------------------------------------
   const handlePermanentDelete = () => {
+    try {
     if (!permanentDeleteTx) return;
     const targetId = getItemId(permanentDeleteTx);
 
@@ -431,6 +452,10 @@ export default function Kas({
     setPermanentDeleteTx(null);
     setPermDeleteBuktiConfirm("");
     setPermDeletePin("");
+    } catch (err: any) {
+      console.error("[Kas] Permanent delete gagal:", err);
+      showToast(`Gagal: ${err.message}`, "error");
+    }
   };
 
   // ----------------------------------------------------------
@@ -438,6 +463,7 @@ export default function Kas({
   // ----------------------------------------------------------
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
+    try {
     if (!editTx) return;
 
     if (userRole !== "SUPER_ADMIN") {
@@ -471,6 +497,10 @@ export default function Kas({
     showToast(`Data transaksi ${targetId} berhasil diperbarui!`, "success");
     setEditTx(null);
     setEditPin("");
+    } catch (err: any) {
+      console.error("[Kas] Edit gagal:", err);
+      showToast('Gagal menyimpan: ' + (err.message || 'Error'), 'error');
+    }
   };
 
   // ----------------------------------------------------------
