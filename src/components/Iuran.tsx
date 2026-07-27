@@ -4,10 +4,13 @@ import {
   Calendar, Users, FileText, Settings, Download,
   Copy, Edit2, Check, Lock, RefreshCw, Search,
   PieChart, Eye, User, ShieldCheck,
-  QrCode, ArrowLeft, Clock, AlertTriangle, Layers, Share2
+  QrCode, ArrowLeft, Clock, AlertTriangle, Layers, Share2,
+  Loader2, Image, Upload, X
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
 import { IuranItem, UserRole, AuthSession, AnggotaItem } from "../types";
+import { compressImage, validateFile } from "../utils/imageUtils";
+import { uploadToDrive } from "../utils/driveClient";
 import { generatePINDinamis } from "../utils/auth";
 
 // ----------------------------------------------------------
@@ -87,8 +90,81 @@ export default function Iuran({
   const [formStatus, setFormStatus]           = useState<FormStatus>("LUNAS");
   const [formNominalCicil, setFormNominalCicil] = useState(5000);
   const [formAlasanBebas, setFormAlasanBebas] = useState("");
+
+  // ── Upload bukti pembayaran ke Google Drive ──
+  const handleUploadBukti = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validation = validateFile(file, 5, ["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+    if (!validation.valid) {
+      showToast(validation.error || "File tidak valid!", "error");
+      e.target.value = "";
+      return;
+    }
+
+    // Preview dulu
+    const reader = new FileReader();
+    reader.onloadend = () => setBuktiPreview(reader.result as string);
+    reader.readAsDataURL(file);
+
+    // Kompres & upload
+    setBuktiUploading(true);
+    showToast("Mengupload bukti ke Google Drive...", "info");
+    
+    try {
+      let fileData: string;
+      let fileName = file.name;
+      let fileType = file.type;
+
+      if (file.type.startsWith("image/")) {
+        const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1600, quality: 0.7, maxSizeMB: 1 });
+        fileData = compressed.dataUrl;
+        fileName = file.name.replace(/\.[^.]+$/, ".jpg");
+        fileType = "image/jpeg";
+      } else {
+        fileData = await new Promise<string>((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result as string);
+          r.onerror = () => reject(new Error("Gagal membaca file"));
+          r.readAsDataURL(file);
+        });
+      }
+
+      const result = await uploadToDrive(
+        fileData,
+        fileName,
+        fileType,
+        selectedMemberForView || session?.id_anggota || ""
+      );
+
+      if (result?.downloadUrl) {
+        setFormBuktiUrl(result.downloadUrl);
+        showToast("✅ Bukti tersimpan di Google Drive!", "success");
+      } else if (result?.url) {
+        setFormBuktiUrl(result.url);
+        showToast("✅ Bukti tersimpan di Google Drive!", "success");
+      } else {
+        // Fallback: simpan base64
+        setFormBuktiUrl(fileData);
+        showToast("⚠️ Drive tidak tersedia — bukti disimpan lokal", "warning");
+      }
+    } catch {
+      setFormBuktiUrl(buktiPreview);
+      showToast("⚠️ Upload gagal — bukti disimpan lokal", "warning");
+    } finally {
+      setBuktiUploading(false);
+    }
+  };
+
+  const handleRemoveBukti = () => {
+    setFormBuktiUrl("");
+    setBuktiPreview("");
+  };
   const [formCatatan, setFormCatatan]         = useState("");
   const [formBuktiUrl, setFormBuktiUrl]       = useState("");
+  const [buktiUploading, setBuktiUploading] = useState(false);
+  const [buktiPreview, setBuktiPreview]     = useState(""); // preview lokal
 
   // Reminder
   const [reminderTemplate, setReminderTemplate] = useState(
@@ -1471,6 +1547,51 @@ export default function Iuran({
                 />
               </div>
 
+              {/* Upload Bukti Transfer */}
+              <div>
+                <label className="block text-slate-400 font-bold mb-1">📎 Bukti Transfer (Opsional)</label>
+                {buktiPreview || formBuktiUrl ? (
+                  <div className="relative">
+                    {(buktiPreview || formBuktiUrl).startsWith("data:") || (buktiPreview || formBuktiUrl).includes("drive.google.com") ? (
+                      <img src={buktiPreview || formBuktiUrl} alt="Bukti Transfer"
+                        className="w-full max-h-40 object-contain rounded-xl border border-slate-700 bg-slate-950" />
+                    ) : (
+                      <div className="p-4 bg-slate-950 rounded-xl border border-slate-700 text-xs text-slate-400">
+                        📄 File tersimpan: {formBuktiUrl ? "✅" : "⏳"}
+                      </div>
+                    )}
+                    <button type="button" onClick={handleRemoveBukti}
+                      className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full transition-colors">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer hover:border-amber-500/40 transition-all bg-slate-900/50">
+                    {buktiUploading ? (
+                      <div className="flex items-center gap-2 text-amber-400">
+                        <Loader2 size={16} className="animate-spin" />
+                        <span className="text-xs">Mengupload ke Drive...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <Upload size={16} />
+                        <span className="text-xs">Upload Bukti (JPG/PNG/PDF, max 5MB)</span>
+                      </div>
+                    )}
+                    <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf"
+                      onChange={handleUploadBukti} disabled={buktiUploading} className="hidden" />
+                  </label>
+                )}
+                {formBuktiUrl && formBuktiUrl.includes("drive.google.com") && (
+                  <p className="text-[10px] text-emerald-400 flex items-center gap-1 mt-1">
+                    <Image size={10} /> Tersimpan di Google Drive ☁️
+                  </p>
+                )}
+                {formBuktiUrl && formBuktiUrl.startsWith("data:") && (
+                  <p className="text-[10px] text-amber-400 mt-1">⚠️ Tersimpan lokal (Drive tidak tersedia)</p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-slate-400 font-bold mb-1">Catatan Tambahan (Opsional)</label>
                 <input
@@ -1542,6 +1663,19 @@ export default function Iuran({
                   </div>
                 ))}
               </div>
+
+              {/* Tampilkan gambar bukti transfer */}
+              {activeReceiptItem.Bukti_Transfer && (
+                <div className="pt-2 border-t border-dashed border-slate-800">
+                  <p className="text-[10px] text-slate-500 mb-1 text-center">📎 Bukti Transfer</p>
+                  <img
+                    src={activeReceiptItem.Bukti_Transfer}
+                    alt="Bukti Transfer"
+                    className="w-full max-h-48 object-contain rounded-xl border border-slate-700"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+              )}
 
               <div className="pt-2 border-t border-dashed border-slate-800 flex items-center justify-center gap-2 text-[9px] text-slate-500">
                 <QrCode size={24} className="text-slate-400" />
