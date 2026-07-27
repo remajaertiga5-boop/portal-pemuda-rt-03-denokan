@@ -119,7 +119,7 @@ export default async function handler(req, res) {
       }
 
     // ── Format sheet: bold header, colored background, freeze row, auto-resize ──
-    if (req.method === "POST" && action === "format") {
+    if (A === "format") {
       const ids = await getIds();
       const sid = ids[tbl];
       if (!sid && sid !== 0) return res.status(404).json({ error: "Sheet not found: " + tbl });
