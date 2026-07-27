@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { 
   Crown, UserPlus, Users, Copy, Share2, Printer, Shield, Key, History, FileText, 
-  Database, Archive, RefreshCw, CheckCircle2, Search, Trash2, Edit3, Lock, Eye, AlertTriangle, Image, Plug
+  Database, Archive, RefreshCw, CheckCircle2, Search, Trash2, Edit3, Lock, Eye, EyeOff, AlertTriangle, Image, Plug, Loader2
 } from "lucide-react";
 import { AppData, saveAppData, addLogAkses, generateIdAnggotaUnik } from "../utils/dataStore";
 import { setStoredPIN, getStoredPINs, verifikasiPINDinamis, generatePINDinamis, getInfoWaktuSekarang } from "../utils/auth";
 import PINField from "./PINField";
-import ManajemenAnggotaSA from "./ManajemenAnggotaSA";
-import GaleriSuperAdmin from "./GaleriSuperAdmin";
 import MatriksHakAksesModal from "./MatriksHakAksesModal";
 import ApiConfigPanel from "./ApiConfigPanel";
+import ErrorBoundaryTab from "./ErrorBoundaryTab";
+
+// Lazy load komponen berat — hanya dimuat saat tab dibuka
+const ManajemenAnggotaSA = lazy(() => import("./ManajemenAnggotaSA"));
+const GaleriSuperAdmin   = lazy(() => import("./GaleriSuperAdmin"));
 
 interface SuperAdminDashboardProps {
   appData: AppData;
@@ -59,6 +62,7 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
   const [logSearch, setLogSearch] = useState("");
   const [arsipSearch, setArsipSearch] = useState("");
   const [showMatriksModal, setShowMatriksModal] = useState(false);
+  const [showPinDynamic, setShowPinDynamic] = useState(false); // 🔒 Default sembunyi — keamanan
 
   // 59. Tombol [➕ Daftar Cepat]
   const handleDaftarCepat = (e: React.FormEvent) => {
@@ -423,24 +427,43 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
 
       {/* TAB 1: MANAJEMEN ANGGOTA SUPER ADMIN */}
       {activeTab === "manajemen_anggota" && (
-        <ManajemenAnggotaSA
-          appData={appData}
-          setAppData={setAppData}
-          showToast={showToast}
-        />
+        <ErrorBoundaryTab tabName="Manajemen Anggota">
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-20 gap-3 text-slate-400">
+              <Loader2 size={24} className="animate-spin" />
+              <span className="text-xs font-bold">Memuat Manajemen Anggota...</span>
+            </div>
+          }>
+            <ManajemenAnggotaSA
+              appData={appData}
+              setAppData={setAppData}
+              showToast={showToast}
+            />
+          </Suspense>
+        </ErrorBoundaryTab>
       )}
 
       {/* TAB 2: GALERI KEGIATAN SUPER ADMIN */}
       {activeTab === "galeri_sa" && (
-        <GaleriSuperAdmin
-          appData={appData}
-          setAppData={setAppData}
-          showToast={showToast}
-        />
+        <ErrorBoundaryTab tabName="Galeri Kegiatan">
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-20 gap-3 text-slate-400">
+              <Loader2 size={24} className="animate-spin" />
+              <span className="text-xs font-bold">Memuat Galeri Kegiatan...</span>
+            </div>
+          }>
+            <GaleriSuperAdmin
+              appData={appData}
+              setAppData={setAppData}
+              showToast={showToast}
+            />
+          </Suspense>
+        </ErrorBoundaryTab>
       )}
 
-      {/* TAB 2: KELOLA PIN SISTEM */}
+      {/* TAB 3: KELOLA PIN SISTEM */}
       {activeTab === "pin" && (
+        <ErrorBoundaryTab tabName="Kelola PIN">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* 68. Ubah PIN Ketua */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-4">
@@ -573,9 +596,23 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
 
               <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/60 pb-3">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400">PIN Jam Ini (0):</span>
-                <span className="text-sm font-mono font-extrabold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-100">
-                  {generatePINDinamis(0)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-mono font-extrabold px-2.5 py-1 rounded-lg border transition-all ${
+                    showPinDynamic 
+                      ? "bg-purple-100 text-purple-700 border-purple-200" 
+                      : "bg-slate-200 dark:bg-slate-700 text-transparent border-slate-300 dark:border-slate-600 select-none"
+                  }`}>
+                    {showPinDynamic ? generatePINDinamis(0) : "••••••••"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowPinDynamic(!showPinDynamic)}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    title={showPinDynamic ? "Sembunyikan PIN" : "Tampilkan PIN"}
+                  >
+                    {showPinDynamic ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -594,26 +631,41 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
                 </div>
               </div>
 
-              <div className="pt-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5 leading-relaxed">
-                <p className="font-bold text-purple-800 flex items-center gap-1">
-                  <span>💡</span> Daftar PIN yang sedang aktif (Toleransi ±1 jam):
-                </p>
-                <ul className="list-disc pl-4 space-y-0.5 font-mono">
-                  <li>Sebelumnya (-1 jam): <span className="font-bold text-slate-700 dark:text-slate-300">{generatePINDinamis(-1)}</span></li>
-                  <li>Sekarang (Jam ini): <span className="font-bold text-purple-700">{generatePINDinamis(0)}</span></li>
-                  <li>Berikutnya (+1 jam): <span className="font-bold text-slate-700 dark:text-slate-300">{generatePINDinamis(1)}</span></li>
-                </ul>
-                <p className="text-[10px] text-amber-600 italic mt-2">
-                  *Sistem memverifikasi input PIN dengan toleransi ±1 jam untuk mengatasi ketidakcocokan waktu perangkat.
-                </p>
-              </div>
+              {showPinDynamic && (
+                <div className="pt-2 text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5 leading-relaxed animate-in fade-in duration-200">
+                  <p className="font-bold text-purple-800 flex items-center gap-1">
+                    <span>💡</span> Daftar PIN yang sedang aktif (Toleransi ±1 jam):
+                  </p>
+                  <ul className="list-disc pl-4 space-y-0.5 font-mono">
+                    <li>Sebelumnya (-1 jam): <span className="font-bold text-slate-700 dark:text-slate-300">{generatePINDinamis(-1)}</span></li>
+                    <li>Sekarang (Jam ini): <span className="font-bold text-purple-700">{generatePINDinamis(0)}</span></li>
+                    <li>Berikutnya (+1 jam): <span className="font-bold text-slate-700 dark:text-slate-300">{generatePINDinamis(1)}</span></li>
+                  </ul>
+                  <p className="text-[10px] text-amber-600 italic mt-2">
+                    *Sistem memverifikasi input PIN dengan toleransi ±1 jam untuk mengatasi ketidakcocokan waktu perangkat.
+                  </p>
+                </div>
+              )}
+              {!showPinDynamic && (
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowPinDynamic(true)}
+                    className="text-[11px] text-purple-600 hover:text-purple-700 font-bold underline underline-offset-2 flex items-center gap-1 mx-auto"
+                  >
+                    <Eye size={12} /> Klik untuk melihat PIN & daftar toleransi
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
+        </ErrorBoundaryTab>
       )}
 
       {/* TAB 4: LOG AKTIVITAS */}
       {activeTab === "log" && (
+        <ErrorBoundaryTab tabName="Log Aktivitas">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
@@ -667,10 +719,12 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
             </table>
           </div>
         </div>
+        </ErrorBoundaryTab>
       )}
 
       {/* TAB 5: ARSIP ANGGOTA */}
       {activeTab === "arsip" && (
+        <ErrorBoundaryTab tabName="Arsip Anggota">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
@@ -750,14 +804,18 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
             </table>
           </div>
         </div>
+        </ErrorBoundaryTab>
       )}
 
       {/* TAB 6: PENGATURAN AKSES & MATRIKS JABATAN */}
       {activeTab === "api_config" && (
-        <ApiConfigPanel appData={appData} setAppData={setAppData} showToast={showToast} />
+        <ErrorBoundaryTab tabName="API & Integrasi">
+          <ApiConfigPanel appData={appData} setAppData={setAppData} showToast={showToast} />
+        </ErrorBoundaryTab>
       )}
 
       {activeTab === "akses" && (
+        <ErrorBoundaryTab tabName="Akses & Settings">
         <div className="space-y-6">
           {!isAksesSettingsUnlocked ? (
             <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-purple-200 shadow-md dark:shadow-none text-center max-w-md mx-auto space-y-4 my-8">
@@ -989,6 +1047,7 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
         </>
       )}
         </div>
+        </ErrorBoundaryTab>
       )}
 
       {/* Modal Matriks Hak Akses Lengkap */}
