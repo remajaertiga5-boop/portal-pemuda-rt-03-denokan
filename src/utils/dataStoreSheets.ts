@@ -68,26 +68,18 @@ export async function loadFromSheets(): Promise<AppData | null> {
       sheets.readSheet("galeri"),
     ]);
 
-    // Build AppData from sheets
+    // Build AppData — merge Sheets dengan localStorage
+    // ...existingData preserve: Iuran, Voting, KonfigurasiAPI, Settings, etc.
+    const existingData = loadAppData();
     const appData: AppData = {
+      ...existingData,
+      // Overwrite hanya 6 tabel dari Sheets:
       Anggota     : safeArray(anggota.data),
       Agenda      : safeArray(agenda.data),
       Pengumuman  : safeArray(pengumuman.data),
       Kas         : safeArray(kas.data),
       Aspirasi    : safeArray(aspirasi.data),
       Galeri      : safeArray(galeri.data),
-      Iuran       : [],
-      Voting      : [],
-      Album       : [],
-      Absensi     : [],
-      PaymentInfo : [],
-      PaymentProofs: [],
-      LogAkses    : [],
-      RiwayatJabatan: [],
-      PengunduranDiri: [],
-      JabatanKosong  : [],
-      KonfigurasiAPI : [],
-      Settings     : (loadAppData() as any)?.Settings || {},
     };
 
     // Cache ke localStorage
