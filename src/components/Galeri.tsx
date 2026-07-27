@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
 import { useLocale } from "../hooks/useLocale";
-import { compressImage } from "../utils/imageUtils";
 import { GaleriItem, UserRole } from "../types";
 import { sendMediaToTelegram, uploadMediaToTelegram } from "../utils/apiConfigHelper";
 import PandawaLogo from "./PandawaLogo";
@@ -20,8 +19,6 @@ import PandawaLogo from "./PandawaLogo";
 // ----------------------------------------------------------
 const KATEGORI_LIST   = ["Kegiatan", "Rapat", "Olahraga", "Kerja Bakti"] as const;
 const FILTER_LIST     = ["SEMUA", ...KATEGORI_LIST] as const;
-const MAX_FILE_SIZE   = 5 * 1024 * 1024; // 5MB
-
 // ----------------------------------------------------------
 // TYPES
 // ----------------------------------------------------------
@@ -142,42 +139,15 @@ export default function Galeri({
     if (!file) return;
 
     const isVideo = file.type.startsWith("video/");
-    const maxSize = isVideo ? 25 * 1024 * 1024 : MAX_FILE_SIZE;
 
-    if (file.size > maxSize) {
-      showToast(isVideo ? "Ukuran video maksimal 25MB!" : "Ukuran foto maksimal 5MB!", "error");
-      e.target.value = "";
-      return;
-    }
-
-    try {
-      if (!isVideo && file.type.startsWith("image/")) {
-        // Kompres gambar sebelum preview
-        showToast("Mengompres gambar...", "info");
-        const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
-        setFotoUrl(compressed.dataUrl);
-        // Simpan blob untuk upload nanti
-        (window as any).__uploadBlob = compressed.blob;
-        const ratio = compressed.blob.size / file.size;
-        showToast(
-          `Gambar dikompres ${ratio < 0.5 ? (ratio * 100).toFixed(0) + "%" : "ke " + (compressed.blob.size / 1024).toFixed(0) + "KB"} 📷`,
-          "info"
-        );
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setFotoUrl(reader.result as string);
-          showToast(isVideo ? "Video dimuat ke pratinjau 📹" : "File dimuat 📄", "info");
-        };
-        reader.readAsDataURL(file);
-        (window as any).__uploadBlob = file;
-      }
-    } catch {
-      // Fallback: baca tanpa kompres
-      const reader = new FileReader();
-      reader.onloadend = () => setFotoUrl(reader.result as string);
-      reader.readAsDataURL(file);
-    }
+    // Baca file langsung — tanpa kompresi, tanpa limit ukuran (Telegram gratis unlimited!)
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFotoUrl(reader.result as string);
+      showToast(isVideo ? "🎬 Video siap diupload!" : "📷 Foto siap diupload!", "success");
+    };
+    reader.readAsDataURL(file);
+    (window as any).__uploadBlob = file;
   };
 
   const handleSubmitGaleri = async (e: React.FormEvent) => {
@@ -423,7 +393,7 @@ export default function Galeri({
           {/* File Input */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Pilih File (Foto/Video) — Foto maks 5MB, Video maks 25MB
+              Pilih File (Foto/Video) — Upload langsung ke Telegram, tanpa batas!
             </label>
             <input
               required
