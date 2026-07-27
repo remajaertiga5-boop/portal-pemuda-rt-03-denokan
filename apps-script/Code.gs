@@ -7,6 +7,10 @@
 
 const SPREADSHEET_ID = "1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8";
 const SHEETS = ["Anggota","Agenda","Pengumuman","Kas","Aspirasi","Galeri"];
+const DRIVE_FOLDERS = {
+  bukti: "18ZbevjsEm8ElZnrLiVB50GBlUtwoYRV7",
+  profil: "1Kz8foBDUWew090EnGDfuu4T8Yw8FJSzh",
+};
 const API_KEY = "remaja-legok-03-2026"; // Ganti dengan key rahasia
 
 // ── CORS Helper ───────────────────────────────────────────
@@ -93,9 +97,53 @@ function deleteRow(sheetName, idColumn, idValue, headers) {
   return { success: true };
 }
 
+// ── Drive Upload Handler ──────────────────────────────────
+function handleDriveUpload(body) {
+  const { fileName, fileType, fileData, idAnggota, folderType } = body || {};
+  const sizeBytes = Math.ceil((fileData.length * 3) / 4);
+  if (sizeBytes > 5 * 1024 * 1024) {
+    return jsonResponse({ error: "File terlalu besar (max 5MB)" }, 400);
+  }
+  try {
+    const decoded = Utilities.base64Decode(fileData);
+    const blob = Utilities.newBlob(decoded, fileType, fileName);
+    const type = folderType || "bukti";
+    const folderId = DRIVE_FOLDERS[type] || DRIVE_FOLDERS["bukti"];
+    const folder = DriveApp.getFolderById(folderId);
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    file.setName(type + "-" + (idAnggota || "anon") + "-" + timestamp + "-" + fileName);
+    file.setDescription((type === "profil" ? "Foto profil" : "Bukti pembayaran") + " dari " + (idAnggota || "Anggota") + " — " + new Date().toLocaleString("id-ID"));
+    return jsonResponse({
+      success: true,
+      url: file.getUrl(),
+      downloadUrl: "https://drive.google.com/uc?export=view&id=" + file.getId(),
+      thumbnailUrl: "https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w400",
+      fileId: file.getId(),
+      fileName: file.getName(),
+      fileSize: file.getSize(),
+      mimeType: file.getMimeType(),
+      createdAt: file.getDateCreated().toISOString(),
+    });
+  } catch (err) {
+    return jsonResponse({ error: "Upload gagal: " + err.toString() }, 500);
+  }
+}
+
 // ── GET — Read data ───────────────────────────────────────
 function doGet(e) {
   if (!checkAuth(e)) return jsonResponse({ error: "Unauthorized" }, 401);
+  
+  // Health check — no table param
+  if (!e.parameter.table && !e.parameter.id) {
+    return jsonResponse({
+      status: "ok",
+      folders: DRIVE_FOLDERS,
+      sheets: SHEETS,
+      time: new Date().toISOString(),
+    });
+  }
   
   const table = e.parameter.table;
   const id = e.parameter.id;
@@ -137,6 +185,11 @@ function doPost(e) {
     body = JSON.parse(e.postData.contents);
   } catch {
     return jsonResponse({ error: "Invalid JSON" }, 400);
+  }
+
+  // ── Drive Upload Handler ── (jika ada fileData)
+  if (body.fileName && body.fileType && body.fileData) {
+    return handleDriveUpload(body);
   }
   
   const action = body.action;

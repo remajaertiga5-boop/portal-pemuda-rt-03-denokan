@@ -25,10 +25,11 @@ interface DriveUploadResult {
  * @param idAnggota - ID anggota yang upload
  */
 export async function uploadToDrive(
-  fileData  : string,
-  fileName  : string,
-  fileType  : string,
-  idAnggota : string = "",
+  fileData   : string,
+  fileName   : string,
+  fileType   : string,
+  idAnggota  : string = "",
+  folderType : string = "bukti",
 ): Promise<DriveUploadResult | null> {
   try {
     // Strip prefix if data URL
@@ -43,8 +44,9 @@ export async function uploadToDrive(
       body: {
         fileName,
         fileType,
-        fileData  : base64Data,
-        idAnggota : idAnggota || "anggota",
+        fileData   : base64Data,
+        idAnggota  : idAnggota || "anggota",
+        folderType : folderType || "bukti",
       },
       timeout: 15000,
       retry  : 1,

@@ -6,8 +6,12 @@
 // Copy URL ke env VERCEL_DRIVE_SCRIPT_URL
 // ============================================================
 
-const FOLDER_ID = "18ZbevjsEm8ElZnrLiVB50GBlUtwoYRV7";
-const API_KEY   = "remaja-legok-03-2026";
+const FOLDERS = {
+  bukti: "18ZbevjsEm8ElZnrLiVB50GBlUtwoYRV7",
+  profil: "1Kz8foBDUWew090EnGDfuu4T8Yw8FJSzh",
+};
+const DEFAULT_FOLDER = "bukti";
+const API_KEY = "remaja-legok-03-2026";
 
 // ── CORS Helper ───────────────────────────────────────────
 function jsonResp(data, code) {
@@ -52,7 +56,9 @@ function doPost(e) {
     const blob = Utilities.newBlob(decoded, fileType, fileName);
 
     // Upload ke folder
-    const folder = DriveApp.getFolderById(FOLDER_ID);
+    const folderType = body.folderType || "bukti";
+    const folderId = FOLDERS[folderType] || FOLDERS["bukti"];
+    const folder = DriveApp.getFolderById(folderId);
     const file = folder.createFile(blob);
 
     // Set public
@@ -60,8 +66,8 @@ function doPost(e) {
 
     // Metadata
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    file.setName(`bukti-${idAnggota || "anon"}-${timestamp}-${fileName}`);
-    file.setDescription(`Bukti pembayaran dari ${idAnggota || "Anggota"} — ${new Date().toLocaleString("id-ID")}`);
+    file.setName(`${folderType}-${idAnggota || "anon"}-${timestamp}-${fileName}`);
+    file.setDescription(`${folderType === "profil" ? "Foto profil" : "Bukti pembayaran"} dari ${idAnggota || "Anggota"} — ${new Date().toLocaleString("id-ID")}`);
 
     return jsonResp({
       success     : true,
@@ -85,8 +91,7 @@ function doGet(e) {
   if (!checkAuth(e)) return jsonResp({ error: "Unauthorized" }, 401);
   return jsonResp({
     status  : "ok",
-    folder  : "Bukti Pembayaran",
-    folderId: FOLDER_ID,
+    folders : FOLDERS,
     time    : new Date().toISOString(),
   });
 }

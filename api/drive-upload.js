@@ -3,7 +3,9 @@
 // Upload bukti pembayaran ke folder Drive via Apps Script
 // ============================================================
 
-const DRIVE_SCRIPT_URL = process.env.VERCEL_DRIVE_SCRIPT_URL || process.env.GOOGLE_SCRIPT_DB_URL || "";
+const DRIVE_SCRIPT_URL = process.env.VERCEL_DRIVE_SCRIPT_URL 
+  || process.env.GOOGLE_SCRIPT_DB_URL 
+  || "https://script.google.com/macros/s/AKfycbx0iBGbgvU_2es_ibVKxbu979oelO21sfZNCySUCE3InykXyP8MOMzt-46yshRq8T-93w/exec";
 const API_KEY          = process.env.SHEETS_API_KEY || "remaja-legok-03-2026";
 
 export default async function handler(req, res) {
@@ -19,7 +21,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { fileName, fileType, fileData, idAnggota } = req.body || {};
+    const { fileName, fileType, fileData, idAnggota, folderType } = req.body || {};
 
     if (!fileName || !fileType || !fileData) {
       return res.status(400).json({ error: "fileName, fileType, fileData wajib" });
@@ -38,7 +40,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + API_KEY,
       },
-      body: JSON.stringify({ fileName, fileType, fileData, idAnggota }),
+      body: JSON.stringify({ fileName, fileType, fileData, idAnggota, folderType: folderType || "bukti" }),
     });
 
     const data = await driveRes.json();

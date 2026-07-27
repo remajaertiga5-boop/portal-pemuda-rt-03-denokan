@@ -64,10 +64,11 @@ const API_DEFINITIONS: ApiDefinition[] = [
     nama: "Google Drive",
     kategori: "Penyimpanan",
     icon: "👤",
-    deskripsi: "Folder Google Drive untuk menyimpan foto profil anggota. Foto diupload ke folder khusus dan bisa diakses via link.",
-    fiturTerkait: ["Foto Profil Anggota"],
+    deskripsi: "Folder Google Drive untuk menyimpan bukti pembayaran dan foto profil anggota.",
+    fiturTerkait: ["Bukti Pembayaran", "Foto Profil Anggota"],
     fields: [
-      { key: "FOLDER_ID", label: "Folder ID", placeholder: "1abc123...", type: "text", hint: "ID folder Google Drive untuk foto profil. URL: drive.google.com/drive/folders/[ID ini]" }
+      { key: "FOLDER_BUKTI", label: "Folder Bukti Bayar", placeholder: "18Zbevjs...", type: "text", hint: "ID folder untuk bukti pembayaran iuran" },
+      { key: "FOLDER_PROFIL", label: "Folder Foto Profil", placeholder: "1Kz8foBD...", type: "text", hint: "ID folder untuk foto profil anggota" }
     ],
     docsUrl: "https://drive.google.com"
   }

@@ -67,6 +67,34 @@ export function autoRestoreKonfigurasiAPI(existingConfigs: any[]): any[] {
       console.log('[autoRestore] ✅ Google Sheets auto-configured');
     }
   }
+
+  // Google Drive — inject kedua folder
+  const driveFolderBukti = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_DRIVE_FOLDER_BUKTI)
+    || (typeof process !== 'undefined' && (process as any).env?.VITE_DRIVE_FOLDER_BUKTI)
+    || '18ZbevjsEm8ElZnrLiVB50GBlUtwoYRV7';
+  const driveFolderProfil = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_DRIVE_FOLDER_PROFIL)
+    || (typeof process !== 'undefined' && (process as any).env?.VITE_DRIVE_FOLDER_PROFIL)
+    || '1Kz8foBDUWew090EnGDfuu4T8Yw8FJSzh';
+
+  if (driveFolderBukti || driveFolderProfil) {
+    const existing = configs.find((c: any) => c.NamaAPI === 'Google Drive');
+    if (!existing || existing.Status !== 'Aktif') {
+      const idx = configs.findIndex((c: any) => c.NamaAPI === 'Google Drive');
+      if (idx >= 0) configs.splice(idx, 1);
+      configs.push({
+        NamaAPI: 'Google Drive',
+        Status: 'Aktif',
+        KeyField1: 'FOLDER_BUKTI',
+        ValueField1: driveFolderBukti,
+        KeyField2: 'FOLDER_PROFIL',
+        ValueField2: driveFolderProfil,
+        KeyField3: '', ValueField3: '',
+        KeyField4: '', ValueField4: '',
+        KeyField5: '', ValueField5: '',
+      });
+      console.log('[autoRestore] ✅ Google Drive auto-configured');
+    }
+  }
   
   // Telegram Bot — from env + hardcoded fallback
   const telegramToken = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TELEGRAM_BOT_TOKEN)
