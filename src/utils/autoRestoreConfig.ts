@@ -57,7 +57,7 @@ export function autoRestoreKonfigurasiAPI(existingConfigs: any[]): any[] {
         NamaAPI: 'Google Sheets',
         Status: 'Aktif',
         KeyField1: 'SCRIPT_URL',
-        ValueField1: sheetsUrl || 'https://script.google.com/macros/s/AKfycbx0iBGbgvU_2es_ibVKxbu979oelO21sfZNCySUCE3InykXyP8MOMzt-46yshRq8T-93w/exec',
+        ValueField1: sheetsUrl || 'https://script.google.com/macros/s/AKfycbzhjPTUpHBfGyRRlrdvCqYnHk5TYe_mCrL-s7tWhTd3IrAYsj4ePlsRYJuk1a4ht6nfZg/exec',
         KeyField2: 'SHEETS_ID',
         ValueField2: sheetsId,
         KeyField3: '', ValueField3: '',

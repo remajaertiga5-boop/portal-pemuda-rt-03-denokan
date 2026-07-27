@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   const scriptUrl = process.env.GOOGLE_SCRIPT_URL 
   || process.env.VITE_GOOGLE_SCRIPT_URL 
   || process.env.VITE_API_URL 
-  || "https://script.google.com/macros/s/AKfycbx0iBGbgvU_2es_ibVKxbu979oelO21sfZNCySUCE3InykXyP8MOMzt-46yshRq8T-93w/exec";
+  || "https://script.google.com/macros/s/AKfycbzhjPTUpHBfGyRRlrdvCqYnHk5TYe_mCrL-s7tWhTd3IrAYsj4ePlsRYJuk1a4ht6nfZg/exec";
 
   if (!scriptUrl) {
     return res.status(500).json({

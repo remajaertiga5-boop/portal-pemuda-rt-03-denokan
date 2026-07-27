@@ -5,7 +5,7 @@
 
 const DRIVE_SCRIPT_URL = process.env.VERCEL_DRIVE_SCRIPT_URL 
   || process.env.GOOGLE_SCRIPT_DB_URL 
-  || "https://script.google.com/macros/s/AKfycbx0iBGbgvU_2es_ibVKxbu979oelO21sfZNCySUCE3InykXyP8MOMzt-46yshRq8T-93w/exec";
+  || "https://script.google.com/macros/s/AKfycbzhjPTUpHBfGyRRlrdvCqYnHk5TYe_mCrL-s7tWhTd3IrAYsj4ePlsRYJuk1a4ht6nfZg/exec";
 const API_KEY          = process.env.SHEETS_API_KEY || "remaja-legok-03-2026";
 
 export default async function handler(req, res) {
