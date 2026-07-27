@@ -1,4 +1,5 @@
 import { AppData, addLogAkses } from "./dataStore";
+import { sendToTelegram as apiSendToTelegram } from "./apiClient";
 import { KonfigurasiAPIItem, UserRole } from "../types";
 
 /**
@@ -156,19 +157,18 @@ export async function sendMediaToTelegram(
       return; // Telegram API belum dikonfigurasi atau tidak aktif
     }
 
-    const res = await fetch("/api/telegram/send-media", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        botToken: tgConfig.BOT_TOKEN,
-        chatId: tgConfig.CHAT_ID,
-        mediaUrl,
-        caption,
-        isVideo,
-      }),
-    });
-    const data = await res.json();
-    console.log("Telegram sync result:", data);
+    const result = await apiSendToTelegram(
+      tgConfig.BOT_TOKEN,
+      tgConfig.CHAT_ID,
+      mediaUrl,
+      caption,
+      isVideo
+    );
+    if (result.ok) {
+      console.log("Telegram sync result:", result.data);
+    } else {
+      console.warn("Telegram sync failed:", result.error);
+    }
   } catch (err) {
     console.error("Failed to send media to Telegram:", err);
   }

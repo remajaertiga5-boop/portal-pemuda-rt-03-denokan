@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Send, User, Bot, Loader2, Sparkles, Wifi, WifiOff } from "lucide-react";
 import { loadAppData, saveAppData, AppData } from "../utils/dataStore";
 import { ambilKonfigAPIByKategori, ambilKonfigAPIByNama } from "../utils/apiConfigHelper";
+import { chatAI } from "../utils/apiClient";
 
 // ----------------------------------------------------------
 // TYPES
@@ -185,29 +186,24 @@ export default function Chatbot({ appData, setAppData, session, showToast }: Cha
 
       if (apiAvailable !== false) {
         try {
-          const res = await fetch("/api/chat", {
-            method : "POST",
-            headers: { "Content-Type": "application/json" },
-            body   : JSON.stringify({
-              message: userText,
-              history: limitedHistory,
-              customApiKey: customApiKey || undefined,
-              appData: currentAppData,
-              userRole: currentRole,
-            }),
-          });
+          const result = await chatAI(
+            userText,
+            limitedHistory,
+            currentAppData,
+            currentRole,
+            customApiKey || undefined
+          );
 
-          if (res.ok) {
+          if (result.ok && result.data) {
             setApiAvailable(true);
-            const data = await res.json();
-            if (data.updatedAppData) {
-              saveAppData(data.updatedAppData);
-              if (setAppData) setAppData(data.updatedAppData);
+            if (result.data.updatedAppData) {
+              saveAppData(result.data.updatedAppData);
+              if (setAppData) setAppData(result.data.updatedAppData);
               if (showToast) showToast("Database berhasil diperbarui oleh AI!", "success");
             }
-            botText = data.reply || "Maaf, terjadi kesalahan pada server.";
+            botText = result.data.reply || "Maaf, terjadi kesalahan pada server.";
           } else {
-            throw new Error(`Server error: ${res.status}`);
+            throw new Error(result.error || "Server error");
           }
         } catch {
           setApiAvailable(false);

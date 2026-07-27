@@ -51,7 +51,7 @@ export const VALIDATION = {
 
 export const LOCALES = {
   DEFAULT: 'id',
-  AVAILABLE: ['id', 'en', 'jv'] as const,
+  AVAILABLE: ['id', 'en', 'jv', 'slg'] as const,
   STORAGE_KEY: 'remaja-legok-locale',
 } as const;
 
