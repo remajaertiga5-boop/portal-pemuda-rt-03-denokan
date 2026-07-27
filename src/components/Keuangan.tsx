@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   Wallet, DollarSign, Plus, CheckCircle2, XCircle, Send, Trash2, AlertCircle, 
   Calendar, Users, FileText, Settings, ShieldAlert, Share2, Download, 
@@ -8,6 +8,7 @@ import {
   Clock, AlertTriangle, Layers, Building2, Printer, CheckSquare, X, Info, MessageCircle, Sliders
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { refreshSingleSheet } from "../utils/dataStoreSheets";
 import { KasItem, IuranItem, UserRole, AuthSession, AnggotaItem } from "../types";
 import { verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";
@@ -138,6 +139,17 @@ export default function Keuangan({
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
 
   // Raw Data
+
+  // ── Refresh data Kas & Anggota dari Google Sheets tiap buka menu ──
+  useEffect(() => {
+    refreshSingleSheet("kas").then((result: any) => {
+      if (result?.Kas) setAppData((prev: AppData) => ({ ...prev, Kas: result.Kas! }));
+    });
+    refreshSingleSheet("anggota").then((result: any) => {
+      if (result?.Anggota) setAppData((prev: AppData) => ({ ...prev, Anggota: result.Anggota! }));
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const kasList = appData.Kas || [];
   const iuranList = appData.Iuran || [];
   const anggotaList = (appData.Anggota || []).filter(a => a.Status_Tampil !== "ARSIP" && a.Status_Aktif === "AKTIF");
