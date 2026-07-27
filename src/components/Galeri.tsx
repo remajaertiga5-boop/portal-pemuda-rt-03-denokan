@@ -12,7 +12,7 @@ import { AppData, addLogAkses } from "../utils/dataStore";
 import { compressImage } from "../utils/imageUtils";
 import { uploadToR2 } from "../utils/apiClient";
 import { GaleriItem, UserRole } from "../types";
-import { sendMediaToTelegram } from "../utils/apiConfigHelper";
+import { sendMediaToTelegram, uploadMediaToTelegram } from "../utils/apiConfigHelper";
 import PandawaLogo from "./PandawaLogo";
 
 // ----------------------------------------------------------
@@ -192,30 +192,46 @@ export default function Galeri({
     const initialApproval: ApprovalStatus =
       isPengurus || !needsApproval ? "DISETUJUI" : "MENUNGGU";
 
-    // Upload ke R2 (atau fallback data URL kalau R2 tidak tersedia)
+    // ── Upload Storage (Telegram ➔ R2 ➔ fallback base64) ──
     let finalUrl = fotoUrl;
+    let storageMethod = "local";
+
+    // 1. TRY: Telegram (prioritas utama)
     try {
-      const blob = (window as any).__uploadBlob as File | undefined;
-      const fileToUpload = blob || new File(
-        [fotoUrl.split(",")[1] ? atob(fotoUrl.split(",")[1]) : ""],
-        `${judulKegiatan.trim().slice(0, 30)}.jpg`,
-        { type: isVideo ? "video/mp4" : "image/jpeg" }
+      const tgFileType = isVideo ? "video/mp4" : "image/jpeg";
+      const tgFileName = `${judulKegiatan.trim().slice(0, 30)}.${isVideo ? "mp4" : "jpg"}`;
+      const tgResult = await uploadMediaToTelegram(
+        appData, fotoUrl, tgFileName, tgFileType,
+        `📱 Remaja Legok 03\n📌 ${judulKegiatan.trim()}\n👤 ${currentUserName || "Anggota"}`
       );
-      
-      const result = await uploadToR2(
-        fileToUpload,
-        "galeri",
-        currentUserName || "Anggota"
-      );
-      
-      if (result.ok && result.data?.url) {
-        finalUrl = result.data.url;
-        if (!result.data.fallback) {
-          showToast("Media berhasil diupload ke cloud! ☁️", "info");
-        }
+      if (tgResult?.url) {
+        finalUrl = tgResult.url;
+        storageMethod = "telegram";
+        showToast("📸 Disimpan di Telegram!", "success");
       }
-    } catch (uploadErr) {
-      console.warn("[Galeri] Upload R2 gagal, pakai data URL:", uploadErr);
+    } catch {}
+
+    // 2. FALLBACK: Cloudflare R2 (jika Telegram gagal/tidak dikonfigurasi)
+    if (storageMethod === "local") {
+      try {
+        const blob = (window as any).__uploadBlob as File | undefined;
+        const fileToUpload = blob || new File(
+          [fotoUrl.split(",")[1] ? atob(fotoUrl.split(",")[1]) : ""],
+          `${judulKegiatan.trim().slice(0, 30)}.jpg`,
+          { type: isVideo ? "video/mp4" : "image/jpeg" }
+        );
+        const r2Result = await uploadToR2(fileToUpload, "galeri", currentUserName || "Anggota");
+        if (r2Result.ok && r2Result.data?.url && !(r2Result.data as any).fallback) {
+          finalUrl = r2Result.data.url;
+          storageMethod = "r2";
+          showToast("☁️ Disimpan di Cloudflare R2!", "info");
+        }
+      } catch {}
+    }
+
+    // 3. LAST RESORT: base64 data URL (tetap di localStorage)
+    if (storageMethod === "local") {
+      showToast("⚠️ Disimpan lokal (Telegram & R2 tidak tersedia)", "warning");
     }
 
     const newItem: GaleriItem = {
@@ -244,12 +260,14 @@ export default function Galeri({
     );
     setAppData(loggedData);
 
-    sendMediaToTelegram(
-      appData,
-      finalUrl,
-      `📱 Remaja Legok 03 - Galeri ${isVideo ? "Video" : "Foto"}\n📌 Kegiatan: ${judulKegiatan.trim()}\n👤 Uploader: ${currentUserName || "Anggota"}`,
-      isVideo
-    );
+    // Notifikasi Telegram (jika belum upload via Telegram)
+    if (storageMethod !== "telegram") {
+      sendMediaToTelegram(
+        appData, finalUrl,
+        `📱 Remaja Legok 03 - Galeri ${isVideo ? "Video" : "Foto"}\n📌 Kegiatan: ${judulKegiatan.trim()}\n👤 Uploader: ${currentUserName || "Anggota"}`,
+        isVideo
+      );
+    }
 
     showToast(
       initialApproval === "MENUNGGU"

@@ -12,7 +12,7 @@ import { uploadToR2 } from "../utils/apiClient";
 import { GaleriItem, AlbumItem, UserRole, ContentVisibility } from "../types";
 import { verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";
-import { sendMediaToTelegram } from "../utils/apiConfigHelper";
+import { sendMediaToTelegram, uploadMediaToTelegram } from "../utils/apiConfigHelper";
 import PandawaLogo from "./PandawaLogo";
 
 // ----------------------------------------------------------
@@ -590,8 +590,27 @@ export default function GaleriSuperAdmin({
     }, 400);
   };
 
-  const finishUploadProcess = (targetAlbumId: string) => {
+  const finishUploadProcess = async (targetAlbumId: string) => {
     const ts = Date.now();
+    
+    // Upload setiap file ke Telegram (parallel)
+    const uploadPromises = uploadFiles.map(async (item) => {
+      const isVideo = item.isVideo || item.url.startsWith("data:video/");
+      try {
+        const tgResult = await uploadMediaToTelegram(
+          appData, item.url,
+          `${item.title.slice(0, 30)}.${isVideo ? "mp4" : "jpg"}`,
+          isVideo ? "video/mp4" : "image/jpeg",
+          item.caption || item.title
+        );
+        if (tgResult?.url) return tgResult.url;
+      } catch {}
+      return item.url; // fallback ke data URL
+    });
+
+    const uploadedUrls = await Promise.all(uploadPromises);
+    const uploadSuccess = uploadedUrls.filter((url, i) => url !== uploadFiles[i].url).length;
+
     const newItems: GaleriItem[] = uploadFiles.map((item, idx) => {
       let finalTitle = item.title;
       if (uploadTitleStrategy === "SAME" && uploadGlobalTitle.trim()) {
@@ -604,7 +623,7 @@ export default function GaleriSuperAdmin({
         ID_Foto         : `FTO-${ts}-${idx}`,
         Judul           : finalTitle,
         Judul_Kegiatan  : finalTitle,
-        Foto_URL        : item.url,
+        Foto_URL        : uploadedUrls[idx] || item.url,
         Link_Foto       : item.url,
         Album_ID        : targetAlbumId || totalAlbums[0]?.ID_Album || "",
         Tanggal         : new Date().toISOString().split("T")[0],

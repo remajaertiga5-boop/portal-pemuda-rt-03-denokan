@@ -201,7 +201,35 @@ export async function chatAI(
   });
 }
 
-/** Kirim media ke Telegram */
+/** Upload media ke Telegram + dapatkan URL publik (untuk storage) */
+export interface TelegramUploadResult {
+  url          : string;
+  fileId       : string;
+  filePath     : string;
+  fileSize     : number;
+  isVideo      : boolean;
+  messageId    : number;
+  chatId       : string;
+  thumbnailUrl?: string;
+}
+
+export async function uploadToTelegram(
+  botToken: string,
+  chatId  : string,
+  fileData: string,
+  fileName: string,
+  fileType: string,
+  caption?: string
+): Promise<ApiResult<TelegramUploadResult>> {
+  return apiRequest("/telegram/upload-return-url", {
+    method : "POST",
+    body   : { botToken, chatId, fileData, fileName, fileType, caption },
+    timeout: 20000,
+    retry  : 1,
+  });
+}
+
+/** Kirim media ke Telegram (notifikasi saja, tanpa return URL) */
 export async function sendToTelegram(
   botToken: string,
   chatId  : string,
@@ -384,6 +412,7 @@ const apiClient = {
   apiRequest,
   chatAI,
   sendToTelegram,
+  uploadToTelegram,
   uploadToR2,
   sheetsProxy,
   verifyAuth,

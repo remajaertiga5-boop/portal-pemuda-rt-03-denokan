@@ -1,5 +1,6 @@
 import { AppData, addLogAkses } from "./dataStore";
-import { sendToTelegram as apiSendToTelegram } from "./apiClient";
+import { sendToTelegram as apiSendToTelegram, uploadToTelegram as apiUploadToTelegram } from "./apiClient";
+import type { TelegramUploadResult } from "./apiClient";
 import { KonfigurasiAPIItem, UserRole } from "../types";
 
 /**
@@ -143,7 +144,39 @@ export function simpanKonfigurasiAPI(
 }
 
 /**
- * Kirim Foto/Video ke Telegram Bot menggunakan konfigurasi API yang disimpan admin
+ * Upload media ke Telegram + dapatkan URL publik untuk storage
+ * Return: URL publik Telegram (bisa dipakai di <img>/<video>) atau null jika gagal
+ */
+export async function uploadMediaToTelegram(
+  appData  : AppData,
+  fileData : string,  // base64 data URL
+  fileName : string,
+  fileType : string,
+  caption ?: string
+): Promise<TelegramUploadResult | null> {
+  try {
+    const tgConfig = ambilKonfigAPIByNama(appData, "Telegram Bot");
+    if (!tgConfig?.BOT_TOKEN || !tgConfig?.CHAT_ID) return null;
+
+    const result = await apiUploadToTelegram(
+      tgConfig.BOT_TOKEN, tgConfig.CHAT_ID,
+      fileData, fileName, fileType, caption
+    );
+
+    if (result.ok && result.data?.url) {
+      console.log("[Telegram] Upload berhasil:", result.data.url);
+      return result.data;
+    }
+    console.warn("[Telegram] Upload gagal:", result.error);
+    return null;
+  } catch (err) {
+    console.error("[Telegram] Upload error:", err);
+    return null;
+  }
+}
+
+/**
+ * Kirim Foto/Video ke Telegram Bot (notifikasi saja — legacy)
  */
 export async function sendMediaToTelegram(
   appData: AppData,
