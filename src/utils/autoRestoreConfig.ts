@@ -110,7 +110,7 @@ export function autoRestoreKonfigurasiAPI(existingConfigs: any[]): any[] {
   
   if (telegramToken && telegramChatId) {
     const existing = configs.find((c: any) => c.NamaAPI === 'Telegram Bot');
-    if (!existing || !existing.ValueField1) {
+    if (!existing || existing.Status !== "Aktif" || !existing.ValueField1) {
       const idx = configs.findIndex((c: any) => c.NamaAPI === 'Telegram Bot');
       if (idx >= 0) configs.splice(idx, 1);
       configs.push({

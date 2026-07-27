@@ -214,7 +214,7 @@ export default function Galeri({
 
     // 2. LAST RESORT: base64 data URL (tetap di localStorage)
     if (storageMethod === "local") {
-      showToast("⚠️ Disimpan lokal (Telegram & R2 tidak tersedia)", "warning");
+      showToast("⚠️ Disimpan lokal — upload ke Telegram gagal", "warning");
     }
 
     const newItem: GaleriItem = {

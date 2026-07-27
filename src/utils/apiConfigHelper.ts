@@ -156,18 +156,69 @@ export async function uploadMediaToTelegram(
 ): Promise<TelegramUploadResult | null> {
   try {
     const tgConfig = ambilKonfigAPIByNama(appData, "Telegram Bot");
-    if (!tgConfig?.BOT_TOKEN || !tgConfig?.CHAT_ID) return null;
-
-    const result = await apiUploadToTelegram(
-      tgConfig.BOT_TOKEN, tgConfig.CHAT_ID,
-      fileData, fileName, fileType, caption
-    );
-
-    if (result.ok && result.data?.url) {
-      console.log("[Telegram] Upload berhasil:", result.data.url);
-      return result.data;
+    if (!tgConfig?.BOT_TOKEN || !tgConfig?.CHAT_ID) {
+      console.warn("[Telegram] Config tidak ditemukan — BOT_TOKEN atau CHAT_ID kosong");
+      return null;
     }
-    console.warn("[Telegram] Upload gagal:", result.error);
+    console.log("[Telegram] Config OK, mengupload...");
+
+    // 1. TRY: Vercel serverless proxy
+    try {
+      const result = await apiUploadToTelegram(
+        tgConfig.BOT_TOKEN, tgConfig.CHAT_ID,
+        fileData, fileName, fileType, caption
+      );
+      if (result.ok && result.data?.url) {
+        console.log("[Telegram] Upload via Vercel OK:", result.data.url);
+        return result.data;
+      }
+      console.warn("[Telegram] Vercel proxy gagal:", result.error, "→ coba direct");
+    } catch (e) {
+      console.warn("[Telegram] Vercel proxy error:", e, "→ coba direct");
+    }
+
+    // 2. FALLBACK: Direct Telegram Bot API (bypass Vercel)
+    try {
+      const isVideo = (fileType || "").startsWith("video/");
+      const method = isVideo ? "sendVideo" : "sendPhoto";
+      const fieldName = isVideo ? "video" : "photo";
+      
+      // Convert base64 data URL to Blob
+      let blob: Blob;
+      if (fileData.startsWith("data:")) {
+        const resp = await fetch(fileData);
+        blob = await resp.blob();
+      } else {
+        // Raw URL — fetch and send as is
+        blob = new Blob([fileData], { type: fileType });
+      }
+
+      const formData = new FormData();
+      formData.append("chat_id", tgConfig.CHAT_ID);
+      if (caption) formData.append("caption", caption);
+      formData.append(fieldName, blob, fileName);
+
+      const tgRes = await fetch(
+        `https://api.telegram.org/bot${tgConfig.BOT_TOKEN}/${method}`,
+        { method: "POST", body: formData }
+      );
+      const tgJson = await tgRes.json();
+      
+      if (tgJson.ok && tgJson.result) {
+        const msg = tgJson.result;
+        const media = isVideo ? msg.video : (msg.photo?.[msg.photo.length - 1] || msg.photo?.[0]);
+        const fileId = media?.file_id || "";
+        const url = fileId 
+          ? `https://api.telegram.org/file/bot${tgConfig.BOT_TOKEN}/${fileId}`
+          : "";
+        console.log("[Telegram] Direct upload OK:", url || fileId);
+        return { url: url || "tg://" + fileId, fileId: fileId || "", filePath: "", fileSize: 0, isVideo, messageId: msg.message_id || 0, chatId: tgConfig.CHAT_ID, fileName, fileType };
+      }
+      console.warn("[Telegram] Direct API gagal:", tgJson.description);
+    } catch (e) {
+      console.error("[Telegram] Direct API error:", e);
+    }
+
     return null;
   } catch (err) {
     console.error("[Telegram] Upload error:", err);

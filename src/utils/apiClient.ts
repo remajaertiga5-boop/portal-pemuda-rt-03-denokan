@@ -208,6 +208,8 @@ export interface TelegramUploadResult {
   filePath     : string;
   fileSize     : number;
   isVideo      : boolean;
+  fileName    ?: string;
+  fileType    ?: string;
   messageId    : number;
   chatId       : string;
   thumbnailUrl?: string;
