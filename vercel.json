@@ -32,5 +32,16 @@
         }
       ]
     }
-  ]
+  ],
+  "nodeVersion": "22",
+  "functions": {
+    "api/**/*.js": {
+      "memory": 512,
+      "maxDuration": 30
+    },
+    "api/upload-r2.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
 }
