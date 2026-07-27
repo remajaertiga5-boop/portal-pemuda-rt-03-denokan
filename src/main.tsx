@@ -14,6 +14,7 @@ import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LanguageProvider } from './context/LanguageContext';
 
 // ✅ ADDED: Guard jika root element tidak ditemukan
 // Mencegah crash tanpa pesan error yang jelas
@@ -92,7 +93,9 @@ i18nInitPromise.then(() => {
     <ThemeProvider>
       <AuthProvider>
         <ErrorBoundary>
-          <App />
+          <LanguageProvider>
+            <App />
+          </LanguageProvider>
         </ErrorBoundary>
       </AuthProvider>
     </ThemeProvider>
@@ -105,7 +108,9 @@ i18nInitPromise.then(() => {
       <ThemeProvider>
         <AuthProvider>
           <ErrorBoundary>
+            <LanguageProvider>
             <App />
+          </LanguageProvider>
           </ErrorBoundary>
         </AuthProvider>
       </ThemeProvider>
