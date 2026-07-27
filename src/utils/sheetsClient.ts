@@ -35,10 +35,19 @@ const SHEET_NAMES: Record<string, string> = {
 // ── Read all rows from a sheet ────────────────────────────
 export async function readSheet<T = any>(table: string): Promise<DbResponse<T>> {
   const sheetName = SHEET_NAMES[table] || table;
-  const result = await apiRequest(`/sheets-db?table=${encodeURIComponent(sheetName)}`, {
-    method: "GET",
-  });
-  return result as unknown as DbResponse<T>;
+  try {
+    const result = await apiRequest(`/sheets-db?table=${encodeURIComponent(sheetName)}`, {
+      method: "GET",
+    });
+    // Pastikan .data selalu array
+    const raw = (result as any)?.data;
+    if (!Array.isArray(raw)) {
+      return { data: [] as T[], total: 0 };
+    }
+    return { data: raw as T[], total: raw.length };
+  } catch {
+    return { data: [] as T[], total: 0 };
+  }
 }
 
 // ── Read single row by ID ─────────────────────────────────

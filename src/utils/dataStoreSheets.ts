@@ -20,6 +20,13 @@ interface SyncResult {
 }
 
 // ── State ─────────────────────────────────────────────────
+
+// ── Safe Array Helper ───────────────────────────────────
+function safeArray(val: any): any[] {
+  if (Array.isArray(val)) return val;
+  return [];
+}
+
 let syncCallbacks: SyncCallback[] = [];
 let currentStatus: SyncStatus = "idle";
 let lastSyncTime: Date | null = null;
@@ -63,12 +70,12 @@ export async function loadFromSheets(): Promise<AppData | null> {
 
     // Build AppData from sheets
     const appData: AppData = {
-      Anggota     : (anggota.data as any[]) || [],
-      Agenda      : (agenda.data as any[]) || [],
-      Pengumuman  : (pengumuman.data as any[]) || [],
-      Kas         : (kas.data as any[]) || [],
-      Aspirasi    : (aspirasi.data as any[]) || [],
-      Galeri      : (galeri.data as any[]) || [],
+      Anggota     : safeArray(anggota.data),
+      Agenda      : safeArray(agenda.data),
+      Pengumuman  : safeArray(pengumuman.data),
+      Kas         : safeArray(kas.data),
+      Aspirasi    : safeArray(aspirasi.data),
+      Galeri      : safeArray(galeri.data),
       Iuran       : [],
       Voting      : [],
       Album       : [],
@@ -108,6 +115,7 @@ export async function saveToSheets(appData: AppData): Promise<SyncResult> {
   const results: { table: string; rows: number; error?: string }[] = [];
 
   const syncTable = async (table: string, data: any[]) => {
+    if (!Array.isArray(data)) return;
     try {
       const result = await sheets.syncSheet(table, data);
       if (result.error) throw new Error(result.error);
@@ -153,19 +161,27 @@ export async function saveToSheets(appData: AppData): Promise<SyncResult> {
 
 // ── Initial load — Sheets first, fallback to localStorage ──
 export async function initializeData(): Promise<AppData> {
-  // 1. Coba dari Sheets
-  const sheetsData = await loadFromSheets();
-  if (sheetsData) return sheetsData;
-
-  // 2. Fallback ke localStorage
-  const localData = loadAppData();
-  if (localData) {
-    notify("idle", "Menggunakan data lokal (Google Sheets tidak tersedia)");
-    return localData;
+  try {
+    // 1. Coba dari Sheets
+    const sheetsData = await loadFromSheets();
+    if (sheetsData) return sheetsData;
+  } catch (err) {
+    console.error("[SheetsDB] initializeData error:", err);
   }
 
-  // 3. Last resort — empty data
-  notify("error", "Tidak ada data tersedia");
+  // 2. Fallback ke localStorage
+  try {
+    const localData = loadAppData();
+    if (localData && localData.Anggota) {
+      notify("idle", "Menggunakan data lokal (Google Sheets tidak tersedia)");
+      return localData;
+    }
+  } catch (err) {
+    console.error("[SheetsDB] localStorage fallback error:", err);
+  }
+
+  // 3. Last resort — empty safe data
+  notify("error", "Tidak ada data tersedia — menggunakan data kosong");
   return loadAppData(); // returns default empty
 }
 
