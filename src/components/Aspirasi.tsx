@@ -66,7 +66,7 @@ export default function Aspirasi({
 
   // ── Refresh data Aspirasi dari Google Sheets tiap buka menu ──
   useEffect(() => {
-    refreshSingleSheet("aspirasi").then(result => {
+    refreshSingleSheet("aspirasi").then((result: any) => {
       if (result?.Aspirasi) setAppData((prev: AppData) => ({ ...prev, Aspirasi: result.Aspirasi! }));
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

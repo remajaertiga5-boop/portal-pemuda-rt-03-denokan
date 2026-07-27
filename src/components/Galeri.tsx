@@ -64,7 +64,7 @@ export default function Galeri({
 
   // ── Refresh data Galeri dari Google Sheets tiap buka menu ──
   useEffect(() => {
-    refreshSingleSheet("galeri").then(result => {
+    refreshSingleSheet("galeri").then((result: any) => {
       if (result?.Galeri) setAppData((prev: AppData) => ({ ...prev, Galeri: result.Galeri! }));
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

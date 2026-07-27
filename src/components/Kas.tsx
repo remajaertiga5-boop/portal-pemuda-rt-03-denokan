@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
@@ -8,6 +8,7 @@ import {
   Settings, Check, Slash, AlertTriangle, Building2, Layers,
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { refreshSingleSheet } from "../utils/dataStoreSheets";
 import { useLocale } from "../hooks/useLocale";
 import { compressImage } from "../utils/imageUtils";
 import { KasItem, UserRole } from "../types";
@@ -137,7 +138,7 @@ export default function Kas({
 
   // ── Refresh data Kas dari Google Sheets tiap buka menu ──
   useEffect(() => {
-    refreshSingleSheet("kas").then(result => {
+    refreshSingleSheet("kas").then((result: any) => {
       if (result?.Kas) setAppData((prev: AppData) => ({ ...prev, Kas: result.Kas! }));
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

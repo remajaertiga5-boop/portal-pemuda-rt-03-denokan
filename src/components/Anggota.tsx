@@ -12,6 +12,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { AppData, addLogAkses, generateIdAnggotaUnik } from "../utils/dataStore";
+import { refreshSingleSheet } from "../utils/dataStoreSheets";
 import { useLocale } from "../hooks/useLocale";
 import { compressImage, validateFile } from "../utils/imageUtils";
 import { AnggotaItem, UserRole } from "../types";
@@ -62,7 +63,7 @@ export default function Anggota({
 
   // ── Refresh data Anggota dari Google Sheets tiap buka menu ──
   useEffect(() => {
-    refreshSingleSheet("anggota").then(result => {
+    refreshSingleSheet("anggota").then((result: any) => {
       if (result?.Anggota) setAppData((prev: AppData) => ({ ...prev, Anggota: result.Anggota! }));
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { AppData, addLogAkses, filterKontenByAkses } from "../utils/dataStore";
+import { refreshSingleSheet } from "../utils/dataStoreSheets";
 import { useLocale } from "../hooks/useLocale";
 import { AgendaItem, UserRole, ContentVisibility } from "../types";
 
@@ -81,7 +82,7 @@ export default function Agenda({
 
   // ── Refresh data Agenda dari Google Sheets tiap buka menu ──
   useEffect(() => {
-    refreshSingleSheet("agenda").then(result => {
+    refreshSingleSheet("agenda").then((result: any) => {
       if (result?.Agenda) setAppData((prev: AppData) => ({ ...prev, Agenda: result.Agenda! }));
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
