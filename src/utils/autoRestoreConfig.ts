@@ -68,17 +68,17 @@ export function autoRestoreKonfigurasiAPI(existingConfigs: any[]): any[] {
     }
   }
   
-  // Telegram Bot — from env (support both VITE_ prefix dan tanpa)
+  // Telegram Bot — from env + hardcoded fallback
   const telegramToken = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TELEGRAM_BOT_TOKEN)
     || (typeof import.meta !== 'undefined' && (import.meta as any).env?.TELEGRAM_BOT_TOKEN)
     || (typeof process !== 'undefined' && (process as any).env?.VITE_TELEGRAM_BOT_TOKEN)
     || (typeof process !== 'undefined' && (process as any).env?.TELEGRAM_BOT_TOKEN)
-    || '';
+    || '7331960901:AAFi80K06GCMTqd9VLaXSFkGZ1nh0Xl_im8';
   const telegramChatId = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TELEGRAM_CHAT_ID)
     || (typeof import.meta !== 'undefined' && (import.meta as any).env?.TELEGRAM_CHAT_ID)
     || (typeof process !== 'undefined' && (process as any).env?.VITE_TELEGRAM_CHAT_ID)
     || (typeof process !== 'undefined' && (process as any).env?.TELEGRAM_CHAT_ID)
-    || '';
+    || '-1004474501263';
   
   if (telegramToken && telegramChatId) {
     const existing = configs.find((c: any) => c.NamaAPI === 'Telegram Bot');
