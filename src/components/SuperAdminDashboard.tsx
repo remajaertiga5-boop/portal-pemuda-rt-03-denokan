@@ -1,9 +1,11 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import {
   Crown, Users, Shield, Key, FileText, Database, Archive,
-  Lock, Image, Printer, Plug, Loader2
+  Lock, Image, Printer, Plug, Loader2, Cloud, CloudOff, RefreshCw
 } from "lucide-react";
 import { AppData, addLogAkses } from "../utils/dataStore";
+import { saveToSheets, onSyncChange, getSyncStatus } from "../utils/dataStoreSheets";
+import type { SyncStatus } from "../utils/dataStoreSheets";
 import { verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";
 import MatriksHakAksesModal from "./MatriksHakAksesModal";
@@ -47,12 +49,19 @@ function TabContent({ id, children }: { id: string; children: React.ReactNode })
 export default function SuperAdminDashboard({ appData, setAppData, showToast }: SuperAdminDashboardProps) {
 
   const { state, dispatch } = useSuperAdminState();
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+  const [syncMsg, setSyncMsg] = useState("");
 
   // Realtime clock
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    setSyncStatus(getSyncStatus());
+    return onSyncChange((s, m) => { setSyncStatus(s); if (m) setSyncMsg(m); });
   }, []);
 
   // ── Derived ────────────────────────────────────────────
@@ -70,6 +79,10 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
   };
 
   const handleCetakDaftar = () => window.print();
+
+  const handleSyncToSheets = async () => {
+    await saveToSheets(appData);
+  };
 
   // ── Tab Config ─────────────────────────────────────────
   const tabs = [
@@ -98,6 +111,21 @@ export default function SuperAdminDashboard({ appData, setAppData, showToast }: 
           <button onClick={handleBackupData}
             className="flex-1 md:flex-none px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 border border-white/20 backdrop-blur-sm transition-all">
             <Database size={16} /> 💾 Backup Data
+          </button>
+          <button onClick={handleSyncToSheets}
+            disabled={syncStatus === "syncing"}
+            className={"flex-1 md:flex-none px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all " +
+              (syncStatus === "syncing" ? "bg-blue-500/30 text-blue-200 animate-pulse cursor-wait" :
+               syncStatus === "error" ? "bg-rose-500/30 text-rose-200 hover:bg-rose-500/50" :
+               syncStatus === "offline" ? "bg-amber-500/30 text-amber-200" :
+               "bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/40")}
+            title={syncMsg || "Sync data ke Google Sheets"}>
+            {syncStatus === "syncing" ? <RefreshCw size={16} className="animate-spin" /> :
+             syncStatus === "error" || syncStatus === "offline" ? <CloudOff size={16} /> :
+             <Cloud size={16} />}
+            {syncStatus === "syncing" ? "Syncing..." :
+             syncStatus === "idle" ? "☁️ Sync Sheets" :
+             syncStatus === "error" ? "⚠️ Retry Sync" : "📡 Offline"}
           </button>
           <button onClick={handleCetakDaftar}
             className="flex-1 md:flex-none px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-purple-950 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md">

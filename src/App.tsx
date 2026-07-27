@@ -26,6 +26,7 @@ import ToastContainer, { ToastMessage } from "./components/Toast";
 import LoginPage from "./components/LoginPage";
 import { AuthSession } from "./types";
 import { getAuthSession, clearAuthSession, addAccessLog } from "./utils/auth";
+import { initializeData } from "./utils/dataStoreSheets";
 import { loadAppData, saveAppData, AppData } from "./utils/dataStore";
 import { isApiConfigured } from "./components/ApiConfigPanel";
 import PandawaLogo from "./components/PandawaLogo";
@@ -226,10 +227,15 @@ export default function App() {
   // EFFECTS
   // ──────────────────────────────────────────────────────────
 
-  // Pulihkan session dari localStorage saat mount
+  // Pulihkan session + load data dari Google Sheets (fallback ke localStorage)
   useEffect(() => {
     const savedSession = getAuthSession();
     setSession(savedSession);
+
+    // Coba load dari Google Sheets, fallback ke localStorage otomatis
+    initializeData().then(data => {
+      if (data) setAppData(data);
+    });
   }, []);
 
   // Auto-save appData ke localStorage tiap ada perubahan
