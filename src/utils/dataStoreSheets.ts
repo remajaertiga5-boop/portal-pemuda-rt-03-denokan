@@ -79,7 +79,16 @@ export async function loadFromSheets(): Promise<AppData | null> {
       Pengumuman  : safeArray(pengumuman.data),
       Kas         : safeArray(kas.data),
       Aspirasi    : safeArray(aspirasi.data),
-      Galeri      : safeArray(galeri.data),
+      // Galeri: merge Sheets + local — jangan overwrite data lokal
+      Galeri: (() => {
+        const galeriSheets = safeArray(galeri.data);
+        if (galeriSheets.length > 0) {
+          const localGaleri = existingData.Galeri || [];
+          const sheetsIds = new Set(galeriSheets.map((s: any) => s.ID));
+          return [...galeriSheets, ...localGaleri.filter((l: any) => !sheetsIds.has(l.ID))];
+        }
+        return existingData.Galeri || [];
+      })(),
     };
 
     // Cache ke localStorage

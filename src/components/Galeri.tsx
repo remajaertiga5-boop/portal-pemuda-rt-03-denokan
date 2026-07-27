@@ -243,14 +243,7 @@ export default function Galeri({
     );
     setAppData(loggedData);
 
-    // Notifikasi Telegram (jika belum upload via Telegram)
-    if (storageMethod !== "telegram") {
-      sendMediaToTelegram(
-        appData, finalUrl,
-        `📱 Remaja Legok 03 - Galeri ${isVideo ? "Video" : "Foto"}\n📌 Kegiatan: ${judulKegiatan.trim()}\n👤 Uploader: ${currentUserName || "Anggota"}`,
-        isVideo
-      );
-    }
+    // Notifikasi: foto sudah dikirim via uploadMediaToTelegram — tidak perlu kirim ulang
 
     showToast(
       initialApproval === "MENUNGGU"
