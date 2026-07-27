@@ -46,25 +46,25 @@ export function autoRestoreKonfigurasiAPI(existingConfigs: any[]): any[] {
     || (typeof import.meta !== 'undefined' && (import.meta as any).env?.SHEETS_ID)
     || (typeof process !== 'undefined' && (process as any).env?.VITE_SHEETS_ID)
     || (typeof process !== 'undefined' && (process as any).env?.SHEETS_ID)
-    || '';
+    || '1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8';
   
-  if (sheetsUrl && sheetsId) {
+  if (sheetsId) {
     const existing = configs.find((c: any) => c.NamaAPI === 'Google Sheets');
-    if (!existing || !existing.ValueField1) {
+    if (!existing || existing.Status !== 'Aktif' || !existing.ValueField1) {
       const idx = configs.findIndex((c: any) => c.NamaAPI === 'Google Sheets');
       if (idx >= 0) configs.splice(idx, 1);
       configs.push({
         NamaAPI: 'Google Sheets',
         Status: 'Aktif',
         KeyField1: 'SCRIPT_URL',
-        ValueField1: sheetsUrl,
+        ValueField1: sheetsUrl || 'PENDING_DEPLOY',
         KeyField2: 'SHEETS_ID',
         ValueField2: sheetsId,
         KeyField3: '', ValueField3: '',
         KeyField4: '', ValueField4: '',
         KeyField5: '', ValueField5: '',
       });
-      console.log('[autoRestore] ✅ Google Sheets auto-configured from env');
+      console.log('[autoRestore] ✅ Google Sheets auto-configured');
     }
   }
   
