@@ -36,16 +36,7 @@ interface AuthModalProps {
   initialMode?: "ID" | "SUPER_ADMIN";
 }
 
-// Quick test shortcuts — tampil hanya di development
-const TEST_IDS = [
-  { label: "Anggota (RL03-006)",    id: "RL03-006" },
-  { label: "Ketua (RL03-001)",      id: "RL03-001" },
-  { label: "Sekretaris (RL03-002)", id: "RL03-002" },
-  { label: "Bendahara (RL03-003)",  id: "RL03-003" },
-  { label: "Humas (RL03-004)",      id: "RL03-004" },
-];
-
-const IS_DEV = import.meta.env.DEV;
+// Quick test IDs dihapus — tidak bocorin ID anggota ke publik
 
 // ----------------------------------------------------------
 // COMPONENT
@@ -139,7 +130,7 @@ export default function AuthModal({
     }
 
     if (!/^RL03-\d{3}$/.test(cleanId) && !/^\d{10}$/.test(cleanId)) {
-      setErrorMsg("Format ID tidak valid (Contoh: RL03-006 atau 1234567890)");
+      setErrorMsg("Format ID tidak valid (Contoh: RL03-XXX atau 10 digit angka)");
       focusField("id-anggota-login-field");
       return;
     }
@@ -297,33 +288,7 @@ export default function AuthModal({
           </div>
         )}
 
-        {/* Tab Selector */}
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-5">
-          <button
-            type="button"
-            onClick={() => { setActiveTab("ID"); setErrorMsg(""); setPinInput(""); }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === "ID"
-                ? "bg-white dark:bg-slate-900 text-emerald-700 shadow-sm"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            <UserCheck size={14} />
-            <span>ID Anggota</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => { setActiveTab("SUPER_ADMIN"); setErrorMsg(""); setMemberIdInput(""); }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === "SUPER_ADMIN"
-                ? "bg-slate-900 text-slate-100 shadow-sm"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            <KeyRound size={14} />
-            <span>Akses Khusus</span>
-          </button>
-        </div>
+        {/* Tidak ada tab switcher — akses Super Admin hanya via secret path/logo-tap */}
 
         {/* ===================== TAB 1: ID Anggota ===================== */}
         {activeTab === "ID" && (
@@ -351,33 +316,14 @@ export default function AuthModal({
               label="ID Anggota (Permanen)"
               value={memberIdInput}
               onChange={handleIdChange}
-              placeholder="Contoh: 8392019482"
+              placeholder="Masukkan ID Anggota"
               maxLength={10}
               isID={true}
               error={!!errorMsg}
               inputClassName="focus:ring-emerald-500 text-slate-900 dark:text-slate-100 text-base tracking-wider font-mono uppercase"
             />
 
-            {/* Quick test IDs — hanya tampil di mode development */}
-            {IS_DEV && (
-              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 rounded-2xl space-y-1.5">
-                <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                  ⚠️ DEV ONLY — Quick Test IDs:
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {TEST_IDS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => handleIdChange(item.id)}
-                      className="px-2 py-1 bg-white dark:bg-slate-900 hover:bg-emerald-50 text-slate-700 dark:text-slate-300 hover:text-emerald-700 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-mono transition-colors"
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+
 
             {/* Remember Me Toggle */}
             <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 p-3 rounded-2xl">

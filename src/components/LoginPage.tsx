@@ -148,7 +148,7 @@ export default function LoginPage({
   const lang = LOGIN_I18N[currentLanguage] || LOGIN_I18N.id;
 
   // Active Login Mode: "MEMBER" or "SUPER_ADMIN"
-  const [loginMode, setLoginMode] = useState<"MEMBER" | "SUPER_ADMIN">("MEMBER");
+  // Super Admin login hanya via secret path/logo-tap (AuthModal), tidak ditampilkan di sini
 
   // Inputs
   const [memberId, setMemberId] = useState("");
@@ -222,8 +222,7 @@ export default function LoginPage({
   };
 
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Dynamic PIN for Super Admin requires 10 digits (YYYYMMDDHH)
-    const maxLen = loginMode === "SUPER_ADMIN" ? 10 : 10;
+    const maxLen = 10;
     const val = e.target.value.replace(/[^0-9]/g, "").slice(0, maxLen);
     setPin(val);
     setError("");
@@ -249,7 +248,7 @@ export default function LoginPage({
       return;
     }
 
-    if (loginMode === "MEMBER") {
+    {
       const cleanId = memberId.trim().toUpperCase();
       const cleanPin = pin.trim();
 
@@ -346,46 +345,6 @@ export default function LoginPage({
         onLoginSuccess(session);
       }, 1000);
 
-    } else {
-      // Super Admin Login
-      const cleanPin = pin.trim();
-
-      if (!cleanPin) {
-        setError(lang.error_empty_pin);
-        pinInputRef.current?.focus();
-        return;
-      }
-
-      setLoading(true);
-      await new Promise((r) => setTimeout(r, 600));
-
-      if (!verifikasiPINDinamis(cleanPin)) {
-        const attempts = recordFailedPinAttempt(cleanPin);
-        if (attempts >= 5) {
-          setError(lang.lockout_wait.replace("{{time}}", "5 menit"));
-        } else {
-          setError(`${lang.wrong_pin} Sisa percobaan: ${5 - (attempts % 5)}`);
-        }
-        setLoading(false);
-        pinInputRef.current?.focus();
-        return;
-      }
-
-      resetPinAttempts();
-      const session = saveAuthSession({
-        role: "SUPER_ADMIN",
-        id_anggota: "SA-001",
-        nama_lengkap: "Super Admin",
-        nama_panggilan: "SuperAdmin",
-        jabatan: "Super Admin"
-      }, rememberMe);
-
-      setSuccess(lang.success_login);
-      setLoading(false);
-
-      setTimeout(() => {
-        onLoginSuccess(session);
-      }, 1000);
     }
   };
 
@@ -492,36 +451,9 @@ export default function LoginPage({
             </p>
           </div>
 
-          {/* Tab Selector */}
-          <div className="flex bg-slate-100/80 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200/20 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => {
-                setLoginMode("MEMBER");
-                setError("");
-              }}
-              className={`flex-1 py-2.5 px-3 text-xs font-black rounded-xl transition-all ${
-                loginMode === "MEMBER"
-                  ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow-md scale-[1.02]"
-                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
-              }`}
-            >
-              {lang.tab_member}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setLoginMode("SUPER_ADMIN");
-                setError("");
-              }}
-              className={`flex-1 py-2.5 px-3 text-xs font-black rounded-xl transition-all ${
-                loginMode === "SUPER_ADMIN"
-                  ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-white shadow-md scale-[1.02]"
-                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
-              }`}
-            >
-              {lang.tab_admin}
-            </button>
+          {/* Header — hanya Member Login */}
+          <div className="text-center mb-3">
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-200">{lang.tab_member}</h2>
           </div>
 
           {/* Locked status banner */}
@@ -556,8 +488,7 @@ export default function LoginPage({
           {/* Form */}
           <form onSubmit={handleFormSubmit} className="space-y-4">
             
-            {/* Input 1: ID Anggota (Only shown for Members) */}
-            {loginMode === "MEMBER" && (
+            {/* Input 1: ID Anggota */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                   ID Anggota
@@ -579,10 +510,9 @@ export default function LoginPage({
                   />
                 </div>
               </div>
-            )}
 
             {/* First-time PIN setup badge */}
-            {loginMode === "MEMBER" && isFirstTimePin && (
+            {isFirstTimePin && (
               <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 text-blue-800 dark:text-blue-400 p-3 rounded-2xl text-[11px] leading-relaxed space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="font-extrabold flex items-center gap-1">
                   <AlertCircle size={14} /> {lang.setup_first_pin}
@@ -593,20 +523,11 @@ export default function LoginPage({
 
             {/* Input 2: PIN (Required for both Member & Admin) */}
             <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <label className="block text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                  {loginMode === "SUPER_ADMIN" ? "PIN Dynamic Super Admin" : "PIN Akses"}
-                </label>
-                {loginMode === "SUPER_ADMIN" && (
-                  <span className="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
-                    10 Digit (WIB)
-                  </span>
-                )}
-              </div>
+              <label className="block text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                PIN Akses
+              </label>
               <div className="relative flex items-center">
-                <Lock className={`absolute left-3.5 pointer-events-none ${
-                  loginMode === "SUPER_ADMIN" ? "text-amber-400" : "text-slate-400 dark:text-slate-500"
-                }`} size={18} />
+                <Lock className="absolute left-3.5 text-slate-400 dark:text-slate-500 pointer-events-none" size={18} />
                 <input
                   ref={pinInputRef}
                   type={showPin ? "text" : "password"}
@@ -614,25 +535,17 @@ export default function LoginPage({
                   disabled={loading || lockout.isLocked}
                   value={pin}
                   onChange={handlePinChange}
-                  placeholder={loginMode === "SUPER_ADMIN" ? "Contoh: 2026072618 (10 digit)" : lang.placeholder_pin}
+                  placeholder={lang.placeholder_pin}
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={10}
-                  className={`w-full pl-11 pr-12 py-3 rounded-xl text-base font-extrabold tracking-widest font-mono outline-none focus:ring-2 focus:border-transparent transition-all disabled:opacity-50 min-h-[48px] ${
-                    loginMode === "SUPER_ADMIN"
-                      ? "bg-slate-900 text-white dark:bg-slate-950 dark:text-white border border-amber-500/50 focus:ring-amber-500 placeholder-slate-500"
-                      : "bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 focus:ring-emerald-500"
-                  }`}
+                  className="w-full pl-11 pr-12 py-3 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-base font-extrabold tracking-widest font-mono outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:opacity-50 min-h-[48px]"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPin(!showPin)}
-                  className={`absolute right-3.5 rounded-full focus:outline-none focus:ring-2 ${
-                    loginMode === "SUPER_ADMIN"
-                      ? "text-amber-400 hover:text-amber-300 focus:ring-amber-500"
-                      : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 focus:ring-emerald-500"
-                  }`}
+                  className="absolute right-3.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -642,7 +555,7 @@ export default function LoginPage({
             </div>
 
             {/* Input 3: Confirm PIN (Only for first-time login) */}
-            {loginMode === "MEMBER" && isFirstTimePin && (
+            {isFirstTimePin && (
               <div className="space-y-1.5 animate-in fade-in slide-in-from-top-3 duration-300">
                 <label className="block text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                   {lang.placeholder_confirm_pin}
@@ -687,15 +600,13 @@ export default function LoginPage({
                 <span>{lang.remember_me}</span>
               </label>
 
-              {loginMode === "MEMBER" && (
-                <button
+              <button
                   type="button"
                   onClick={() => setShowHelpModal(true)}
                   className="text-emerald-700 dark:text-emerald-400 font-extrabold hover:underline select-none"
                 >
                   {lang.forgot_pin}
                 </button>
-              )}
             </div>
 
             {/* Buttons */}
