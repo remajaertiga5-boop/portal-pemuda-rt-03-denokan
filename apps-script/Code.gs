@@ -7,6 +7,47 @@
 
 const SPREADSHEET_ID = "1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8";
 const SHEETS = ["Anggota","Agenda","Pengumuman","Kas","Aspirasi","Galeri"];
+
+// ── Format Sheet ──────────────────────────────────────────
+function formatSheet(sheet, headers, dataLength) {
+  if (!sheet || !headers || headers.length === 0) return;
+  
+  const lastRow = dataLength + 1; // row 1 = headers, data from row 2
+  const lastCol = headers.length;
+  
+  // Bold + background untuk header
+  const headerRange = sheet.getRange(1, 1, 1, lastCol);
+  headerRange.setFontWeight("bold");
+  headerRange.setBackground("#1a73e8");
+  headerRange.setFontColor("#ffffff");
+  headerRange.setFontSize(11);
+  headerRange.setHorizontalAlignment("center");
+  
+  // Border semua cell
+  if (lastRow >= 1) {
+    const dataRange = sheet.getRange(1, 1, lastRow, lastCol);
+    dataRange.setBorder(true, true, true, true, true, true, "#d2d2d2", SpreadsheetApp.BorderStyle.SOLID);
+  }
+  
+  // Alternating row colors
+  if (lastRow > 1) {
+    for (var r = 2; r <= lastRow; r++) {
+      if (r % 2 === 0) {
+        sheet.getRange(r, 1, 1, lastCol).setBackground("#f8f9fa");
+      }
+    }
+  }
+  
+  // Auto-resize columns
+  for (var c = 1; c <= lastCol; c++) {
+    sheet.autoResizeColumn(c);
+  }
+  
+  // Freeze header row
+  sheet.setFrozenRows(1);
+  
+  Logger.log("Format applied: " + lastRow + " rows, " + lastCol + " cols");
+}
 const DRIVE_FOLDERS = {
   bukti: "18ZbevjsEm8ElZnrLiVB50GBlUtwoYRV7",
   profil: "1Kz8foBDUWew090EnGDfuu4T8Yw8FJSzh",
@@ -207,8 +248,9 @@ function doPost(e) {
     switch (action) {
       case "create":
       case "insert":
-        const result = addRow(table, body.data, headers);
-        return jsonResponse(result, 201);
+        const createResult = addRow(table, body.data, headers);
+        formatSheet(sheet, headers, sheet.getLastRow() - 1);
+        return jsonResponse(createResult, 201);
       
       case "update":
         if (!body.id) return jsonResponse({ error: "Field 'id' wajib" }, 400);
@@ -239,6 +281,8 @@ function doPost(e) {
           const rows = body.data.map(item => headers.map(h => item[h] !== undefined ? item[h] : ""));
           sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
         }
+        // Apply formatting (borders, bold header, alternating colors)
+        formatSheet(sheet, headers, body.data.length);
         return jsonResponse({ success: true, rows: body.data.length });
       
       default:
