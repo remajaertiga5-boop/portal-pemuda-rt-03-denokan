@@ -101,7 +101,7 @@ export function autoRestoreKonfigurasiAPI(existingConfigs: any[]): any[] {
     || (typeof import.meta !== 'undefined' && (import.meta as any).env?.TELEGRAM_BOT_TOKEN)
     || (typeof process !== 'undefined' && (process as any).env?.VITE_TELEGRAM_BOT_TOKEN)
     || (typeof process !== 'undefined' && (process as any).env?.TELEGRAM_BOT_TOKEN)
-    || '7331960901:AAFi80K06GCMTqd9VLaXSFkGZ1nh0Xl_im8';
+    || '8805899577:AAHKGy-z3oO2oIkIO1FUDhXLtZwQGdVIzsg';
   const telegramChatId = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_TELEGRAM_CHAT_ID)
     || (typeof import.meta !== 'undefined' && (import.meta as any).env?.TELEGRAM_CHAT_ID)
     || (typeof process !== 'undefined' && (process as any).env?.VITE_TELEGRAM_CHAT_ID)
