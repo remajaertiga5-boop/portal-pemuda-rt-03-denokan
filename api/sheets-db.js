@@ -6,10 +6,12 @@
 import { createSign } from "crypto";
 
 const SID = "1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8";
+// Case-insensitive: frontend sends lowercase table names
 const SHEETS = ["Anggota","Agenda","Pengumuman","Kas","Aspirasi","Galeri"];
+const SHEET_MAP = {anggota:"Anggota",agenda:"Agenda",pengumuman:"Pengumuman",kas:"Kas",aspirasi:"Aspirasi",galeri:"Galeri"};
+function fixTable(t) { return SHEET_MAP[(t||"").toLowerCase()] || null; }
 
 let _token = null, _tokenExpiry = 0, _sheetIds = null;
-
 
 async function getToken() {
   if (_token && Date.now() < _tokenExpiry) return _token;
@@ -52,8 +54,9 @@ export default async function handler(req, res) {
     if (req.method==="GET") {
       const {table, id, idColumn} = req.query||{};
       if (!table) return res.json({status:"ok",sheets:SHEETS,time:new Date().toISOString()});
-      if (!SHEETS.includes(table)) return res.status(400).json({error:"Invalid table"});
-      const v = await getValues(table);
+      const tbl = fixTable(table);
+      if (!tbl) return res.status(400).json({error:"Invalid table: "+table});
+      const v = await getValues(tbl);
       if (id) {
         const col = idColumn||"ID", h = v[0].map(String), ci = h.indexOf(col);
         if (ci<0) return res.status(400).json({error:"Column not found"});
@@ -67,15 +70,16 @@ export default async function handler(req, res) {
 
     if (req.method==="POST") {
       const {action, table, id, idColumn, data} = req.body||{};
-      if (!table||!SHEETS.includes(table)) return res.status(400).json({error:"Invalid table"});
-      const v = await getValues(table);
+      const tbl = fixTable(table);
+      if (!tbl) return res.status(400).json({error:"Invalid table: "+table});
+      const v = await getValues(tbl);
       const h = v[0]?.map(String)||[], col = idColumn||"ID", ci = h.indexOf(col);
 
       const A = action;
       if (A==="create"||A==="insert") {
         if (!data) return res.status(400).json({error:"data required"});
-        await api("POST","/values/"+encodeURIComponent(table)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:[h.map(k=>data[k]??"")]});
-        const u = await getValues(table);
+        await api("POST","/values/"+encodeURIComponent(tbl)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:[h.map(k=>data[k]??"")]});
+        const u = await getValues(tbl);
         return res.status(201).json({success:true,row:u.length});
       }
       if (A==="update") {
@@ -83,14 +87,14 @@ export default async function handler(req, res) {
         const ri = v.slice(1).findIndex(r=>String(r[ci])===String(id));
         if (ri<0) return res.status(404).json({error:"Not found"});
         const row = h.map((k,i)=>k===col?id:(data?.[k]??v[ri+1]?.[i]??""));
-        await api("PUT","/values/"+encodeURIComponent(table)+"!A"+(ri+2)+"?valueInputOption=USER_ENTERED",{values:[row]});
+        await api("PUT","/values/"+encodeURIComponent(tbl)+"!A"+(ri+2)+"?valueInputOption=USER_ENTERED",{values:[row]});
         return res.json({success:true,row:ri+2});
       }
       if (A==="delete") {
         if (!id||ci<0) return res.status(400).json({error:"id required"});
         const ri = v.slice(1).findIndex(r=>String(r[ci])===String(id));
         if (ri<0) return res.status(404).json({error:"Not found"});
-        const ids = await getIds(), sid = ids[table];
+        const ids = await getIds(), sid = ids[tbl];
         await api("POST",":batchUpdate",{requests:[{deleteDimension:{range:{sheetId:sid,dimension:"ROWS",startIndex:ri+1,endIndex:ri+2}}}]});
         return res.json({success:true});
       }
@@ -99,18 +103,18 @@ export default async function handler(req, res) {
         const ri = v.slice(1).findIndex(r=>String(r[ci])===String(id));
         if (ri>=0) {
           const row = h.map((k,i)=>k===col?id:(data?.[k]??v[ri+1]?.[i]??""));
-          await api("PUT","/values/"+encodeURIComponent(table)+"!A"+(ri+2)+"?valueInputOption=USER_ENTERED",{values:[row]});
+          await api("PUT","/values/"+encodeURIComponent(tbl)+"!A"+(ri+2)+"?valueInputOption=USER_ENTERED",{values:[row]});
           return res.json({success:true,row:ri+2});
         }
-        await api("POST","/values/"+encodeURIComponent(table)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:[h.map(k=>data?.[k]??"")]});
-        const u = await getValues(table);
+        await api("POST","/values/"+encodeURIComponent(tbl)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:[h.map(k=>data?.[k]??"")]});
+        const u = await getValues(tbl);
         return res.status(201).json({success:true,row:u.length});
       }
       if (A==="sync") {
         if (!Array.isArray(data)) return res.status(400).json({error:"data must be array"});
-        const ids = await getIds(), sid = ids[table];
+        const ids = await getIds(), sid = ids[tbl];
         if (v.length>1) await api("POST",":batchUpdate",{requests:[{deleteDimension:{range:{sheetId:sid,dimension:"ROWS",startIndex:1,endIndex:v.length}}}]});
-        if (data.length) await api("POST","/values/"+encodeURIComponent(table)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:data.map(d=>h.map(k=>d[k]??""))});
+        if (data.length) await api("POST","/values/"+encodeURIComponent(tbl)+":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",{values:data.map(d=>h.map(k=>d[k]??""))});
         return res.json({success:true,rows:data.length});
       }
       return res.status(400).json({error:`Unknown action: ${A}`});
