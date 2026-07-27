@@ -232,6 +232,15 @@ export default function App() {
     initializeData().then(data => {
       if (data) setAppData(data);
     });
+
+    // Re-load dari Google Sheets setiap kali user kembali ke tab ini
+    const onFocus = () => {
+      initializeData().then(data => {
+        if (data) setAppData(data);
+      });
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   // Auto-save appData ke localStorage tiap ada perubahan
