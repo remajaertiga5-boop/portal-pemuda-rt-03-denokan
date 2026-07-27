@@ -23,6 +23,7 @@ import {
   PaymentInfoItem,
   PaymentProofItem,
 } from "../types";
+import { autoRestoreKonfigurasiAPI } from "./autoRestoreConfig";
 
 // ============================================================
 // CONSTANTS
@@ -642,7 +643,9 @@ export function loadAppData(): AppData {
       Voting: parsed.Voting || defaultInitialData.Voting || [],
       PaymentInfo: parsed.PaymentInfo || defaultInitialData.PaymentInfo || [],
       PaymentProofs: parsed.PaymentProofs || defaultInitialData.PaymentProofs || [],
-      KonfigurasiAPI: parsed.KonfigurasiAPI || defaultInitialData.KonfigurasiAPI || [],
+      KonfigurasiAPI: autoRestoreKonfigurasiAPI(
+        parsed.KonfigurasiAPI || defaultInitialData.KonfigurasiAPI || []
+      ),
       // ✅ Settings di-merge secara dalam agar sub-object tidak hilang
       Settings: {
         ...defaultInitialData.Settings,
