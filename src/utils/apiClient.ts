@@ -192,7 +192,7 @@ export async function chatAI(
   appData     : AppData,
   userRole    : string,
   customApiKey?: string
-): Promise<ApiResult<{ reply: string; updatedAppData?: AppData }>> {
+): Promise<ApiResult<{ reply: string | null; error?: string; updatedAppData?: AppData }>> {
   return apiRequest("/chat", {
     method: "POST",
     body  : { message, history, appData, userRole, customApiKey },

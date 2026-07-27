@@ -245,13 +245,23 @@ export default function Chatbot({ appData, setAppData, session, showToast }: Cha
           const result = await chatAI(userText, limitedHistory, currentAppData, currentRole, customApiKey || undefined);
 
           if (result.ok && result.data) {
-            setApiAvailable(true);
-            if (result.data.updatedAppData) {
-              saveAppData(result.data.updatedAppData);
-              setAppData?.(result.data.updatedAppData);
-              showToast?.("Database diperbarui oleh AI!", "success");
+            if (result.data.reply) {
+              // AI berhasil merespon
+              setApiAvailable(true);
+              botText = result.data.reply;
+              if (result.data.updatedAppData) {
+                saveAppData(result.data.updatedAppData);
+                setAppData?.(result.data.updatedAppData);
+                showToast?.("Database diperbarui oleh AI!", "success");
+              }
+            } else if (result.data.error) {
+              // AI error (rate limited, etc) — fallback ke lokal
+              console.warn("[Chatbot] AI error:", result.data.error);
+              setApiAvailable(true); // API tersedia tapi sibuk
+              botText = generateLocalResponse(userText, currentAppData, currentRole);
+            } else {
+              botText = generateLocalResponse(userText, currentAppData, currentRole);
             }
-            botText = result.data.reply || "Maaf, AI tidak menghasilkan jawaban.";
           } else {
             throw new Error(result.error || "Server error");
           }
