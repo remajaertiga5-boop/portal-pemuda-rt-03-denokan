@@ -1,294 +1,53 @@
 // ============================================================
-// GOOGLE APPS SCRIPT — DATABASE API
-// Portal Remaja Legok 03 Denokan
-// 
-// Deploy sebagai Web App → copy URL ke environment variable
+// GOOGLE APPS SCRIPT — BACKEND LENGKAP
+// Portal Pemuda RT 03 Denokan — v3.0
+//
+// Deploy: Publish → Deploy as Web App → Execute as: "Me"
+//         Who has access: "Anyone" → Copy URL
 // ============================================================
 
-const SPREADSHEET_ID = "1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8";
-const SHEETS = ["Anggota","Agenda","Pengumuman","Kas","Aspirasi","Galeri"];
+// ── KONFIGURASI ────────────────────────────────────────────
+var SPREADSHEET_ID = "1bwb4dIlyLQiq0hMjzC5HGCQPd5cQZVB7ndQ51FaC8R8";
+var SHEETS = ["Anggota","Agenda","Pengumuman","Kas","Aspirasi","Galeri"];
 
-// ── Format Sheet ──────────────────────────────────────────
-function formatSheet(sheet, headers, dataLength) {
-  if (!sheet || !headers || headers.length === 0) return;
-  
-  const lastRow = dataLength + 1; // row 1 = headers, data from row 2
-  const lastCol = headers.length;
-  
-  // Bold + background untuk header
-  const headerRange = sheet.getRange(1, 1, 1, lastCol);
-  headerRange.setFontWeight("bold");
-  headerRange.setBackground("#1a73e8");
-  headerRange.setFontColor("#ffffff");
-  headerRange.setFontSize(11);
-  headerRange.setHorizontalAlignment("center");
-  
-  // Border semua cell
-  if (lastRow >= 1) {
-    const dataRange = sheet.getRange(1, 1, lastRow, lastCol);
-    dataRange.setBorder(true, true, true, true, true, true, "#d2d2d2", SpreadsheetApp.BorderStyle.SOLID);
-  }
-  
-  // Alternating row colors
-  if (lastRow > 1) {
-    for (var r = 2; r <= lastRow; r++) {
-      if (r % 2 === 0) {
-        sheet.getRange(r, 1, 1, lastCol).setBackground("#f8f9fa");
-      }
-    }
-  }
-  
-  // Auto-resize columns
-  for (var c = 1; c <= lastCol; c++) {
-    sheet.autoResizeColumn(c);
-  }
-  
-  // Freeze header row
-  sheet.setFrozenRows(1);
-  
-  Logger.log("Format applied: " + lastRow + " rows, " + lastCol + " cols");
-}
-const DRIVE_FOLDERS = {
+var DRIVE_FOLDERS = {
   bukti: "18ZbevjsEm8ElZnrLiVB50GBlUtwoYRV7",
-  profil: "1Kz8foBDUWew090EnGDfuu4T8Yw8FJSzh",
+  profil: "1Kz8foBDUWew090EnGDfuu4T8Yw8FJSzh"
 };
-const API_KEY = "remaja-legok-03-2026"; // Ganti dengan key rahasia
 
-// ── CORS Helper ───────────────────────────────────────────
-function jsonResponse(data, code) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setStatusCode(code || 200);
-}
+// ⚠️ ISI TOKEN DI BAWAH INI SEBELUM DEPLOY APPS SCRIPT!
+var TELEGRAM_BOT_TOKEN = "ISI_TOKEN_BOT_TELEGRAM_DISINI";
+var TELEGRAM_CHAT_ID    = "-1004474501263";
+var GEMINI_API_KEY = "ISI_API_KEY_GEMINI_DISINI";
+var GEMINI_MODEL   = "gemini-2.0-flash";
 
-// ── Auth Check ────────────────────────────────────────────
-function checkAuth(request) {
-  const key = request.parameter.key || request.parameter.apiKey || "";
-  const authHeader = request.headers?.Authorization || "";
-  return key === API_KEY || authHeader === "Bearer " + API_KEY;
-}
+var API_KEY = "remaja-legok-03-2026";
 
-// ── Get Sheet ─────────────────────────────────────────────
-function getSheet(name) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = ss.getSheetByName(name);
-  if (!sheet) throw new Error(`Sheet "${name}" tidak ditemukan`);
-  return sheet;
-}
+function jsonResponse(d,c){var o=ContentService.createTextOutput(JSON.stringify(d)).setMimeType(ContentService.MimeType.JSON);if(c)o.setStatusCode(c);return o}
+function checkAuth(e){var k=(e.parameter&&(e.parameter.key||e.parameter.apiKey))||"";var b=parseBody(e);var bk=b?(b.key||b.apiKey||""):"";var ah="";try{ah=e.headers&&e.headers.Authorization?e.headers.Authorization:""}catch(_){}return k===API_KEY||bk===API_KEY||ah==="Bearer "+API_KEY}
+function parseBody(e){if(!e||!e.postData||!e.postData.contents)return null;try{return JSON.parse(e.postData.contents)}catch(_){return null}}
+function getSheet(n){var ss=SpreadsheetApp.openById(SPREADSHEET_ID);var s=ss.getSheetByName(n);if(!s)throw new Error('Sheet "'+n+'" tidak ditemukan');return s}
+function readAll(sn){var s=getSheet(sn);var d=s.getDataRange().getValues();if(d.length<2)return[];var h=d[0].map(String);return d.slice(1).map(function(r){var o={};h.forEach(function(h,i){o[h]=r[i]!==undefined?r[i]:""});return o})}
+function findRowIndex(s,ci,v){var d=s.getDataRange().getValues();for(var i=1;i<d.length;i++){if(String(d[i][ci])===String(v))return i}return -1}
+function addRow(sn,rd,h){var s=getSheet(sn);var r=h.map(function(h){return rd[h]!==undefined?rd[h]:""});s.appendRow(r);return{success:true,row:s.getLastRow()}}
+function updateRow(sn,ic,iv,rd,h){var s=getSheet(sn);var ci=h.indexOf(ic);if(ci<0)throw new Error('Kolom "'+ic+'" tidak ditemukan');var ri=findRowIndex(s,ci,iv);if(ri<0)return{success:false,error:"Data tidak ditemukan"};var r=h.map(function(h){if(h===ic)return iv;return rd[h]!==undefined?rd[h]:""});s.getRange(ri+1,1,1,h.length).setValues([r]);return{success:true,row:ri+1}}
+function deleteRow(sn,ic,iv,h){var s=getSheet(sn);var ci=h.indexOf(ic);if(ci<0)throw new Error('Kolom "'+ic+'" tidak ditemukan');var ri=findRowIndex(s,ci,iv);if(ri<0)return{success:false,error:"Data tidak ditemukan"};s.deleteRow(ri+1);return{success:true}}
+function formatSheet(s,h,dl){if(!s||!h||h.length===0)return;var lr=dl+1;var lc=h.length;s.getRange(1,1,1,lc).setFontWeight("bold").setBackground("#1a73e8").setFontColor("#ffffff").setFontSize(11).setHorizontalAlignment("center");if(lr>=1)s.getRange(1,1,lr,lc).setBorder(true,true,true,true,true,true,"#d2d2d2",SpreadsheetApp.BorderStyle.SOLID);for(var r=2;r<=lr;r++){if(r%2===0)s.getRange(r,1,1,lc).setBackground("#f8f9fa")}for(var c=1;c<=lc;c++)s.autoResizeColumn(c);s.setFrozenRows(1)}
 
-// ── Read All Rows ─────────────────────────────────────────
-function readAll(sheetName) {
-  const sheet = getSheet(sheetName);
-  const data = sheet.getDataRange().getValues();
-  if (data.length < 2) return [];
-  
-  const headers = data[0];
-  return data.slice(1).map(row => {
-    const obj = {};
-    headers.forEach((h, i) => { obj[String(h)] = row[i] !== undefined ? row[i] : ""; });
-    return obj;
-  });
-}
+function handleDriveUpload(b){var fn=b.fileName,ft=b.fileType,fd=b.fileData;var ia=b.idAnggota||"",fld=b.folderType||"bukti";if(!fn||!ft||!fd)return jsonResponse({error:"fileName, fileType, fileData wajib"},400);var sz=Math.ceil((fd.length*3)/4);if(sz>5*1024*1024)return jsonResponse({error:"File terlalu besar (max 5MB)"},400);try{var dc=Utilities.base64Decode(fd);var bl=Utilities.newBlob(dc,ft,fn);var fid=DRIVE_FOLDERS[fld]||DRIVE_FOLDERS["bukti"];var fldr=DriveApp.getFolderById(fid);var f=fldr.createFile(bl);f.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);var ts=new Date().toISOString().replace(/[:.]/g,"-");f.setName(fld+"-"+(ia||"anon")+"-"+ts+"-"+fn);f.setDescription((fld==="profil"?"Foto profil":"Bukti pembayaran")+" dari "+(ia||"Anggota")+" — "+new Date().toLocaleString("id-ID"));return jsonResponse({success:true,url:f.getUrl(),downloadUrl:"https://drive.google.com/uc?export=view&id="+f.getId(),thumbnailUrl:"https://drive.google.com/thumbnail?id="+f.getId()+"&sz=w400",fileId:f.getId(),fileName:f.getName(),fileSize:f.getSize(),mimeType:f.getMimeType(),createdAt:f.getDateCreated().toISOString()})}catch(e){return jsonResponse({error:"Upload gagal: "+e.toString()},500)}}
 
-// ── Find Row Index ────────────────────────────────────────
-function findRowIndex(sheet, colIndex, value) {
-  const data = sheet.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) {
-    if (String(data[i][colIndex]) === String(value)) return i;
-  }
-  return -1;
-}
+function handleTelegramUpload(b){var fd=b.fileData,fn=b.fileName,ft=b.fileType;var cp=b.caption||"",ia=b.idAnggota||"";var nu=b.namaUpload||"",ru=b.roleUpload||"ANGGOTA";var ai=b.albumId||"",jd=b.judul||fn;var kt=b.kategori||"Kegiatan";if(!fd||!ft)return jsonResponse({error:"fileData dan fileType wajib"},400);try{var bt=b.botToken||TELEGRAM_BOT_TOKEN;var ci=b.chatId||TELEGRAM_CHAT_ID;var iv=ft.indexOf("video/")===0;var mt=iv?"sendVideo":"sendPhoto";var fln=iv?"video":"photo";var ct=cp;if(jd)ct="📸 *"+jd+"*"+(ct?"\n"+ct:"");if(nu)ct+="\n\n👤 "+nu+(ru?" ("+ru+")":"");ct+="\n📅 "+new Date().toLocaleString("id-ID");var mc=fd.match(/^data:([^;]+);base64,(.+)$/);if(!mc)return jsonResponse({error:"Format data URL tidak valid"},400);var mm=mc[1];var b64=mc[2];var buf=Utilities.base64Decode(b64);var bl=Utilities.newBlob(buf,mm,fn||(iv?"video.mp4":"foto.jpg"));var frm={chat_id:ci,caption:ct,parse_mode:"Markdown"};frm[fln]=bl;var tgu="https://api.telegram.org/bot"+bt+"/"+mt;var opts={method:"post",payload:frm,muteHttpExceptions:true};var tr=UrlFetchApp.fetch(tgu,opts);var td=JSON.parse(tr.getContentText());if(!td.ok)return jsonResponse({error:"Gagal upload ke Telegram: "+(td.description||"unknown")},400);var fid="";var rs=td.result;if(iv){fid=rs.video?rs.video.file_id:""}else{var ph=rs.photo||[];fid=ph.length>0?ph[ph.length-1].file_id:""}if(!fid)return jsonResponse({error:"Gagal mendapatkan file_id"},500);var mid=rs.message_id;var gfu="https://api.telegram.org/bot"+bt+"/getFile?file_id="+encodeURIComponent(fid);var gfr=UrlFetchApp.fetch(gfu,{muteHttpExceptions:true});var gfd=JSON.parse(gfr.getContentText());var fp="";var fs=0;if(gfd.ok&&gfd.result){fp=gfd.result.file_path||"";fs=gfd.result.file_size||0}var pu=fp?"https://api.telegram.org/file/bot"+bt+"/"+fp:"";var gs=getSheet("Galeri");var gh=gs.getDataRange().getValues()[0].map(String);var ftoId="FTO-"+Date.now();var nr={};nr["ID"]=ftoId;nr["ID_Foto"]=ftoId;nr["Judul"]=jd;nr["Judul_Kegiatan"]=jd;nr["file_id"]=fid;nr["file_path"]=fp;nr["Link_Foto"]=pu;nr["Foto_URL"]=pu;nr["Album_ID"]=ai;nr["Tanggal"]=new Date().toISOString().split("T")[0];nr["Kategori"]=kt;nr["Kategori_Akses"]=b.kategoriAkses||"PUBLIK";nr["ID_Anggota_Upload"]=ia;nr["Nama_Upload"]=nu;nr["Uploader"]=nu;nr["Role_Upload"]=ru;nr["Caption"]=cp;nr["Is_Video"]=iv;nr["Jenis_Media"]=iv?"VIDEO":"FOTO";nr["Telegram_MessageID"]=mid;nr["Status_Approval"]="DISETUJUI";nr["Ukuran_KB"]=Math.round(fs/1024);var rw=gh.map(function(h){return nr[h]!==undefined?nr[h]:""});gs.appendRow(rw);formatSheet(gs,gh,gs.getLastRow()-1);return jsonResponse({success:true,fileId:fid,filePath:fp,url:pu,messageId:mid,isVideo:iv,size:fs,savedToSheet:true,fotoId:ftoId})}catch(e){Logger.log(e.toString());return jsonResponse({error:"Telegram upload failed: "+e.toString()},500)}}
 
-// ── Add Row ───────────────────────────────────────────────
-function addRow(sheetName, rowData, headers) {
-  const sheet = getSheet(sheetName);
-  const row = headers.map(h => rowData[h] !== undefined ? rowData[h] : "");
-  sheet.appendRow(row);
-  return { success: true, row: sheet.getLastRow() };
-}
+function handleTelegramGetUrl(b){var fid=b.fileId;if(!fid)return jsonResponse({error:"fileId wajib"},400);try{var bt=b.botToken||TELEGRAM_BOT_TOKEN;var u="https://api.telegram.org/bot"+bt+"/getFile?file_id="+encodeURIComponent(fid);var r=UrlFetchApp.fetch(u,{muteHttpExceptions:true});var d=JSON.parse(r.getContentText());if(!d.ok)return jsonResponse({error:"Gagal getFile: "+(d.description||"unknown")},400);var fp=d.result.file_path||"";var pu=fp?"https://api.telegram.org/file/bot"+bt+"/"+fp:"";return jsonResponse({success:true,fileId:fid,filePath:fp,url:pu,fileSize:d.result.file_size||0})}catch(e){return jsonResponse({error:e.toString()},500)}}
 
-// ── Update Row ────────────────────────────────────────────
-function updateRow(sheetName, idColumn, idValue, rowData, headers) {
-  const sheet = getSheet(sheetName);
-  const colIndex = headers.indexOf(idColumn);
-  if (colIndex < 0) throw new Error(`Kolom "${idColumn}" tidak ditemukan`);
-  
-  const rowIndex = findRowIndex(sheet, colIndex, idValue);
-  if (rowIndex < 0) return { success: false, error: "Data tidak ditemukan" };
-  
-  const row = headers.map(h => {
-    if (h === idColumn) return idValue;
-    return rowData[h] !== undefined ? rowData[h] : "";
-  });
-  
-  sheet.getRange(rowIndex + 1, 1, 1, headers.length).setValues([row]);
-  return { success: true, row: rowIndex + 1 };
-}
+function handleTelegramBroadcast(b){var t=b.text;if(!t)return jsonResponse({error:"text wajib"},400);try{var bt=b.botToken||TELEGRAM_BOT_TOKEN;var ci=b.chatId||TELEGRAM_CHAT_ID;var p=JSON.stringify({chat_id:ci,text:t,parse_mode:b.parseMode||"HTML",disable_notification:b.disableNotification||false});var o={method:"post",contentType:"application/json",payload:p,muteHttpExceptions:true};var r=UrlFetchApp.fetch("https://api.telegram.org/bot"+bt+"/sendMessage",o);var d=JSON.parse(r.getContentText());if(!d.ok)return jsonResponse({error:"Broadcast gagal: "+(d.description||"unknown")},400);return jsonResponse({success:true,messageId:d.result.message_id,chatId:d.result.chat?d.result.chat.id:ci})}catch(e){return jsonResponse({error:e.toString()},500)}}
 
-// ── Delete Row ────────────────────────────────────────────
-function deleteRow(sheetName, idColumn, idValue, headers) {
-  const sheet = getSheet(sheetName);
-  const colIndex = headers.indexOf(idColumn);
-  if (colIndex < 0) throw new Error(`Kolom "${idColumn}" tidak ditemukan`);
-  
-  const rowIndex = findRowIndex(sheet, colIndex, idValue);
-  if (rowIndex < 0) return { success: false, error: "Data tidak ditemukan" };
-  
-  sheet.deleteRow(rowIndex + 1);
-  return { success: true };
-}
+function handleChatAI(b){var m=b.message;if(!m)return jsonResponse({error:"message wajib"},400);try{var ak=b.customApiKey||GEMINI_API_KEY;var md=b.model||GEMINI_MODEL;var hi=b.history||[];var c=[];hi.forEach(function(msg){c.push({role:msg.role==="user"?"user":"model",parts:[{text:msg.text||msg.parts||""}]})});c.push({role:"user",parts:[{text:m}]});var gu="https://generativelanguage.googleapis.com/v1beta/models/"+md+":generateContent?key="+ak;var p=JSON.stringify({contents:c,generationConfig:{temperature:b.temperature||0.7,maxOutputTokens:b.maxTokens||1024,topP:0.95,topK:40},safetySettings:[{category:"HARM_CATEGORY_HARASSMENT",threshold:"BLOCK_MEDIUM_AND_ABOVE"},{category:"HARM_CATEGORY_HATE_SPEECH",threshold:"BLOCK_MEDIUM_AND_ABOVE"},{category:"HARM_CATEGORY_SEXUALLY_EXPLICIT",threshold:"BLOCK_MEDIUM_AND_ABOVE"},{category:"HARM_CATEGORY_DANGEROUS_CONTENT",threshold:"BLOCK_MEDIUM_AND_ABOVE"}],systemInstruction:{parts:[{text:"Kamu adalah Asisten Pemuda RT 03 Denokan, asisten AI untuk Remaja Legok 03. Jawab dalam Bahasa Indonesia, ramah dan sopan."}]}});var o={method:"post",contentType:"application/json",payload:p,muteHttpExceptions:true,timeout:30000};var r=UrlFetchApp.fetch(gu,o);var d=JSON.parse(r.getContentText());if(d.error)return jsonResponse({success:false,error:"Gemini API error: "+d.error.message},400);var rp="";if(d.candidates&&d.candidates.length>0&&d.candidates[0].content){var pts=d.candidates[0].content.parts||[];rp=pts.map(function(p){return p.text||""}).join("").trim()}if(!rp)return jsonResponse({success:false,error:"AI tidak menghasilkan respons"},500);return jsonResponse({success:true,reply:rp})}catch(e){return jsonResponse({error:"Chat AI gagal: "+e.toString()},500)}}
 
-// ── Drive Upload Handler ──────────────────────────────────
-function handleDriveUpload(body) {
-  const { fileName, fileType, fileData, idAnggota, folderType } = body || {};
-  const sizeBytes = Math.ceil((fileData.length * 3) / 4);
-  if (sizeBytes > 5 * 1024 * 1024) {
-    return jsonResponse({ error: "File terlalu besar (max 5MB)" }, 400);
-  }
-  try {
-    const decoded = Utilities.base64Decode(fileData);
-    const blob = Utilities.newBlob(decoded, fileType, fileName);
-    const type = folderType || "bukti";
-    const folderId = DRIVE_FOLDERS[type] || DRIVE_FOLDERS["bukti"];
-    const folder = DriveApp.getFolderById(folderId);
-    const file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    file.setName(type + "-" + (idAnggota || "anon") + "-" + timestamp + "-" + fileName);
-    file.setDescription((type === "profil" ? "Foto profil" : "Bukti pembayaran") + " dari " + (idAnggota || "Anggota") + " — " + new Date().toLocaleString("id-ID"));
-    return jsonResponse({
-      success: true,
-      url: file.getUrl(),
-      downloadUrl: "https://drive.google.com/uc?export=view&id=" + file.getId(),
-      thumbnailUrl: "https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w400",
-      fileId: file.getId(),
-      fileName: file.getName(),
-      fileSize: file.getSize(),
-      mimeType: file.getMimeType(),
-      createdAt: file.getDateCreated().toISOString(),
-    });
-  } catch (err) {
-    return jsonResponse({ error: "Upload gagal: " + err.toString() }, 500);
-  }
-}
+function handleVerifyID(b){var ia=b.idAnggota;if(!ia)return jsonResponse({error:"idAnggota wajib"},400);try{var a=readAll("Anggota");for(var i=0;i<a.length;i++){if(String(a[i].ID_Anggota)===String(ia)){return jsonResponse({success:true,valid:true,found:true,data:{ID_Anggota:a[i].ID_Anggota,Nama_Lengkap:a[i].Nama_Lengkap,Nama_Panggilan:a[i].Nama_Panggilan||"",Jabatan:a[i].Jabatan||"",Status_Aktif:a[i].Status_Aktif||"AKTIF",Foto_Profil:a[i].Foto_Profil||a[i].FotoProfilURL||""}})}}return jsonResponse({success:false,valid:false,found:false,error:"ID Anggota tidak ditemukan"},404)}catch(e){return jsonResponse({error:e.toString()},500)}}
 
-// ── GET — Read data ───────────────────────────────────────
-function doGet(e) {
-  if (!checkAuth(e)) return jsonResponse({ error: "Unauthorized" }, 401);
-  
-  // Health check — no table param
-  if (!e.parameter.table && !e.parameter.id) {
-    return jsonResponse({
-      status: "ok",
-      folders: DRIVE_FOLDERS,
-      sheets: SHEETS,
-      time: new Date().toISOString(),
-    });
-  }
-  
-  const table = e.parameter.table;
-  const id = e.parameter.id;
-  const idColumn = e.parameter.idColumn || "ID";
-  
-  if (!table || !SHEETS.includes(table)) {
-    return jsonResponse({ error: "Parameter 'table' tidak valid. Gunakan: " + SHEETS.join(",") }, 400);
-  }
-  
-  try {
-    if (id) {
-      // Get single row
-      const sheet = getSheet(table);
-      const headers = sheet.getDataRange().getValues()[0];
-      const colIndex = headers.indexOf(idColumn);
-      const rowIndex = findRowIndex(sheet, colIndex, id);
-      
-      if (rowIndex < 0) return jsonResponse({ error: "Not found" }, 404);
-      
-      const row = sheet.getDataRange().getValues()[rowIndex];
-      const obj = {};
-      headers.forEach((h, i) => { obj[String(h)] = row[i] !== undefined ? row[i] : ""; });
-      return jsonResponse(obj);
-    }
-    
-    const data = readAll(table);
-    return jsonResponse({ data, total: data.length });
-  } catch (err) {
-    return jsonResponse({ error: err.toString() }, 500);
-  }
-}
+function handleVerifyPin(b){var p=b.pin,ti=b.tipe||b.role||"pengurus",ia=b.idAnggota||"";if(!p)return jsonResponse({error:"pin wajib"},400);try{var vp=false,rl="ANGGOTA";if(ti==="SUPER_ADMIN"||ti==="super_admin"){if(p==="12345678"||p==="00000000"){vp=true;rl="SUPER_ADMIN"}}else if(ti==="KETUA"||ti==="ADMIN"||ti==="ketua"){if(p==="123456"){vp=true;rl="KETUA"}}else{if(p==="654321"){vp=true;rl="PENGURUS"}}if(vp&&ia){var a=readAll("Anggota");for(var i=0;i<a.length;i++){if(String(a[i].ID_Anggota)===String(ia)){return jsonResponse({success:true,valid:true,role:rl,idAnggota:a[i].ID_Anggota,nama:a[i].Nama_Lengkap,jabatan:a[i].Jabatan||"",foto:a[i].Foto_Profil||""})}}}return jsonResponse({success:vp,valid:vp,role:vp?rl:null,error:vp?null:"PIN tidak valid"},vp?200:401)}catch(e){return jsonResponse({error:e.toString()},500)}}
 
-// ── POST — Create/Update/Delete ───────────────────────────
-function doPost(e) {
-  if (!checkAuth(e)) return jsonResponse({ error: "Unauthorized" }, 401);
-  
-  let body;
-  try {
-    body = JSON.parse(e.postData.contents);
-  } catch {
-    return jsonResponse({ error: "Invalid JSON" }, 400);
-  }
+function doGet(e){if(!checkAuth(e))return jsonResponse({error:"Unauthorized",code:401},401);if(!e.parameter.table&&!e.parameter.id&&!e.parameter.action){return jsonResponse({status:"ok",name:"Portal Pemuda RT 03 Denokan API",version:"3.0.0",sheets:SHEETS,time:new Date().toISOString()})}var act=e.parameter.action||"";if(act==="telegramGetUrl")return handleTelegramGetUrl({fileId:e.parameter.fileId,botToken:e.parameter.botToken});var tbl=e.parameter.table;var id=e.parameter.id;var ic=e.parameter.idColumn||"ID";if(!tbl||SHEETS.indexOf(tbl)===-1)return jsonResponse({error:"Parameter 'table' tidak valid. Pilih: "+SHEETS.join(", ")},400);try{if(id){var s=getSheet(tbl);var h=s.getDataRange().getValues()[0].map(String);var ci=h.indexOf(ic);var ri=findRowIndex(s,ci,id);if(ri<0)return jsonResponse({error:"Not found"},404);var rw=s.getDataRange().getValues()[ri];var o={};h.forEach(function(h,i){o[h]=rw[i]!==undefined?rw[i]:""});return jsonResponse(o)}var d=readAll(tbl);return jsonResponse({data:d,total:d.length,table:tbl})}catch(e){return jsonResponse({error:e.toString()},500)}}
 
-  // ── Drive Upload Handler ── (jika ada fileData)
-  if (body.fileName && body.fileType && body.fileData) {
-    return handleDriveUpload(body);
-  }
-  
-  const action = body.action;
-  const table = body.table;
-  const idColumn = body.idColumn || "ID";
-  
-  if (!table || !SHEETS.includes(table)) {
-    return jsonResponse({ error: "Parameter 'table' tidak valid" }, 400);
-  }
-  
-  try {
-    const sheet = getSheet(table);
-    const headers = sheet.getDataRange().getValues()[0];
-    
-    switch (action) {
-      case "create":
-      case "insert":
-        const createResult = addRow(table, body.data, headers);
-        formatSheet(sheet, headers, sheet.getLastRow() - 1);
-        return jsonResponse(createResult, 201);
-      
-      case "update":
-        if (!body.id) return jsonResponse({ error: "Field 'id' wajib" }, 400);
-        const updResult = updateRow(table, idColumn, body.id, body.data, headers);
-        return jsonResponse(updResult);
-      
-      case "delete":
-        if (!body.id) return jsonResponse({ error: "Field 'id' wajib" }, 400);
-        const delResult = deleteRow(table, idColumn, body.id, headers);
-        return jsonResponse(delResult);
-      
-      case "upsert":
-        if (!body.id) return jsonResponse({ error: "Field 'id' wajib" }, 400);
-        const colIndex = headers.indexOf(idColumn);
-        const exists = findRowIndex(sheet, colIndex, body.id) >= 0;
-        if (exists) {
-          return jsonResponse(updateRow(table, idColumn, body.id, body.data, headers));
-        } else {
-          return jsonResponse(addRow(table, body.data, headers), 201);
-        }
-      
-      case "sync":
-        // Bulk sync — replace all data
-        if (!Array.isArray(body.data)) return jsonResponse({ error: "data harus array" }, 400);
-        sheet.clear();
-        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-        if (body.data.length > 0) {
-          const rows = body.data.map(item => headers.map(h => item[h] !== undefined ? item[h] : ""));
-          sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
-        }
-        // Apply formatting (borders, bold header, alternating colors)
-        formatSheet(sheet, headers, body.data.length);
-        return jsonResponse({ success: true, rows: body.data.length });
-      
-      default:
-        return jsonResponse({ error: `Action '${action}' tidak dikenal. Gunakan: create, update, delete, upsert, sync` }, 400);
-    }
-  } catch (err) {
-    return jsonResponse({ error: err.toString() }, 500);
-  }
-}
+function doPost(e){if(!checkAuth(e))return jsonResponse({error:"Unauthorized",code:401},401);var b=parseBody(e);if(!b)return jsonResponse({error:"Invalid JSON body"},400);var act=b.action||"";if(act==="chat"||act==="chatAI")return handleChatAI(b);if(act==="telegramUpload"||act==="uploadTelegram")return handleTelegramUpload(b);if(act==="telegramGetUrl")return handleTelegramGetUrl(b);if(act==="telegramBroadcast"||act==="broadcast")return handleTelegramBroadcast(b);if(b.fileName&&b.fileType&&b.fileData&&!act)return handleDriveUpload(b);if(act==="verifikasiID"||act==="verifyID"||act==="verify-id")return handleVerifyID(b);if(act==="verifikasiPin"||act==="verifyPin"||act==="verify-pin"||act==="verifikasiPengurus"||act==="verify-pengurus"||act==="verifikasiKetua"||act==="verify-ketua"||act==="verifikasiSuperAdmin"||act==="verify-sa")return handleVerifyPin(b);var tbl=b.table;var ic=b.idColumn||"ID";if(!tbl||SHEETS.indexOf(tbl)===-1)return jsonResponse({error:"Parameter 'table' tidak valid. Pilih: "+SHEETS.join(", ")},400);try{var s=getSheet(tbl);var h=s.getDataRange().getValues()[0].map(String);switch(act){case"create":case"insert":if(!b.data)return jsonResponse({error:"data wajib"},400);var r=addRow(tbl,b.data,h);formatSheet(s,h,s.getLastRow()-1);return jsonResponse(r,201);case"update":if(!b.id)return jsonResponse({error:"id wajib"},400);return jsonResponse(updateRow(tbl,ic,b.id,b.data,h));case"delete":if(!b.id)return jsonResponse({error:"id wajib"},400);return jsonResponse(deleteRow(tbl,ic,b.id,h));case"upsert":if(!b.id)return jsonResponse({error:"id wajib"},400);var ci=h.indexOf(ic);if(findRowIndex(s,ci,b.id)>=0)return jsonResponse(updateRow(tbl,ic,b.id,b.data,h));return jsonResponse(addRow(tbl,b.data,h),201);case"sync":if(!Array.isArray(b.data))return jsonResponse({error:"data harus array"},400);s.clear();s.getRange(1,1,1,h.length).setValues([h]);if(b.data.length>0){var rws=b.data.map(function(it){return h.map(function(h){return it[h]!==undefined?it[h]:""})});s.getRange(2,1,rws.length,h.length).setValues(rws)}formatSheet(s,h,b.data.length);return jsonResponse({success:true,rows:b.data.length});default:return jsonResponse({error:"Action '"+act+"' tidak dikenal.",validActions:"create, update, delete, upsert, sync, chat, telegramUpload, telegramGetUrl, telegramBroadcast, verifikasiID, verifikasiPin"},400)}}catch(e){Logger.log("doPost error: "+e.toString());return jsonResponse({error:e.toString()},500)}}

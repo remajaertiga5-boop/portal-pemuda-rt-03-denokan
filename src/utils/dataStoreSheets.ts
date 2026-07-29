@@ -1,6 +1,6 @@
 // ============================================================
 // DATASTORE HYBRID — Google Sheets Primary + localStorage Cache
-// v1.0 — Automatic sync, offline fallback, conflict resolution
+// v1.1 — Fixed: refreshSingleSheet now merges instead of replacing
 // ============================================================
 
 import { AppData, loadAppData, saveAppData } from "./dataStore";
@@ -19,9 +19,6 @@ interface SyncResult {
   error     ?: string;
 }
 
-// ── State ─────────────────────────────────────────────────
-
-// ── Safe Array Helper ───────────────────────────────────
 function safeArray(val: any): any[] {
   if (Array.isArray(val)) return val;
   return [];
@@ -31,7 +28,6 @@ let syncCallbacks: SyncCallback[] = [];
 let currentStatus: SyncStatus = "idle";
 let lastSyncTime: Date | null = null;
 
-// ── Subscribe to sync events ──────────────────────────────
 export function onSyncChange(cb: SyncCallback) {
   syncCallbacks.push(cb);
   cb(currentStatus);
@@ -44,12 +40,10 @@ function notify(status: SyncStatus, message?: string) {
   syncCallbacks.forEach(cb => cb(status, message));
 }
 
-// ── Check if online ───────────────────────────────────────
 function isOnline(): boolean {
   return typeof navigator !== "undefined" ? navigator.onLine : true;
 }
 
-// ── Load all data from Google Sheets ──────────────────────
 export async function loadFromSheets(): Promise<AppData | null> {
   if (!isOnline()) {
     notify("offline", "Tidak ada koneksi internet");
@@ -68,19 +62,14 @@ export async function loadFromSheets(): Promise<AppData | null> {
       sheets.readSheet("galeri"),
     ]);
 
-    // Build AppData — merge Sheets dengan localStorage
-    // ...existingData preserve: Iuran, Voting, KonfigurasiAPI, Settings, etc.
     const existingData = loadAppData();
     const appData: AppData = {
       ...existingData,
-      // Overwrite hanya 6 tabel dari Sheets:
-      // Anggota: merge Sheets + local — jangan overwrite data yang sudah terdaftar
       Anggota: (() => {
         const anggotaSheets = safeArray(anggota.data);
         if (anggotaSheets.length > 0) {
           const localAnggota = existingData.Anggota || [];
           const sheetsIds = new Set(anggotaSheets.map((s: any) => s.ID));
-          // Sheets priority, local sebagai pelengkap
           return [...anggotaSheets, ...localAnggota.filter((l: any) => !sheetsIds.has(l.ID))];
         }
         return existingData.Anggota || [];
@@ -89,7 +78,6 @@ export async function loadFromSheets(): Promise<AppData | null> {
       Pengumuman  : safeArray(pengumuman.data),
       Kas         : safeArray(kas.data),
       Aspirasi    : safeArray(aspirasi.data),
-      // Galeri: merge Sheets + local — jangan overwrite data lokal
       Galeri: (() => {
         const galeriSheets = safeArray(galeri.data);
         if (galeriSheets.length > 0) {
@@ -101,9 +89,7 @@ export async function loadFromSheets(): Promise<AppData | null> {
       })(),
     };
 
-    // Cache ke localStorage
     saveAppData(appData);
-
     notify("idle", `Data dimuat: ${appData.Anggota.length} anggota, ${appData.Kas.length} kas, ${appData.Agenda.length} agenda`);
     return appData;
 
@@ -114,8 +100,6 @@ export async function loadFromSheets(): Promise<AppData | null> {
   }
 }
 
-
-// ── Refresh single sheet from Google Sheets (dipanggil tiap buka menu) ──
 export async function refreshSingleSheet(table: string): Promise<Partial<AppData> | null> {
   if (!isOnline()) return null;
 
@@ -123,7 +107,6 @@ export async function refreshSingleSheet(table: string): Promise<Partial<AppData
     const result = await (sheets as any).readSheet(table);
     const rawData = safeArray(result.data);
 
-    // Map table name to AppData key (lowercase → camelCase)
     const keyMap: Record<string, keyof AppData> = {
       anggota: "Anggota", agenda: "Agenda", pengumuman: "Pengumuman",
       kas: "Kas", aspirasi: "Aspirasi", galeri: "Galeri"
@@ -132,18 +115,25 @@ export async function refreshSingleSheet(table: string): Promise<Partial<AppData
     const appKey = keyMap[table];
     if (!appKey) return null;
 
-    // Merge: Sheets data overwrites localStorage
+    // Merge: Sheets + localStorage — jangan hapus data lokal kalau Sheets kosong
     const existing = loadAppData();
-    const updated = { ...existing, [appKey]: rawData };
+    const existingData = (existing as any)[appKey] || [];
+    if (rawData.length === 0) {
+      // Sheets kosong → pertahankan data lokal
+      return { [appKey]: existingData } as Partial<AppData>;
+    }
+    // Merge: Sheets priority, local sebagai pelengkap (hindari duplikat ID)
+    const sheetsIds2 = new Set(rawData.map((item: any) => item.ID || item.ID_Foto || ""));
+    const merged = [...rawData, ...existingData.filter((item: any) => !sheetsIds2.has(item.ID || item.ID_Foto || ""))];
+    const updated = { ...existing, [appKey]: merged };
     saveAppData(updated);
-    return { [appKey]: rawData };
+    return { [appKey]: merged } as Partial<AppData>;
   } catch (err: any) {
     console.error("[SheetsDB] Refresh single sheet error:", table, err);
     return null;
   }
 }
 
-// ── Save all data to Google Sheets ────────────────────────
 export async function saveToSheets(appData: AppData): Promise<SyncResult> {
   if (!isOnline()) {
     notify("offline", "Offline — data hanya disimpan lokal");
@@ -199,17 +189,14 @@ export async function saveToSheets(appData: AppData): Promise<SyncResult> {
   }
 }
 
-// ── Initial load — Sheets first, fallback to localStorage ──
 export async function initializeData(): Promise<AppData> {
   try {
-    // 1. Coba dari Sheets
     const sheetsData = await loadFromSheets();
     if (sheetsData) return sheetsData;
   } catch (err) {
     console.error("[SheetsDB] initializeData error:", err);
   }
 
-  // 2. Fallback ke localStorage
   try {
     const localData = loadAppData();
     if (localData && localData.Anggota) {
@@ -220,12 +207,10 @@ export async function initializeData(): Promise<AppData> {
     console.error("[SheetsDB] localStorage fallback error:", err);
   }
 
-  // 3. Last resort — empty safe data
   notify("error", "Tidak ada data tersedia — menggunakan data kosong");
-  return loadAppData(); // returns default empty
+  return loadAppData();
 }
 
-// ── Quick sync single table ───────────────────────────────
 export async function syncSingleTable(
   table: keyof typeof sheets.SHEET_NAMES | string,
   data : any[]
@@ -237,7 +222,6 @@ export async function syncSingleTable(
   }
 }
 
-// ── Status ────────────────────────────────────────────────
 export function getSyncStatus(): SyncStatus { return currentStatus; }
 export function getLastSyncTime(): Date | null { return lastSyncTime; }
 
