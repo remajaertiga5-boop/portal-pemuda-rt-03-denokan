@@ -318,6 +318,7 @@ const id = {
         id   : 'Indonesia',
         en   : 'English',
         jv   : 'Jawa',
+        slg  : 'Gaul',
       },
       fontSize: {
         title     : 'Ukuran Font',

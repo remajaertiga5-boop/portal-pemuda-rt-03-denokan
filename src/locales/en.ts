@@ -317,6 +317,7 @@ const en = {
         id   : 'Indonesia',
         en   : 'English',
         jv   : 'Javanese',
+        slg  : 'Gaul',
       },
       fontSize: {
         title     : 'Font Size',
