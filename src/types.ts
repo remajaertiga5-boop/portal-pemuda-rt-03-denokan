@@ -318,6 +318,13 @@ export interface SystemSettings {
   WA_Sekretaris?: string;
   Nama_Ketua?: string;
   Nama_Sekretaris?: string;
+  // Optional custom main contacts maintained by administrators
+  MainContacts?: {
+    icon?: string;
+    jabatan: string;
+    nama: string;
+    wa: string;
+  }[];
 }
 
 export interface VotingOption {

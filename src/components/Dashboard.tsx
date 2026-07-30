@@ -7,9 +7,10 @@ import {
   Database, Server, Crown, X, UserPlus, Info,
   Image as ImageIcon, KeyRound,
 } from "lucide-react";
-import { AppData, filterKontenByAkses } from "../utils/dataStore";
+import { AppData, filterKontenByAkses, saveAppData } from "../utils/dataStore";
 import { UserRole, AuthSession, AgendaItem, PengumumanItem, AnggotaItem } from "../types";
 import { useLocale } from "../hooks/useLocale";
+import { useState } from "react";
 
 // ----------------------------------------------------------
 // KONSTANTA
@@ -104,6 +105,10 @@ export default function Dashboard({
   const [selectedPhotoModal, setSelectedPhotoModal]   = useState<string | null>(null);
   const [rsvpState, setRsvpState]                 = useState<Record<string, "HADIR" | "TIDAK">>({});
 
+  // Add-contact modal state (visible only to SUPER_ADMIN or KETUA)
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const [newContact, setNewContact] = useState<{ icon?: string; jabatan: string; nama: string; wa: string }>({ icon: "👤", jabatan: "", nama: "", wa: "" });
+
   const [sekretarisTasks, setSekretarisTasks] = useState<SekretarisTask[]>([
     { id: 1, text: "Rekap absensi rapat koordinasi kemarin",           done: true,  tag: "Absensi" },
     { id: 2, text: "Kirim reminder iuran bulanan ke anggota",          done: false, tag: "Iuran"   },
@@ -170,6 +175,25 @@ export default function Dashboard({
 
   const dismissNotification = (id: string) => {
     setUserNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  // Save new contact into settings.MainContacts (persist to app data)
+  const handleSaveContact = () => {
+    const contact = { ...newContact };
+    const existing = (settings.MainContacts && Array.isArray(settings.MainContacts)) ? settings.MainContacts : [];
+    const updatedSettings = { ...settings, MainContacts: [...existing, contact] };
+    const updatedAppData = { ...currentData, Settings: updatedSettings } as AppData;
+
+    if (setAppData) setAppData(updatedAppData);
+    try {
+      saveAppData(updatedAppData);
+    } catch (err) {
+      // best-effort save; ignore errors here but keep UI responsive
+      console.error("Gagal menyimpan kontak:", err);
+    }
+
+    setShowAddContactModal(false);
+    setNewContact({ icon: "👤", jabatan: "", nama: "", wa: "" });
   };
 
   const userFullName = session?.nama_lengkap || session?.nama_panggilan || "Anggota Remaja";
@@ -932,16 +956,34 @@ export default function Dashboard({
 
         {/* Kontak Pengurus */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-3">
-          <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
-            <Phone size={18} className="text-emerald-600" />
-            Kontak Pengurus Utama
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+              <Phone size={18} className="text-emerald-600" />
+              Kontak Pengurus Utama
+            </h3>
+
+            {/* Add button visible to SUPER_ADMIN or KETUA */}
+            {(userRole === "SUPER_ADMIN" || userRole === "KETUA") && (
+              <button
+                onClick={() => setShowAddContactModal(true)}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-bold transition-all flex items-center gap-2"
+                aria-label="Tambah kontak pengurus"
+              >
+                <UserPlus size={14} />
+                <span>Tambah</span>
+              </button>
+            )}
+          </div>
 
           <div className="space-y-2.5 pt-1">
-            {[
-              { icon: "👑", jabatan: "Ketua Remaja RT 03",  nama: actualNamaKetua,   wa: actualWaKetua      },
-              { icon: "📝", jabatan: "Sekretaris Remaja",   nama: actualNamaSekretaris,  wa: actualWaSekretaris },
-            ].map((kontak) => (
+            {(
+              (settings.MainContacts && Array.isArray(settings.MainContacts) && settings.MainContacts.length > 0)
+                ? settings.MainContacts
+                : [
+                    { icon: "👑", jabatan: "Ketua Remaja RT 03",  nama: actualNamaKetua,   wa: actualWaKetua      },
+                    { icon: "📝", jabatan: "Sekretaris Remaja",   nama: actualNamaSekretaris,  wa: actualWaSekretaris },
+                  ]
+            ).map((kontak: any) => (
               <div
                 key={kontak.jabatan}
                 className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700"
@@ -1030,6 +1072,49 @@ export default function Dashboard({
       {/* ================================================================= */}
       {/* PHOTO LIGHTBOX */}
       {/* ================================================================= */}
+      {showAddContactModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-6 shadow-2xl space-y-4 relative border border-slate-100 dark:border-slate-800">
+            <button
+              onClick={() => setShowAddContactModal(false)}
+              aria-label="Tutup tambah kontak"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-full transition-colors"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100">Tambah Kontak Pengurus</h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold">Icon (emoji atau singkatan)</label>
+                <input value={newContact.icon} onChange={(e) => setNewContact({ ...newContact, icon: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold">Jabatan</label>
+                <input value={newContact.jabatan} onChange={(e) => setNewContact({ ...newContact, jabatan: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold">Nama</label>
+                <input value={newContact.nama} onChange={(e) => setNewContact({ ...newContact, nama: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold">Nomor WhatsApp (628... tanpa +)</label>
+                <input value={newContact.wa} onChange={(e) => setNewContact({ ...newContact, wa: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm" />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => { setShowAddContactModal(false); setNewContact({ icon: "👤", jabatan: "", nama: "", wa: "" }); }} className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">Batal</button>
+              <button onClick={handleSaveContact} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Simpan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedPhotoModal && (
         <div
           className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
