@@ -5,7 +5,7 @@
 function getScriptUrl(): string {
   try { const s = localStorage.getItem("apps_script_url"); if (s) return s; } catch {}
   try { if (import.meta.env?.VITE_API_URL) return import.meta.env.VITE_API_URL; } catch {}
-  return "https://script.google.com/macros/s/AKfycbyn9nU2CFNoGfUqN42KEPEm8HO0Xqnd8wEfyO5i7e3bqcNx-8i4JCt2dhcTW47OWcvchw/exec";
+  return "https://script.google.com/macros/AKfycbyG9z3yK5IBda_71kx6IBda_71kx6IQg82vF19Qah2Ce91d_2h3EtgltVrkp77vNGHVdheL92LLQjLG/exec";
 }
 
 const API_KEY = "remaja-legok-03-2026";
