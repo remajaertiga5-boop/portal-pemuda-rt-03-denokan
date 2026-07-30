@@ -7,7 +7,7 @@ import {
   Crown, KeyRound, Sparkles, HelpCircle, PhoneCall, QrCode, ArrowLeft,
   Clock, AlertTriangle, Layers, Building2, Printer, CheckSquare, X, Info, MessageCircle, Sliders
 } from "lucide-react";
-import { AppData, addLogAkses } from "../utils/dataStore";
+import { AppData, addLogAkses, saveAppData } from "../utils/dataStore";
 import { refreshSingleSheet } from "../utils/dataStoreSheets";
 import { KasItem, IuranItem, UserRole, AuthSession, AnggotaItem } from "../types";
 import { verifikasiPINDinamis } from "../utils/auth";
@@ -143,10 +143,22 @@ export default function Keuangan({
   // ── Refresh data Kas & Anggota dari Google Sheets tiap buka menu ──
   useEffect(() => {
     refreshSingleSheet("kas").then((result: any) => {
-      if (result?.Kas) setAppData((prev: AppData) => ({ ...prev, Kas: result.Kas! }));
+      if (result?.Kas) {
+        setAppData((prev: AppData) => {
+          const updated = { ...prev, Kas: result.Kas! } as AppData;
+          try { saveAppData(updated); } catch (e) { console.error('Gagal menyimpan Kas setelah refresh:', e); }
+          return updated;
+        });
+      }
     });
     refreshSingleSheet("anggota").then((result: any) => {
-      if (result?.Anggota) setAppData((prev: AppData) => ({ ...prev, Anggota: result.Anggota! }));
+      if (result?.Anggota) {
+        setAppData((prev: AppData) => {
+          const updated = { ...prev, Anggota: result.Anggota! } as AppData;
+          try { saveAppData(updated); } catch (e) { console.error('Gagal menyimpan Anggota setelah refresh:', e); }
+          return updated;
+        });
+      }
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -255,13 +267,16 @@ export default function Keuangan({
         Status: "DISETUJUI"
       };
 
-      return addLogAkses(
+      const updated = addLogAkses(
         { ...prev, Kas: [...prevKasList, newItem] },
         currentUserName || "Pengurus",
         userRole,
         "INPUT_KAS",
         `Input ${kasFormJenis} Rp ${kasFormNominal.toLocaleString("id-ID")}`
       );
+
+      try { saveAppData(updated); } catch (e) { console.error('Gagal menyimpan kas baru:', e); }
+      return updated;
     });
 
     setShowInputKasModal(false);
@@ -280,13 +295,16 @@ export default function Keuangan({
       const updatedKasList = prevKasList.filter(k => k.ID !== targetItem.ID);
       const nominalValue = getKasNominal(targetItem);
 
-      return addLogAkses(
+      const updated = addLogAkses(
         { ...prev, Kas: updatedKasList },
         currentUserName || "Pengurus",
         userRole,
         "HAPUS_KAS",
         `Hapus transaksi kas (${targetItem.ID}) ${targetItem.Jenis} ${targetItem.Kategori}: Rp ${nominalValue.toLocaleString("id-ID")}`
       );
+
+      try { saveAppData(updated); } catch (e) { console.error('Gagal menyimpan setelah hapus kas:', e); }
+      return updated;
     });
 
     setShowDeleteKasModal(false);
@@ -303,13 +321,16 @@ export default function Keuangan({
         !(i.ID_Anggota === memberId && i.Bulan === month && String(i.Tahun) === String(year))
       );
 
-      return addLogAkses(
+      const updated = addLogAkses(
         { ...prev, Iuran: updatedIuranList },
         currentUserName || "Pengurus",
         userRole,
         "HAPUS_IURAN",
         `Batalkan / hapus catatan iuran anggota ${memberId} bulan ${month} ${year}`
       );
+
+      try { saveAppData(updated); } catch (e) { console.error('Gagal menyimpan setelah hapus iuran:', e); }
+      return updated;
     });
 
     setShowDeleteIuranModal(false);
