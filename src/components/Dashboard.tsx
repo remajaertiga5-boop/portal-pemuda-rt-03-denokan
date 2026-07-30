@@ -920,7 +920,7 @@ export default function Dashboard({
             Mari bergabung dengan Remaja Legok 03 RT 03/RW 04 Denokan!
           </p>
           <a
-            href={WA_URL(actualWaKetua, "Halo Ketua Remaja Legok 03, saya ingin mendaftar jadi anggota")}
+            href={WA_URL(actualWaKetua, `Halo ${actualNamaKetua}, saya ${userFullName} (${userID}) ingin mendaftar jadi anggota Remaja Legok 03.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black rounded-xl text-xs transition-all shadow-md dark:shadow-none"
@@ -966,7 +966,7 @@ export default function Dashboard({
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm dark:shadow-none"
                 >
                   <MessageCircle size={13} />
-                  <span>t("dashboard.chatWA")</span>
+                  <span>{t("dashboard.chatWA")}</span>
                 </a>
               </div>
             ))}
