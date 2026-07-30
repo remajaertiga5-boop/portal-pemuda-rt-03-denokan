@@ -11,9 +11,9 @@ import { AppData, filterKontenByAkses } from "../utils/dataStore";
 import { UserRole, AuthSession, AgendaItem, PengumumanItem, AnggotaItem } from "../types";
 import { useLocale } from "../hooks/useLocale";
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // KONSTANTA
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 const MOTIVATION_QUOTES = [
   "Bersatu kita teguh, bercerai kita runtuh.",
   "Gotong royong wujud kebersamaan pemuda RT 03 Denokan.",
@@ -29,9 +29,9 @@ const WA_SEKRETARIS = "6281234567891";
 const WA_URL = (no: string, msg: string) =>
   `https://wa.me/${no}?text=${encodeURIComponent(msg)}`;
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // TYPES
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 interface DashboardProps {
   appData?: AppData;
   data?: AppData;              // ✅ Ganti any → AppData
@@ -57,9 +57,9 @@ interface UserNotification {
   read : boolean;
 }
 
-// ----------------------------------------------------------
-// HELPER - Greeting berdasarkan jam
-// ----------------------------------------------------------
+// -----------------------------------------------------------
+// HELPER - Greeting berdasarkan jam (pure, no t dependency)
+// -----------------------------------------------------------
 function getTimeGreeting(hours: number): string {
   if (hours >= 0  && hours < 11) return "Selamat Pagi";
   if (hours >= 11 && hours < 15) return "Selamat Siang";
@@ -67,9 +67,9 @@ function getTimeGreeting(hours: number): string {
   return "Selamat Malam";
 }
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // COMPONENT
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 export default function Dashboard({
   appData,
   data,
@@ -90,14 +90,21 @@ export default function Dashboard({
   const isGuest     = userRole === "TAMU";
 
   const now          = new Date();
-  const timeGreeting = getTimeGreeting(now.getHours());
+  const rawGreeting = getTimeGreeting(now.getHours());
+  const greetingMap: Record<string, string> = {
+    "Selamat Pagi": t("common.greeting.morning", "Selamat Pagi"),
+    "Selamat Siang": t("common.greeting.afternoon", "Selamat Siang"),
+    "Selamat Sore": t("common.greeting.evening", "Selamat Sore"),
+    "Selamat Malam": t("common.greeting.night", "Selamat Malam"),
+  };
+  const timeGreeting = greetingMap[rawGreeting] || rawGreeting;
 
   // Kutipan motivasi berdasarkan tanggal
   const todayQuote = MOTIVATION_QUOTES[now.getDate() % MOTIVATION_QUOTES.length];
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // STATE
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const [isRefreshing, setIsRefreshing]           = useState(false);
   const [showRefreshToast, setShowRefreshToast]   = useState(false);
   const [selectedAgendaModal, setSelectedAgendaModal] = useState<AgendaItem | null>(null);
@@ -109,18 +116,18 @@ export default function Dashboard({
     { id: 2, text: "Kirim reminder iuran bulanan ke anggota",          done: false, tag: "Iuran"   },
     { id: 3, text: "Input pemasukan donasi warga RT 03",               done: false, tag: "Kas"     },
     { id: 4, text: "Buat draft undangan Pesta Lomba 17-an",            done: false, tag: "Agenda"  },
-    { id: 5, text: "Update data kontak anggota baru",                  done: true,  tag: "Anggota" },
+    { id: 5, text: "Update data kontak anggota baru",                    done: true,  tag: "Anggota" },
   ]);
 
   const [userNotifications, setUserNotifications] = useState<UserNotification[]>([
-    { id: "1", title: "Iuran Bulan Ini",    msg: "Iuran Anda bulan ini belum dikonfirmasi.",                              type: "warning", read: false },
+    { id: "1", title: "Iuran Bulan Ini",    msg: "Iuran Anda bulan ini belum dikonfirmasi.",                                      type: "warning", read: false },
     { id: "2", title: "Agenda Mendatang",   msg: "Pesta Lomba Rakyat Remaja RT 03 diselenggarakan 17 Agustus 2026.",      type: "info",    read: false },
     { id: "3", title: "Aspirasi Direspon", msg: "Usulan perbaikan peralatan olahraga telah ditanggapi oleh Pengurus.",   type: "success", read: true  },
   ]);
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // DATA
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const anggotaList      = (currentData.Anggota || []) as AnggotaItem[];
   const totalAnggota     = anggotaList.length;
   const activeAnggotaCount = anggotaList.filter((a) => a.Status_Aktif === "AKTIF").length;
@@ -148,11 +155,11 @@ export default function Dashboard({
   const agendaMendatang   = [...visibleAgenda].reverse().slice(0, 3);
 
   const galeriList   = currentData.Galeri || [];
-  const latestPhotos = [...galeriList].reverse().slice(0, 6);
+  const latestPhotos = [...galeryList].reverse().slice(0, 6);
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // HANDLERS
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleRefresh = () => {
     setIsRefreshing(true);
     setTimeout(() => {
@@ -175,9 +182,9 @@ export default function Dashboard({
   const userFullName = session?.nama_lengkap || session?.nama_panggilan || "Anggota Remaja";
   const userID       = session?.id_anggota   || "RL03-000";
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // ROLE BADGE
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const RoleBadge = () => {
     const badges: Partial<Record<UserRole, { label: string; className: string }>> = {
       SUPER_ADMIN: { label: "🔴 SuperAdmin", className: "bg-amber-100 text-amber-900 border-amber-300" },
@@ -199,9 +206,9 @@ export default function Dashboard({
     );
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // RENDER
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
 
@@ -209,7 +216,7 @@ export default function Dashboard({
       {showRefreshToast && (
         <div className="fixed top-4 right-4 z-50 bg-slate-900 text-emerald-400 px-4 py-3 rounded-2xl shadow-xl border border-emerald-500/30 text-xs font-bold flex items-center gap-2 animate-in slide-in-from-top-2">
           <CheckCircle2 size={16} />
-          <span>Data Dashboard Diperbarui!</span>
+          <span>{t("dashboard.dataRefreshed", "Data Dashboard Diperbarui!")}</span>
         </div>
       )}
 
@@ -223,7 +230,7 @@ export default function Dashboard({
             <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 flex-wrap">
               <span>
                 {timeGreeting},{" "}
-                {isGuest ? "Warga RT 03 / Tamu" : userFullName}!
+                {isGuest ? t("dashboard.guestName", "Warga RT 03 / Tamu") : userFullName}!
               </span>
               <RoleBadge />
             </div>
@@ -239,11 +246,11 @@ export default function Dashboard({
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-xl transition-all text-xs font-bold flex items-center gap-1 border border-slate-200 dark:border-slate-800"
-            title="Refresh Data Dashboard"
-            aria-label="Refresh data"
+            title={t("dashboard.refreshData", "Refresh Data Dashboard")}
+            aria-label={t("dashboard.refreshDataAria", "Refresh data")}
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-emerald-600" : ""} />
-            <span className="hidden sm:inline">Refresh</span>
+            <span className="hidden sm:inline">{t("common.button.refresh")}</span>
           </button>
         </div>
       </div>
@@ -257,13 +264,13 @@ export default function Dashboard({
           </span>
         </div>
         <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 dark:bg-emerald-900/50 dark:text-emerald-300 px-2 py-0.5 rounded-md shrink-0">
-          Motivasi Hari Ini
+          {t("dashboard.motivationLabel", "Motivasi Hari Ini")}
         </span>
       </div>
 
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {/* TAMU: Hero Banner & Stats Publik */}
-      {/* ================================================================= */}
+      {/* ================================================================== */}
       {isGuest && (
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-xl dark:shadow-none relative overflow-hidden">
@@ -272,14 +279,13 @@ export default function Dashboard({
             </div>
             <div className="relative z-10 max-w-2xl space-y-3">
               <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded-full text-[11px] font-bold uppercase tracking-wider inline-block">
-                PORTAL RESMI WARGA & REMAJA
+                {t("dashboard.portalBadge", "PORTAL RESMI WARGA & REMAJA")}
               </span>
               <h1 className="text-2xl md:text-3xl font-black text-white leading-tight">
-                Remaja Legok 03 Denokan
+                {t("dashboard.heroTitle", "Remaja Legok 03 Denokan")}
               </h1>
               <p className="text-xs md:text-sm text-emerald-100/90 leading-relaxed">
-                RT 03 Legok RW 04 Denokan, Kelurahan Gondoryo, Kecamatan Jambu,
-                Kabupaten Semarang, Jawa Tengah.
+                {t("dashboard.heroLocation", "RT 03 Legok RW 04 Denokan, Kelurahan Gondoryo, Kecamatan Jambu, Kabupaten Semarang, Jawa Tengah.")}
               </p>
               <div className="flex flex-wrap items-center gap-2.5 pt-3">
                 {onOpenAuthModal && (
@@ -288,7 +294,7 @@ export default function Dashboard({
                     className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold rounded-xl text-xs transition-all shadow-md dark:shadow-none flex items-center gap-1.5"
                   >
                     <KeyRound size={14} />
-                    <span>Masuk dengan ID Anggota</span>
+                    <span>{t("dashboard.loginButton", "Masuk dengan ID Anggota")}</span>
                   </button>
                 )}
                 <button
@@ -296,7 +302,7 @@ export default function Dashboard({
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1.5"
                 >
                   <Megaphone size={14} />
-                  <span>Lihat Pengumuman</span>
+                  <span>{t("dashboard.viewAnnouncements", "Lihat Pengumuman")}</span>
                 </button>
                 <a
                   href={WA_URL(actualWaKetua, "Halo Pengurus Remaja Legok 03, saya warga RT 03 ingin bertanya")}
@@ -305,7 +311,7 @@ export default function Dashboard({
                   className="px-4 py-2 bg-emerald-800/80 hover:bg-emerald-700/80 border border-emerald-600/50 text-emerald-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5"
                 >
                   <MessageCircle size={14} />
-                  <span>Hubungi Pengurus</span>
+                  <span>{t("dashboard.contactAdmin", "Hubungi Pengurus")}</span>
                 </a>
               </div>
             </div>
@@ -320,9 +326,9 @@ export default function Dashboard({
               <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center mb-2.5">
                 <Users size={24} />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Anggota</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("dashboard.totalMembers", "Total Anggota")}</p>
               <p className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5">{totalAnggota}</p>
-              <span className="text-[10px] text-emerald-600 font-bold mt-1">Lihat Profil Publik →</span>
+              <span className="text-[10px] text-emerald-600 font-bold mt-1">{t("dashboard.viewPublicProfile", "Lihat Profil Publik")} →</span>
             </div>
 
             <div
@@ -332,9 +338,9 @@ export default function Dashboard({
               <div className="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mb-2.5">
                 <ImageIcon size={24} />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Galeri Foto</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5">{galeriList.length}</p>
-              <span className="text-[10px] text-amber-600 font-bold mt-1">Dokumentasi →</span>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("dashboard.galleryPhotos", "Galeri Foto")}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5">{galeryList.length}</p>
+              <span className="text-[10px] text-amber-600 font-bold mt-1">{t("dashboard.documentation", "Dokumentasi")} →</span>
             </div>
 
             <div
@@ -344,9 +350,9 @@ export default function Dashboard({
               <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center mb-2.5">
                 <Calendar size={24} />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Agenda Publik</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("dashboard.publicAgenda", "Agenda Publik")}</p>
               <p className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5">{visibleAgenda.length}</p>
-              <span className="text-[10px] text-blue-600 font-bold mt-1">Cek Jadwal →</span>
+              <span className="text-[10px] text-blue-600 font-bold mt-1">{t("dashboard.checkSchedule", "Cek Jadwal")} →</span>
             </div>
 
             <div
@@ -356,17 +362,17 @@ export default function Dashboard({
               <div className="w-12 h-12 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center mb-2.5">
                 <Megaphone size={24} />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Pengumuman</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{t("dashboard.announcementsLabel", "Pengumuman")}</p>
               <p className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5">{visiblePengumuman.length}</p>
-              <span className="text-[10px] text-purple-600 font-bold mt-1">Baca Berita →</span>
+              <span className="text-[10px] text-purple-600 font-bold mt-1">{t("dashboard.readNews", "Baca Berita")} →</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {/* ANGGOTA: Personal Status Card */}
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {!isGuest && (
         <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white p-5 md:p-6 rounded-3xl shadow-lg dark:shadow-none border border-slate-800">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -378,7 +384,7 @@ export default function Dashboard({
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-lg font-black text-white">{userFullName}</h2>
                   <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded-md text-[10px] font-bold">
-                    AKTIF
+                    {t("common.status.active")}
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 font-mono mt-0.5">ID: {userID}</p>
@@ -394,23 +400,23 @@ export default function Dashboard({
                 className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm dark:shadow-none flex items-center gap-1"
               >
                 <Wallet size={14} />
-                <span>Iuran Saya</span>
+                <span>{t("dashboard.myDues", "Iuran Saya")}</span>
               </button>
               <button
                 onClick={() => setTab("absensi")}
                 className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm dark:shadow-none flex items-center gap-1"
               >
                 <Users size={14} />
-                <span>Absensi</span>
+                <span>{t("common.nav.attendance")}</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {/* SEKRETARIS: Operational Dashboard */}
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {userRole === "SEKRETARIS" && (
         <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-5 rounded-3xl space-y-4">
           <div className="flex items-center justify-between">
@@ -420,53 +426,53 @@ export default function Dashboard({
               </span>
               <div>
                 <h3 className="font-black text-slate-900 dark:text-slate-100 text-sm">
-                  Dashboard Sekretaris Operasional
+                  {t("dashboard.dashboardSekretaris")}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Ringkasan administrasi & tugas harian organisasi
+                  {t("dashboard.sekretarisSubtitle", "Ringkasan administrasi & tugas harian organisasi")}
                 </p>
               </div>
             </div>
             <span className="px-3 py-1 bg-yellow-200 text-yellow-900 rounded-full text-xs font-bold">
-              Operasional
+              {t("dashboard.operational", "Operasional")}
             </span>
           </div>
 
           {/* Stat Cards Sekretaris — dari data nyata */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-amber-200/80 shadow-sm dark:shadow-none">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Total Anggota</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("dashboard.totalMembers", "Total Anggota")}</div>
               <div className="text-lg font-black text-slate-900 dark:text-slate-100 mt-1">{totalAnggota} Orang</div>
               <div className="text-[10px] text-emerald-600 mt-1">{activeAnggotaCount} Aktif</div>
               <button onClick={() => setTab("anggota")} className="text-[10px] font-bold text-amber-700 mt-2 hover:underline block">
-                Kelola Anggota →
+                {t("dashboard.manageMembers", "Kelola Anggota")} →
               </button>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-amber-200/80 shadow-sm dark:shadow-none">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Pemasukan</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("finance.income", "Pemasukan")}</div>
               <div className="text-lg font-black text-emerald-700 mt-1">{formatCurrency(kasBulanIniPemasukan)}</div>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
                 Keluar: {formatCurrency(kasBulanIniPengeluaran)}
               </p>
               <button onClick={() => setTab("kas")} className="text-[10px] font-bold text-amber-700 mt-2 hover:underline block">
-                Input Transaksi →
+                {t("dashboard.inputTransaction", "Input Transaksi")} →
               </button>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-amber-200/80 shadow-sm dark:shadow-none">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Total Agenda</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("dashboard.totalAgenda", "Total Agenda")}</div>
               <div className="text-lg font-black text-blue-700 mt-1">{visibleAgenda.length} Kegiatan</div>
               <button onClick={() => setTab("absensi")} className="text-[10px] font-bold text-amber-700 mt-2 hover:underline block">
-                Rekap Absensi →
+                {t("dashboard.recapAttendance", "Rekap Absensi")} →
               </button>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-amber-200/80 shadow-sm dark:shadow-none">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Pengumuman</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("dashboard.announcementsLabel", "Pengumuman")}</div>
               <div className="text-lg font-black text-purple-700 mt-1">{visiblePengumuman.length} Aktif</div>
               <button onClick={() => setTab("pengumuman")} className="text-[10px] font-bold text-amber-700 mt-2 hover:underline block">
-                Kelola Pengumuman →
+                {t("dashboard.manageAnnouncements", "Kelola Pengumuman")} →
               </button>
             </div>
           </div>
@@ -475,7 +481,7 @@ export default function Dashboard({
           <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-amber-200/80 space-y-3">
             <h4 className="font-extrabold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
               <CheckSquare size={16} className="text-amber-600" />
-              Daftar Tugas Harian
+              {t("dashboard.daftarTugas")}
             </h4>
             <div className="space-y-2">
               {sekretarisTasks.map((task) => (
@@ -508,9 +514,9 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {/* KETUA / BENDAHARA / ADMIN: Management Monitor */}
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {(userRole === "KETUA" || userRole === "BENDAHARA" || userRole === "ADMIN") && (
         <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 p-5 rounded-3xl space-y-4">
           <div className="flex items-center justify-between">
@@ -520,55 +526,55 @@ export default function Dashboard({
               </span>
               <div>
                 <h3 className="font-black text-slate-900 dark:text-slate-100 text-sm">
-                  Monitor Kesehatan Organisasi
+                  {t("dashboard.healthMonitor", "Monitor Kesehatan Organisasi")}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Ringkasan indikator performa & persetujuan kebijakan
+                  {t("dashboard.healthSubtitle", "Ringkasan indikator performa & persetujuan kebijakan")}
                 </p>
               </div>
             </div>
             <span className="px-3 py-1 bg-rose-200 text-rose-900 rounded-full text-xs font-bold">
-              Level Eksekutif
+              {t("dashboard.executiveLevel", "Level Eksekutif")}
             </span>
           </div>
 
           {/* Stat Cards — dari data nyata */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-rose-200/80 shadow-sm dark:shadow-none">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Saldo Kas</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("dashboard.cashBalance", "Saldo Kas")}</div>
               <div className="text-base font-black text-emerald-700 mt-1">{formatCurrency(sumKas)}</div>
               <button onClick={() => setTab("kas")} className="text-[10px] font-bold text-rose-700 mt-2 hover:underline block">
-                Laporan Kas →
+                {t("dashboard.cashReport", "Laporan Kas")} →
               </button>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-rose-200/80 shadow-sm dark:shadow-none">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Partisipasi Anggota</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("dashboard.memberParticipation", "Partisipasi Anggota")}</div>
               <div className="text-base font-black text-slate-900 dark:text-slate-100 mt-1">
                 {activeAnggotaCount} / {totalAnggota} Aktif
               </div>
               <button onClick={() => setTab("anggota")} className="text-[10px] font-bold text-rose-700 mt-2 hover:underline block">
-                Kelola Anggota →
+                {t("dashboard.manageMembers", "Kelola Anggota")} →
               </button>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-rose-200/80 shadow-sm dark:shadow-none">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Total Agenda</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("dashboard.totalAgenda", "Total Agenda")}</div>
               <div className="text-base font-black text-purple-700 mt-1">
                 {visibleAgenda.length} Kegiatan
               </div>
               <button onClick={() => setTab("agenda")} className="text-[10px] font-bold text-rose-700 mt-2 hover:underline block">
-                Kelola Agenda →
+                {t("dashboard.manageAgenda", "Kelola Agenda")} →
               </button>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-rose-200/80 shadow-sm dark:shadow-none">
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">Pengumuman Aktif</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">{t("dashboard.activeAnnouncements", "Pengumuman Aktif")}</div>
               <div className="text-base font-black text-slate-900 dark:text-slate-100 mt-1">
                 {visiblePengumuman.length} Pengumuman
               </div>
               <button onClick={() => setTab("pengumuman")} className="text-[10px] font-bold text-rose-700 mt-2 hover:underline block">
-                Kelola Pengumuman →
+                {t("dashboard.manageAnnouncements", "Kelola Pengumuman")} →
               </button>
             </div>
           </div>
@@ -577,7 +583,7 @@ export default function Dashboard({
           <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-rose-200/80 space-y-2.5">
             <h4 className="font-extrabold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
               <Activity size={16} className="text-rose-600" />
-              Indikator Kesehatan Organisasi
+              {t("dashboard.healthIndicator", "Indikator Kesehatan Organisasi")}
             </h4>
             <div className="space-y-2 text-xs">
               {/* Persentase anggota aktif dari data nyata */}
@@ -588,7 +594,7 @@ export default function Dashboard({
                 return (
                   <div>
                     <div className="flex justify-between font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      <span>👥 Anggota Aktif</span>
+                      <span>{t("dashboard.anggotaAktif", "Anggota Aktif")}</span>
                       <span className="text-blue-600">{pctAktif}%</span>
                     </div>
                     <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -607,7 +613,7 @@ export default function Dashboard({
                 return (
                   <div>
                     <div className="flex justify-between font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      <span>💰 Rasio Pemasukan vs Pengeluaran</span>
+                      <span>{t("dashboard.incomeExpenseRatio", "Rasio Pemasukan vs Pengeluaran")}</span>
                       <span className="text-emerald-600">{pct}%</span>
                     </div>
                     <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -621,9 +627,9 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {/* SUPER ADMIN: Master Control */}
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {userRole === "SUPER_ADMIN" && (
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl text-slate-100 space-y-4">
           <div className="flex items-center justify-between">
@@ -633,24 +639,24 @@ export default function Dashboard({
               </span>
               <div>
                 <h3 className="font-black text-amber-400 text-sm">
-                  Master Control System (Super Admin)
+                  {t("dashboard.masterControl", "Master Control System (Super Admin)")}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Monitoring infrastruktur, audit trail, & keamanan sistem
+                  {t("dashboard.masterSubtitle", "Monitoring infrastruktur, audit trail, & keamanan sistem")}
                 </p>
               </div>
             </div>
             <span className="px-3 py-1 bg-purple-950 border border-purple-700 text-amber-300 rounded-full text-xs font-bold">
-              Full Access SA
+              {t("dashboard.fullAccessSA", "Full Access SA")}
             </span>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { icon: <Database size={12} className="text-amber-400" />, label: "Storage",       value: "2.4 MB / 100 MB", sub: "Normal (2.4%)"   },
-              { icon: <Server   size={12} className="text-blue-400"  />, label: "Response Time", value: "118 ms",          sub: "Sangat Cepat"    },
-              { icon: <ShieldCheck size={12} className="text-emerald-400" />, label: "Uptime",   value: "99.98%",          sub: "Aktif & Stabil"  },
-              { icon: <Activity size={12} className="text-purple-400" />, label: "Log Keamanan", value: "0 Breach",        sub: "PIN Encrypted"   },
+              { icon: <Database size={12} className="text-amber-400" />, label: t("dashboard.saStorage", "Storage"),       value: "2.4 MB / 100 MB", sub: t("dashboard.saStorageSub", "Normal (2.4%)")   },
+              { icon: <Server   size={12} className="text-blue-400"  />, label: t("dashboard.saResponseTime", "Response Time"), value: "118 ms",          sub: t("dashboard.saResponseSub", "Sangat Cepat")    },
+              { icon: <ShieldCheck size={12} className="text-emerald-400" />, label: t("dashboard.saUptime", "Uptime"),   value: "99.98%",          sub: t("dashboard.saUptimeSub", "Aktif & Stabil")  },
+              { icon: <Activity size={12} className="text-purple-400" />, label: t("dashboard.saSecurityLog", "Log Keamanan"), value: "0 Breach",        sub: t("dashboard.saSecuritySub", "PIN Encrypted")   },
             ].map((card) => (
               <div key={card.label} className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
                 <div className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1">
@@ -667,27 +673,27 @@ export default function Dashboard({
             className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-sm dark:shadow-none flex items-center gap-1.5 cursor-pointer"
           >
             <Crown size={14} />
-            <span>t("dashboard.superAdminPanel")</span>
+            <span>{t("dashboard.superAdminPanel")}</span>
           </button>
         </div>
       )}
 
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {/* NOTIFIKASI PERSONAL */}
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {!isGuest && userNotifications.length > 0 && (
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
               <Bell size={18} className="text-amber-500" />
-              Notifikasi Personal ({userNotifications.length})
+              {t("dashboard.personalNotifications", "Notifikasi Personal")} ({userNotifications.length})
             </h3>
           </div>
           <div className="space-y-2">
             {userNotifications.map((notif) => (
               <div
-                key={notif.id}
-                className={`p-3.5 rounded-2xl border flex items-start justify-between gap-3 ${
+                key={NOTIF.id}
+                className={`pand rounded-2xl border flex items-start justify-between gap-3 ${
                   notif.type === "warning"
                     ? "bg-amber-50/60 border-amber-200 text-amber-900 dark:bg-amber-950/20 dark:border-amber-800 dark:text-amber-200"
                     : notif.type === "success"
@@ -698,7 +704,7 @@ export default function Dashboard({
                 <div className="space-y-0.5">
                   <div className="font-bold text-xs flex items-center gap-1.5">
                     {notif.type === "warning" && <AlertCircle size={14} className="text-amber-600" />}
-                    {notif.type === "success" && <CheckCircle2 size={14} className="text-emerald-600" />}
+                    {NOTIF.type === "success" && <CheckCircle2 size={14} className="text-emerald-600" />}
                     {notif.type === "info"    && <Info size={14} className="text-blue-600" />}
                     <span>{notif.title}</span>
                   </div>
@@ -717,9 +723,9 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       {/* PENGUMUMAN & AGENDA */}
-      {/* ================================================================= */}
+      {/* =================================================================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* Pengumuman Terbaru */}
@@ -754,16 +760,14 @@ export default function Dashboard({
                     <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
                       item.Visibilitas === "ANGGOTA"
                         ? "bg-blue-100 text-blue-800 border border-blue-200"
-                        : item.Visibilitas === "PENGURUS"
-                        ? "bg-purple-100 text-purple-800 border border-purple-200"
-                        : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                        : "bg-green-100 text-green-800 border border-green-200"
                     }`}>
-                      {item.Visibilitas || "PUBLIK"}
+                      {item.Visibilitas}
                     </span>
                   </div>
-                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{item.Judul}</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                    {item.Isi}
+                  <h2 className="font-extrabold text-base text-slate-800 dark:text-slate-200">{item.Judul</h2>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    {item.Isi || t("dashboard.noDescription", "Tidak ada keterangan tambahan.")}
                   </p>
                 </div>
               ))
@@ -771,289 +775,152 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* Agenda Terdekat */}
+        {/* Agenda Mendatang */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Calendar className="text-blue-600" size={20} />
-              Agenda Terdekat
+              {t("agenda.title", "Agenda Kegiatan")}
             </h2>
             <button
               onClick={() => setTab("agenda")}
               className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1"
             >
-              {t("dashboard.viewAll", "Lihat Semua")} <ArrowRight size={14} />
+              t("dashboard.viewAll", "Lift Semua") <ArrowRight size={14} />
             </button>
           </div>
-
           <div className="space-y-3">
             {agendaMendatang.length === 0 ? (
               <p className="text-slate-500 dark:text-slate-400 text-xs italic py-4 text-center">
-                Belum ada agenda mendatang saat ini.
+                Belum ada agenda mendatang.
               </p>
             ) : (
-              // ✅ Pakai item.ID bukan index
-              agendaMendatang.map((item) => {
-                const dateObj      = new Date(item.Tanggal);
-                const monthStr     = dateObj.toLocaleString("id-ID", { month: "short" });
-                const dayNum       = dateObj.getDate();
-                const isConfirmed  = rsvpState[item.ID] === "HADIR";
-
-                return (
-                  <div
-                    key={item.ID}
-                    onClick={() => setSelectedAgendaModal(item)}
-                    className="p-3.5 border border-slate-200 dark:border-slate-700 hover:border-blue-300 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all cursor-pointer flex flex-col sm:flex-row gap-3.5"
-                  >
-                    <div className="bg-emerald-600 text-white px-3 py-2.5 rounded-xl text-center flex-shrink-0 min-w-[54px] shadow-sm dark:shadow-none">
-                      <div className="text-[10px] font-bold uppercase tracking-wider">{monthStr}</div>
-                      <div className="text-xl font-black">{dayNum}</div>
-                    </div>
-
-                    <div className="flex-1 space-y-1">
-                      <h3 className="font-bold text-slate-900 dark:text-slate-100 text-xs leading-snug">
-                        {item["Nama Kegiatan"]}
-                      </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                        <span>⏰ {item.Waktu}</span>
-                        <span>•</span>
-                        <span>📍 {item.Lokasi}</span>
-                      </p>
-
-                      {!isGuest && (
-                        <div
-                          className="pt-1.5 flex items-center gap-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            onClick={() =>
-                              setRsvpState((prev) => ({ ...prev, [item.ID]: "HADIR" }))
-                            }
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${
-                              isConfirmed
-                                ? "bg-emerald-600 text-white shadow-sm"
-                                : "bg-slate-200 dark:bg-slate-700 hover:bg-emerald-100 text-slate-700 dark:text-slate-300 hover:text-emerald-800"
-                            }`}
-                          >
-                            <CheckCircle2 size={12} />
-                            <span>{isConfirmed ? "Hadir ✅" : "Konfirmasi Hadir"}</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
+              agendaMendatang.map((item) => (
+                <div
+                  key={item.ID}
+                  className="p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1.5"
+                >
+                  <div className="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="font-mono text-slate-400 dark:text-slate-500">{item.Tanggal}</span>
+                    <span className="flex items-center gap-1">
+                      <MapPin size={12} className="text-emerald-600" />
+                      {item.Lokasi || "Balai RT 03 Legok"}
+                    </span>
                   </div>
-                );
-              })
+                  <h2 className="font-extrabold text-base text-slate-800 dark:text-slate-200">{item.Nama_Kegiatan}</h2>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    {item.Keterangan || "Tidak ada keterangan."}
+                  </p>
+                </div>
+              ))
             )}
           </div>
         </div>
       </div>
 
-      {/* ================================================================= */}
-      {/* GALERI */}
-      {/* ================================================================= */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-4">
-        <div className="flex justify-between items-center">
-          <div>
+      {/* =================================================================== */}
+      {/* GALERI TERBARU */}
+      {/* =================================================================== */}
+      {latestPhotos.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-4">
+          <div className="flex justify-between items-center">
             <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <ImageIcon className="text-amber-500" size={20} />
+              <ImageIcon className="text-amber-600" size={20} />
               {t("dashboard.latestGallery", "Galeri Kegiatan Terbaru")}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Dokumentasi kegiatan dan kebersamaan pemuda RT 03 Denokan
-            </p>
+            <button
+              onClick={() => setTab("galeri")}
+              className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1"
+            >
+              {t("dashboard.viewAll", "Lihat Semua")} <ArrowRight size={14} />
+            </button>
           </div>
-          <button
-            onClick={() => setTab("galeri")}
-            className="text-xs text-emerald-600 font-bold hover:underline flex items-center gap-1"
-          >
-            Lihat Galeri <ArrowRight size={14} />
-          </button>
-        </div>
-
-        {latestPhotos.length === 0 ? (
-          <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 text-xs">
-            Belum ada foto galeri dipublikasikan.
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            {latestPhotos.map((photo: any, idx: number) => {
-              const url   = photo.Link_Foto || photo.Foto_URL || "";
-              const title = photo.Judul || photo.Judul_Kegiatan || "Foto Kegiatan";
-              if (!url) return null;
-
-              return (
-                <div
-                  key={photo.ID || photo.id || idx}
-                  onClick={() => setSelectedPhotoModal(url)}
-                  className="group relative aspect-square rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer shadow-sm dark:shadow-none hover:shadow-md transition-all border border-slate-200 dark:border-slate-700"
-                >
-                  <img
-                    src={url}
-                    alt={title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-end text-white">
-                    <p className="text-[10px] font-bold truncate">{title}</p>
-                    <p className="text-[9px] text-slate-300 font-mono">{photo.Tanggal}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ================================================================= */}
-      {/* CTA & KONTAK */}
-      {/* ================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {/* Join CTA */}
-        <div className="bg-gradient-to-br from-emerald-800 to-teal-900 text-white p-6 rounded-3xl shadow-md dark:shadow-none space-y-3">
-          <div className="inline-block p-2.5 bg-emerald-500/20 text-emerald-300 rounded-2xl border border-emerald-400/30">
-            <UserPlus size={22} />
-          </div>
-          <h3 className="font-extrabold text-lg text-white">Warga RT 03 Usia Remaja?</h3>
-          <p className="text-xs text-emerald-100/90 leading-relaxed">
-            Mari bergabung dengan Remaja Legok 03 RT 03/RW 04 Denokan!
-          </p>
-          <a
-            href={WA_URL(actualWaKetua, "Halo Ketua Remaja Legok 03, saya ingin mendaftar jadi anggota")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black rounded-xl text-xs transition-all shadow-md dark:shadow-none"
-          >
-            <MessageCircle size={15} />
-            <span>Daftar via WhatsApp Ketua</span>
-          </a>
-        </div>
-
-        {/* Kontak Pengurus */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none space-y-3">
-          <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
-            <Phone size={18} className="text-emerald-600" />
-            Kontak Pengurus Utama
-          </h3>
-
-          <div className="space-y-2.5 pt-1">
-            {[
-              { icon: "👑", jabatan: "Ketua Remaja RT 03",  nama: actualNamaKetua,   wa: actualWaKetua      },
-              { icon: "📝", jabatan: "Sekretaris Remaja",   nama: actualNamaSekretaris,  wa: actualWaSekretaris },
-            ].map((kontak) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+            {latestPhotos.map((photo: any, i: number) => (
               <div
-                key={kontak.jabatan}
-                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700"
+                key={photo.ID || i}
+                onClick={() => setSelectedPhotoModal(photo.URL || photo.url)}
+                className="aspect-square bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:opacity-90 transition-all border border-slate-200 dark:border-slate-700"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold flex items-center justify-center text-xs">
-                    {kontak.icon}
+                {photo.URL || photo.url ? (
+                  <img 
+                    src={photo.URL || photo.url} 
+                    alt={photo.Nama || "Foto"} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <ImageIcon size={32} />
                   </div>
-                  <div>
-                    <div className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-                      {kontak.jabatan}
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {kontak.nama}
-                    </div>
-                  </div>
-                </div>
-                <a
-                  href={WA_URL(kontak.wa, `Halo ${kontak.jabatan} Remaja Legok 03`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm dark:shadow-none"
-                >
-                  <MessageCircle size={13} />
-                  <span>t("dashboard.chatWA")</span>
-                </a>
+                )}
               </div>
             ))}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* ================================================================= */}
-      {/* MODAL DETAIL AGENDA */}
-      {/* ================================================================= */}
+      {/* =================================================================== */}
+      {/* MODAL AGENDA */}
+      {/* =================================================================== */}
       {selectedAgendaModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 max-w-md w-full rounded-3xl p-6 shadow-2xl space-y-4 relative border border-slate-100 dark:border-slate-800">
-            <button
-              onClick={() => setSelectedAgendaModal(null)}
-              aria-label="Tutup detail agenda"
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-full transition-colors"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center shrink-0">
-                <Calendar size={24} />
-              </div>
-              <div>
-                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-md uppercase">
-                  {selectedAgendaModal.Visibilitas || "PUBLIK"}
-                </span>
-                <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base leading-snug mt-0.5">
-                  {selectedAgendaModal["Nama Kegiatan"]}
-                </h3>
-              </div>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedAgendaModal(null)}>
+          <div className="bg-white dark:bg-slate-950 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-extrabold text-lg text-slate-900 dark:text-slate-100">{selectedAgendaModal.Nama_Kegiatan}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{selectedAgendaModal.Keterangan || "Tidak ada keterangan."}</p>
+            <div className="text-xs text-slate-600 dark:text-slate-400">
+              <div>📍 {selectedAgendaModal.Tanggal}</div>
+              <div>🇍 {selectedAgendaModal.Lokasi || "Balai RT 03 Legok"}</div>
             </div>
-
-            <div className="space-y-2 text-xs bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700">
-              <p className="text-slate-700 dark:text-slate-300 font-semibold">📅 {selectedAgendaModal.Tanggal}</p>
-              <p className="text-slate-700 dark:text-slate-300 font-semibold">⏰ {selectedAgendaModal.Waktu}</p>
-              <p className="text-slate-700 dark:text-slate-300 font-semibold">📍 {selectedAgendaModal.Lokasi}</p>
-            </div>
-
-            <div>
-              <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200">Keterangan:</label>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl mt-1">
-                {selectedAgendaModal.Keterangan || t("dashboard.noDescription", "Tidak ada keterangan tambahan.")}
-              </p>
-            </div>
-
-            <div className="pt-2 flex justify-end">
+            <div className="flex gap-2">
               <button
-                onClick={() => setSelectedAgendaModal(null)}
-                className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition-all"
+                onClick={() => {
+                  setRsvpState(prev => ({ ...prev, [selectedAgendaModal.ID]: "HADIR" }));
+                  { showToast && showToast("Response Hadir tersimpan! 🌑", "success"); }
+                }}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+                  rsvpState[selectedAgendaModal.ID] === "HADIR"
+                    ? "bg-emerald-500 text-white"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                }`}
               >
-                Tutup
+                <CheckCircle2 size={14} />
+                <span>Hadir</span>
+              </button>
+              <button
+                onClick={() => {
+                  setRsvpState(prev => ({ ...prev, [selectedAgendaModal.ID]: "TIDAK" }));
+                  { showToast && showToast("Tidak hadir dicatat. Terima kasih.", "info"); }
+                }}
+                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${rsvpState[selectedAgendaModal.ID]=== "TIDAK"
+                    ? "bg-rose-500 text-white"
+                    : "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                }`}
+              >
+                <X size={14} />
+                <span>Tidak Hadir</span>
               </button>
             </div>
+            <button
+              onClick={() => setSelectedAgendaModal(null)}
+              className="w-full px-3 py-2 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold"
+            >
+              Tutup
+            </button>
           </div>
         </div>
       )}
 
-      {/* ================================================================= */}
-      {/* PHOTO LIGHTBOX */}
-      {/* ================================================================= */}
+      {/* =================================================================== */}
+      {/* MODAL FOTO GALERI */}
+      {/* =================================================================== */}
       {selectedPhotoModal && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
-          onClick={() => setSelectedPhotoModal(null)}
-        >
-          <div
-            className="relative max-w-3xl max-h-[85vh] w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedPhotoModal(null)}
-              aria-label="Tutup foto"
-              className="absolute -top-10 right-0 p-2 text-white bg-white/20 hover:bg-white/40 rounded-full transition-colors"
-            >
-              <X size={20} />
-            </button>
-            <img
-              src={selectedPhotoModal}
-              alt="Preview Galeri"
-              className="w-full h-full object-contain rounded-2xl shadow-2xl border border-slate-800"
-            />
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedPhotoModal(null)}>
+          <div className="max-w-3xl max-h-[80vh] rounded-3xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <img src={selectedPhotoModal} alt="Foto" className="w-full h-full object-contain" />
           </div>
         </div>
       )}
+
     </div>
   );
 }
