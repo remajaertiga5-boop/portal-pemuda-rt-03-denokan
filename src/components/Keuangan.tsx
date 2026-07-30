@@ -8,7 +8,7 @@ import {
   Clock, AlertTriangle, Layers, Building2, Printer, CheckSquare, X, Info, MessageCircle, Sliders
 } from "lucide-react";
 import { AppData, addLogAkses, saveAppData } from "../utils/dataStore";
-import { refreshSingleSheet } from "../utils/dataStoreSheets";
+import { refreshSingleSheet, deleteRemoteRow, syncSingleTable } from "../utils/dataStoreSheets";
 import { KasItem, IuranItem, UserRole, AuthSession, AnggotaItem } from "../types";
 import { verifikasiPINDinamis } from "../utils/auth";
 import PINField from "./PINField";
@@ -304,14 +304,24 @@ export default function Keuangan({
       );
 
       try { saveAppData(updated); } catch (e) { console.error('Gagal menyimpan setelah hapus kas:', e); }
-      return updated;
-    });
 
-    setShowDeleteKasModal(false);
-    setShowDetailKasModal(false);
-    setKasToDelete(null);
-    setActiveKasDetail(null);
-    showToast(`Transaksi ${targetItem.ID} berhasil dihapus.`, "success");
+        // Fire-and-forget: delete remotely (Supabase + Sheets). Log any errors to console.
+        (async () => {
+          try {
+            await deleteRemoteRow('kas', String(targetItem.ID || targetItem.ID_Kas || targetItem.id));
+          } catch (err) {
+            console.error('Remote delete kas failed:', err);
+          }
+        })();
+
+        return updated;
+      });
+
+      setShowDeleteKasModal(false);
+      setShowDetailKasModal(false);
+      setKasToDelete(null);
+      setActiveKasDetail(null);
+      showToast(`Transaksi ${targetItem.ID} berhasil dihapus.`, "success");
   };
 
   const handleDeleteIuran = (memberId: string, month: string, year: string) => {
@@ -330,12 +340,22 @@ export default function Keuangan({
       );
 
       try { saveAppData(updated); } catch (e) { console.error('Gagal menyimpan setelah hapus iuran:', e); }
-      return updated;
-    });
 
-    setShowDeleteIuranModal(false);
-    setIuranToDelete(null);
-    showToast(`Catatan iuran bulan ${month} ${year} berhasil dibatalkan.`, "success");
+        // Push updated Iuran list to remote (sync replace) to ensure deletion propagates
+        (async () => {
+          try {
+            await syncSingleTable('iuran', updatedIuranList.map(i => (typeof i === 'object' ? i : {})));
+          } catch (err) {
+            console.error('Remote sync iuran failed:', err);
+          }
+        })();
+
+        return updated;
+      });
+
+      setShowDeleteIuranModal(false);
+      setIuranToDelete(null);
+      showToast(`Catatan iuran bulan ${month} ${year} berhasil dibatalkan.`, "success");
   };
 
   // ==========================================

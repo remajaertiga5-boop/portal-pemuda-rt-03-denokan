@@ -275,4 +275,56 @@ export async function syncSingleTable(
 export function getSyncStatus(): SyncStatus { return currentStatus; }
 export function getLastSyncTime(): Date | null { return lastSyncTime; }
 
+/**
+ * Delete a row remotely (Supabase preferred, then Apps Script Sheets) and update local store.
+ * table: logical table name e.g. 'kas', 'anggota', 'iuran', 'galeri'
+ */
+export async function deleteRemoteRow(table: string, id: string): Promise<{ supabase?: boolean; sheets?: boolean }> {
+  const res: { supabase?: boolean; sheets?: boolean } = {};
+  const SUPABASE_URL = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_URL : undefined;
+  const SUPABASE_KEY = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_ANON_KEY : undefined;
+
+  // Try Supabase DELETE if configured
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    try {
+      const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`;
+      const r = await fetch(url, { method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+      if (r.ok) res.supabase = true;
+    } catch (err) {
+      console.error('[SheetsDB] Supabase delete error:', err);
+    }
+  }
+
+  // Try Apps Script Sheets delete as fallback/secondary
+  try {
+    const sres = await (sheets as any).deleteRow(table);
+    if (sres && !sres.error) res.sheets = true;
+  } catch (err) {
+    // If deleteRow requires id param, try with id
+    try {
+      const sres2 = await (sheets as any).deleteRow(table, id);
+      if (sres2 && !sres2.error) res.sheets = true;
+    } catch (err2) {
+      console.error('[SheetsDB] Sheets delete error:', err2);
+    }
+  }
+
+  // Update local storage to remove the id from the matching app key
+  try {
+    const existing = loadAppData();
+    const keyMap: Record<string, keyof AppData> = { anggota: 'Anggota', agenda: 'Agenda', pengumuman: 'Pengumuman', kas: 'Kas', aspirasi: 'Aspirasi', galeri: 'Galeri', iuran: 'Iuran' };
+    const appKey = keyMap[table];
+    if (appKey) {
+      const arr = ((existing as any)[appKey] || []) as any[];
+      const filtered = arr.filter(item => !(String(item.ID || item.id || item.ID_Anggota) === String(id)));
+      (existing as any)[appKey] = filtered;
+      saveAppData(existing);
+    }
+  } catch (err) {
+    console.error('[SheetsDB] Failed to update local store after delete:', err);
+  }
+
+  return res;
+}
+
 export type { SyncStatus, SyncResult, SyncCallback };
