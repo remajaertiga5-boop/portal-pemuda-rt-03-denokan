@@ -11,8 +11,8 @@ export interface LanguageMetadata {
 }
 
 export const availableLanguages: Readonly<LanguageMetadata[]> = Object.freeze([
-  { code: 'id',  name: 'Indonesia',  nativeName: 'Bahasa Indonesia', flag: '🇮🇩', dir: 'ltr' },
-  { code: 'en',  name: 'English',    nativeName: 'English',          flag: '🇬🇧', dir: 'ltr' },
-  { code: 'jv',  name: 'Jawa',       nativeName: 'Basa Jawa',        flag: '🌱', dir: 'ltr' },
-  { code: 'slg', name: 'Gaul',       nativeName: 'Bahasa Gaul 🔥',   flag: '💬', dir: 'ltr' },
+  { code: 'id',  name: 'Bahasa Indonesia',  nativeName: 'Bahasa Indonesia', flag: '🇮🇩', dir: 'ltr' },
+  { code: 'en',  name: 'Inggris',          nativeName: 'English',          flag: '🇬🇧', dir: 'ltr' },
+  { code: 'jv',  name: 'Jawa',              nativeName: 'Basa Jawa',        flag: '🌱', dir: 'ltr' },
+  { code: 'slg', name: 'Bahasa Indonesia Gaul', nativeName: 'Bahasa Gaul 🔥', flag: '💬', dir: 'ltr' },
 ]);
