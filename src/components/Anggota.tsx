@@ -17,9 +17,9 @@ import { useLocale } from "../hooks/useLocale";
 import { compressImage, validateFile } from "../utils/imageUtils";
 import { AnggotaItem, UserRole } from "../types";
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // TYPES
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 interface AnggotaProps {
   appData: AppData;
   setAppData: React.Dispatch<React.SetStateAction<AppData>>;
@@ -31,9 +31,9 @@ interface AnggotaProps {
   ) => void;
 }
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // COMPONENT
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 export default function Anggota({
   appData,
   setAppData,
@@ -57,9 +57,9 @@ export default function Anggota({
   const [tglLahir, setTglLahir] = useState("2005-01-01");
   const [minat, setMinat]       = useState("");
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // DATA
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
 
   // ── Refresh data Anggota dari Google Sheets tiap buka menu ──
   useEffect(() => {
@@ -91,11 +91,11 @@ export default function Anggota({
 
   const totalTampil = anggotaList.filter(
     (a) => a.Status_Tampil === "TAMPIL"
-  ).length;
+  }).length;
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // HELPER - Reset form
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const resetForm = () => {
     setNama("");
     setPanggilan("");
@@ -105,25 +105,25 @@ export default function Anggota({
     setMinat("");
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 15. Lihat Profil
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleLihatProfil = (member: AnggotaItem) => {
     setSelectedMember(member);
     setEditProfileData({ ...member });
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 16. Hubungi via WA
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleHubungiWa = (noHp: string, name: string) => {
     if (!noHp || noHp.trim() === "" || noHp === "Disembunyikan") {
-      showToast("Nomor HP belum diisi atau disembunyikan!", "warning");
+      showToast(t("anggota.phoneNotSet", "Nomor HP belum diisi atau disembunyikan!"), "warning");
       return;
     }
     const formatted = noHp.replace(/^0/, "62").replace(/[^0-9]/g, "");
     if (formatted.length < 10) {
-      showToast("Format nomor HP tidak valid!", "warning");
+      showToast(t("anggota.phoneInvalid", "Format nomor HP tidak valid!"), "warning");
       return;
     }
     window.open(
@@ -133,21 +133,21 @@ export default function Anggota({
     );
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 8. Ganti Foto Profil
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleGantiFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editProfileData) return;
 
     const validation = validateFile(file, 2);
     if (!validation.valid) {
-      showToast(validation.error || "File tidak valid!", "error");
+      showToast(validation.error || t("anggota.invalidFile", "File tidak valid!"), "error");
       return;
     }
 
     try {
-      showToast("Mengompres foto...", "info");
+      showToast(t("anggota.compressingPhoto", "Mengompres foto..."), "info");
       const compressed = await compressImage(file, {
         maxWidth: 400, maxHeight: 400, quality: 0.7, maxSizeMB: 0.2
       });
@@ -159,28 +159,28 @@ export default function Anggota({
         ...editProfileData,
         Foto_Profil: finalUrl,
       });
-      showToast("Foto profil diperbarui ✅", "success"
+      showToast(t("anggota.photoUpdated", "Foto profil diperbarui ✅"), "success"
       );
     } catch {
       // Fallback: baca tanpa kompres
       const reader = new FileReader();
       reader.onloadend = () => {
         setEditProfileData({ ...editProfileData, Foto_Profil: reader.result as string });
-        showToast("Foto profil diperbarui (pratinjau)!", "info");
+        showToast(t("anggota.photoPreview", "Foto profil diperbarui (pratinjau)!"), "info");
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 9. Simpan Perubahan Profil
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleSimpanProfil = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editProfileData) return;
 
     if (!editProfileData.Nama_Lengkap.trim()) {
-      showToast("Nama lengkap tidak boleh kosong!", "error");
+      showToast(t("anggota.fullNameRequired", "Nama lengkap tidak boleh kosong!"), "error");
       return;
     }
 
@@ -199,27 +199,27 @@ export default function Anggota({
 
     setAppData(loggedData);
     setSelectedMember(editProfileData);
-    showToast("Data profil berhasil disimpan!", "success");
+    showToast(t("anggota.profileSaved", "Data profil berhasil disimpan!"), "success");
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 10. Batal Edit Profil
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleBatalEditProfil = () => {
     if (selectedMember) {
       setEditProfileData({ ...selectedMember });
     }
-    showToast("Perubahan dibatalkan.", "info");
+    showToast(t("anggota.changesCancelled", "Perubahan dibatalkan."), "info");
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // Registrasi Anggota Baru
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleRegisterNewMember = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!nama.trim() || !panggilan.trim()) {
-      showToast("Nama lengkap dan nama panggilan wajib diisi!", "error");
+      showToast(t("anggota.nameRequired", "Nama lengkap dan nama panggilan wajib diisi!"), "error");
       return;
     }
 
@@ -252,15 +252,15 @@ export default function Anggota({
     );
 
     setAppData(loggedData);
-    showToast(`Anggota ${nama} berhasil terdaftar! ID: ${nextId}`, "success");
+    showToast(`${t("anggota.registeredPrefix", "Anggota")} ${nama} ${t("anggota.registeredSuffix", "berhasil terdaftar! ID:")} ${nextId}`, "success");
 
     setShowForm(false);
     resetForm();
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // RENDER
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
 
@@ -268,10 +268,10 @@ export default function Anggota({
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Users className="text-emerald-600" /> Halaman Anggota
+            <Users className="text-emerald-600" /> {t("anggota.title", "Halaman Anggota")}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Menampilkan {filteredAnggota.length} dari {totalTampil} anggota terdaftar.
+            {t("anggota.showingCount", "Menampilkan")} {filteredAnggota.length} {t("anggota.of", "dari")} {totalTampil} {t("anggota.registeredMembers", "anggota terdaftar.")}
           </p>
         </div>
 
@@ -279,13 +279,13 @@ export default function Anggota({
           {/* 17. Toggle Filter Aktif */}
           <button
             onClick={() => setFilterAktifOnly(!filterAktifOnly)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+            className={apx-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
               filterAktifOnly
                 ? "bg-emerald-600 text-white border-emerald-600 shadow-md dark:shadow-none"
                 : "bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
             }`}
           >
-            {filterAktifOnly ? "✅ Hanya Aktif" : "👥 Semua Anggota"}
+            {filterAktifOnly ? t("anggota.activeOnly", "✅ Hanya Aktif") : t("anggota.allMembers", "👥 Semua Anggota")}
           </button>
 
           {/* Tambah Anggota — hanya pengurus ke atas */}
@@ -297,7 +297,7 @@ export default function Anggota({
               }}
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md dark:shadow-none transition-all"
             >
-              {showForm ? "Batal Tambah" : <><Plus size={16} /> Tambah Anggota</>}
+              {showForm ? t\"anggota.cancelAdd\"\"Batal Tambah")\" : <><Plus size={16} /> {t\"anggota.addMember\"\"Tambah Anggota")}</>}
             </button>
           )}
         </div>
@@ -313,14 +313,14 @@ export default function Anggota({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="🔍 Cari anggota berdasarkan nama atau ID..."
+          placeholder={t("anggota.searchPlaceholder", "🔍 Cari anggota berdasarkan nama atau ID...")}
           className="w-full pl-11 pr-10 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm dark:shadow-none"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}
             className="absolute right-4 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-            aria-label="Hapus pencarian"
+            aria-label={t("anggota.clearSearch", "Hapus pencarian")}
           >
             <X size={16} />
           </button>
@@ -334,68 +334,68 @@ export default function Anggota({
           className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-emerald-200 shadow-md dark:shadow-none space-y-4"
         >
           <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
-            Tambah Anggota Baru
+            {t("anggota.addNewMember", "Tambah Anggota Baru")}
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Nama Lengkap *
+                {t("anggota.fullName", "Nama Lengkap")} *
               </label>
               <input
                 required
                 type="text"
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
-                placeholder="Rian Ardianto"
+                placeholder={t("anggota.fullNamePlaceholder", "Rian Ardianto")}
                 className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Nama Panggilan *
+                {t("anggota.nickname", "Nama Panggilan")} *
               </label>
               <input
                 required
                 type="text"
                 value={panggilan}
                 onChange={(e) => setPanggilan(e.target.value)}
-                placeholder="Rian"
+                placeholder={t("anggota.nicknamePlaceholder", "Rian")}
                 className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                No WhatsApp
+                {t("anggota.whatsapp", "No WhatsApp")}
               </label>
               <input
                 type="text"
                 value={nohp}
                 onChange={(e) => setNohp(e.target.value)}
-                placeholder="081234567890 (opsional)"
+                placeholder={t("anggota.whatsappPlaceholder", "081234567890 (opsional)")}
                 className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Jenis Kelamin
+                {t("anggota.gender", "Jenis Kelamin")}
               </label>
               <select
                 value={jk}
                 onChange={(e) => setJk(e.target.value)}
                 className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500"
               >
-                <option value="Laki-laki">Laki-laki</option>
-                <option value="Perempuan">Perempuan</option>
+                <option value="Laki-laki">{t("profile.gender.male")}</option>
+                <option value="Perempuan">{t("profile.gender.female")}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Tanggal Lahir
+                {t("anggota.birthDate", "Tanggal Lahir")}
               </label>
               <input
                 type="date"
@@ -407,13 +407,13 @@ export default function Anggota({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Minat & Bakat
+                {t("anggota.interests", "Minat & Bakat")}
               </label>
               <input
                 type="text"
                 value={minat}
                 onChange={(e) => setMinat(e.target.value)}
-                placeholder="Musik, Futsal, IT"
+                placeholder={t("anggota.interestsPlaceholder", "Musik, Futsal, IT")}
                 className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
@@ -423,7 +423,7 @@ export default function Anggota({
             type="submit"
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md dark:shadow-none transition-all text-sm"
           >
-            💾 Simpan Data Anggota
+            {t("anggota.saveMember", "💎 Simpan Data Anggota")}
           </button>
         </form>
       )}
@@ -433,10 +433,10 @@ export default function Anggota({
         {filteredAnggota.length === 0 ? (
           <div className="col-span-full bg-white dark:bg-slate-900 p-12 text-center rounded-3xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 space-y-2">
             <p className="font-bold text-slate-700 dark:text-slate-300">
-              Tidak ditemukan
+              {t("anggota.notFound", "Tidak ditemukan")}
             </p>
             <p className="text-xs">
-              Tidak ada data anggota yang cocok dengan kata kunci pencarian Anda.
+              {t("anggota.notFoundDesc", "Tidak ada data anggota yang cocok dengan kata kunci pencarian Anda.")}
             </p>
           </div>
         ) : (
@@ -472,19 +472,19 @@ export default function Anggota({
                 {/* Info Singkat */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl space-y-1.5 text-xs text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-800 mb-4">
                   <div className="flex justify-between">
-                    <span className="text-slate-400 dark:text-slate-500">No HP:</span>
+                    <span className="text-slate-400 dark:text-slate-500">{t("anggota.phoneLabel", "No HP:")}</span>
                     <span className="font-medium">
                       {item.Izin_NoHP !== false
                         ? item.No_HP || "-"
-                        : "🔒 Disembunyikan"}
+                        : t("anggota.hidden", "💒 Disembunyikan")}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400 dark:text-slate-500">Minat:</span>
+                    <span className="text-slate-400 dark:text-slate-500">{t("anggota.interestsLabel", "Minat:")}</span>
                     <span className="font-medium">
                       {item.Izin_Minat !== false
                         ? item.Minat_Bakat || "-"
-                        : "🔒 Disembunyikan"}
+                        : t("anggota.hidden", "💒 Disembunyikan")}
                     </span>
                   </div>
                 </div>
@@ -497,7 +497,7 @@ export default function Anggota({
                   onClick={() => handleLihatProfil(item)}
                   className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex justify-center items-center gap-1"
                 >
-                  <UserIcon size={14} /> Lihat Profil
+                  <UserIcon size={14} /> {t("anggota.viewProfile", "Lihat Profil")}
                 </button>
 
                 {/* 16. Hubungi via WA */}
@@ -521,14 +521,14 @@ export default function Anggota({
       {/* 15. Modal Profil & Edit */}
       {selectedMember && editProfileData && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          {/* ✅ Hapus overflow-hidden yang conflict dengan overflow-y-auto */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto space-y-5 animate-in zoom-in-95 duration-200">
+          {/* ℅ Hapus overflow-hidden yang conflict dengan overflow-y-auto */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h[90vh] overflow-y-auto space-y-5 animate-in zoom-in-95 duration-200">
 
             {/* Header Modal */}
             <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
                 <h3 className="font-black text-slate-900 dark:text-slate-100 text-xl">
-                  Profil Anggota
+                  {t("anggota.profileTitle", "Profil Anggota")}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                   {editProfileData.ID_Anggota}
@@ -537,18 +537,18 @@ export default function Anggota({
               <button
                 onClick={() => setSelectedMember(null)}
                 className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                aria-label="Tutup profil"
+                aria-label={t("anggota.closeProfile", "Tutup profil")}
               >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Avatar & 8. Ganti Foto */}
+            <{/* Avatar & 8. Ganti Foto */}
             <div className="flex flex-col items-center justify-center text-center space-y-2">
               <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-100 shadow-md dark:shadow-none bg-slate-100 dark:bg-slate-800 group">
                 {editProfileData.Foto_Profil ? (
                   <img
-                    src={editProfileData.Foto_Profil}
+                    src={EditProfileData.Foto_Profil}
                     alt="Foto Profil"
                     className="w-full h-full object-cover"
                   />
@@ -566,7 +566,7 @@ export default function Anggota({
                 </label>
               </div>
               <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                Maks. 2MB · JPG, PNG, WebP
+                {t("anggota.photoHint", "Maks. 2MB · JPG, PNG, WebP")}
               </p>
             </div>
 
@@ -575,7 +575,7 @@ export default function Anggota({
               {/* Nama Lengkap */}
               <div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Nama Lengkap
+                  {t("anggota.fullName", "Nama Lengkap")}
                 </label>
                 <input
                   required
@@ -595,7 +595,7 @@ export default function Anggota({
                 {/* Nama Panggilan */}
                 <div>
                   <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Nama Panggilan
+                    {t("anggota.nickname", "Nama Panggilan")}
                   </label>
                   <input
                     type="text"
@@ -613,7 +613,7 @@ export default function Anggota({
                 {/* No HP */}
                 <div>
                   <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Nomor HP / WA
+                    {t("anggota.phone", "Nomor HP / WA")}
                   </label>
                   <input
                     type="text"
@@ -632,7 +632,7 @@ export default function Anggota({
               {/* Minat Bakat */}
               <div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Minat & Bakat
+                  {t("anggota.interests", "Minat & Bakat")}
                 </label>
                 <input
                   type="text"
@@ -650,12 +650,12 @@ export default function Anggota({
               {/* Pengaturan Privasi 11, 12, 13 */}
               <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
                 <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                  Pengaturan Privasi Profil
+                  {t("anggota.privacySettings", "Pengaturan Privasi Profil")}
                 </div>
 
                 {/* 11. Toggle No HP */}
                 <div className="flex items-center justify-between">
-                  <span>Tampilkan No HP ke publik</span>
+                  <span>{t("anggota.showPhone", "Tampilkan No HP ke publik")}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -665,7 +665,7 @@ export default function Anggota({
                       })
                     }
                     className="text-emerald-600 focus:outline-none"
-                    aria-label="Toggle izin No HP"
+                    aria-label={t("anggota.togglePhone", "Toggle izin No HP")}
                   >
                     {editProfileData.Izin_NoHP !== false ? (
                       <ToggleRight size={28} />
@@ -677,7 +677,7 @@ export default function Anggota({
 
                 {/* 12. Toggle Tanggal Lahir */}
                 <div className="flex items-center justify-between">
-                  <span>Tampilkan Tanggal Lahir</span>
+                  <span>{t("anggota.showBirthDate", "Tampilkan Tanggal Lahir")}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -687,7 +687,7 @@ export default function Anggota({
                       })
                     }
                     className="text-emerald-600 focus:outline-none"
-                    aria-label="Toggle izin Tanggal Lahir"
+                    aria-label={t("anggota.toggleBirthDate", "Toggle izin Tanggal Lahir")}
                   >
                     {editProfileData.Izin_TanggalLahir !== false ? (
                       <ToggleRight size={28} />
@@ -699,7 +699,7 @@ export default function Anggota({
 
                 {/* 13. Toggle Minat */}
                 <div className="flex items-center justify-between">
-                  <span>Tampilkan Minat / Bakat</span>
+                  <span>{t("anggota.showInterests", "Tampilkan Minat / Bakat")}</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -709,7 +709,7 @@ export default function Anggota({
                       })
                     }
                     className="text-emerald-600 focus:outline-none"
-                    aria-label="Toggle izin Minat"
+                    aria-label={t("anggota.toggleInterests", "Toggle izin Minat")}
                   >
                     {editProfileData.Izin_Minat !== false ? (
                       <ToggleRight size={28} />
@@ -728,7 +728,7 @@ export default function Anggota({
                   onClick={handleBatalEditProfil}
                   className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold transition-all"
                 >
-                  Batal
+                  {t("common.button.cancel")}
                 </button>
 
                 {/* 9. Simpan */}
@@ -736,7 +736,7 @@ export default function Anggota({
                   type="submit"
                   className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-md dark:shadow-none flex justify-center items-center gap-1"
                 >
-                  <Save size={16} /> 💾 Simpan
+                  <Save size={16} /> {t("common.button.save")}
                 </button>
               </div>
             </form>
