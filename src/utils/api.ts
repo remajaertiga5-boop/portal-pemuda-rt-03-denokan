@@ -5,7 +5,7 @@
 function getScriptUrl(): string {
   try { const s = localStorage.getItem("apps_script_url"); if (s) return s; } catch {}
   try { if (import.meta.env?.VITE_API_URL) return import.meta.env.VITE_API_URL; } catch {}
-  return "https://script.google.com/macros/s/AKfycbyn9nU2CFNoGfUqN42KEPEm8HO0Xqnd8wEfyO5i7e3bqcNx-8i4JCt2dhcTW47OWcvchw/exec";
+  return "https://script.google.com/macros/AKfycbyG9z3yK5IBda_71kx6IBda_71kx6IQg82vF19Qah2Ce91d_2h3EtgltVrkp77vNGHVdheL92LLQjLG/exec";
 }
 
 const API_KEY = "remaja-legok-03-2026";
@@ -28,7 +28,7 @@ export async function fetchAPI(params: Record<string, any>, options: FetchOption
   const { timeoutMs = DEFAULT_TIMEOUT, maxRetry = MAX_RETRY, signal: extSignal } = options;
   if (typeof navigator !== "undefined" && !navigator.onLine) throw new Error("Tidak ada koneksi internet.");
 
-` API_URL = getScriptUrl();
+const API_URL = getScriptUrl();
   let lastErr: Error = new Error("Unknown");
 
   for (let i = 0; i <= maxRetry; i++) {
@@ -81,7 +81,7 @@ export function getTelegramUrl(fileId:string) { return getData("telegramGetUrl",
 export function broadcastTelegram(text:string) { return postData("telegramBroadcast",{text}); }
 
 // AI Chat
-export function chatAI(msg:string, history:{role:string;text:string=[]) { return postData("chat",{message:msg,history},{timeoutMs:30000}); }
+export function chatAI(msg: string, history: { role: string; text: string }[] = []) { return postData("chat", { message: msg, history }, { timeoutMs: 30000 }); }
 
 // Auth
 export function verifyID(idAnggota:string) { return postData("verifikasiID",{idAnggota}); }
