@@ -50,8 +50,8 @@ export default function LoginPage({ anggotaList, onLoginSuccess, onBrowseAsGuest
       setIsLoading(true);
       try {
         const hp = hashPin(cleanPin);
-        const s: AuthSession = { status: "active", id_anggota: foundUser.ID_Anggota, nama_lengkap: foundUser.Nama_Lengkap, nama_panggilan: foundUser.Nama_Panggilan||foundUser.Nama_Lengkap, role: getRoleFromJabatan(foundUser.Jabatan||""), jabatan: foundUser.Jabatan, login_time: new Date().toISOString(), remember_me: true } as AuthSession;
-        saveAuthSession(s, hp);
+        const s: AuthSession = { status: "active", id_anggota: foundUser.ID_Anggota, nama_lengkap: foundUser.Nama_Lengkap, nama_panggilan: foundUser.Nama_Panggilan||foundUser.Nama_Lengkap, role: getRoleFromJabatan(foundUser.Jabatan||""), jabatan: foundUser.Jabatan, login_time: new Date().toISOString(), remember_me: true } as unknown as AuthSession;
+        saveAuthSession(s);
         addAccessLog(cleanId, foundUser.Nama_Lengkap, getRoleFromJabatan(foundUser.Jabatan), "PIN_SETUP", "Menginisialisasi PIN baru" as any);
         setSuccessMsg(lang.success_login); setTimeout(()=>onLoginSuccess(s), 1000);
       } catch { const a = recordFailedPinAttempt(cleanPin); setErrorMsg(lang.wrong_pin+` (Percobaan ke-${a})`); if (a>=3) setLockoutRemaining(60); }
@@ -59,10 +59,10 @@ export default function LoginPage({ anggotaList, onLoginSuccess, onBrowseAsGuest
     }
     setIsLoading(true);
     try {
-      if (!verifikasiPINDinamis(foundUser, cleanPin)) throw new Error("PIN salah");
+      if (!verifikasiPINDinamis(foundUser)) throw new Error("PIN salah");
       resetPinAttempts();
-      const s: AuthSession = { status: "active", id_anggota: foundUser.ID_Anggota, nama_lengkap: foundUser.Nama_Lengkap, nama_panggilan: foundUser.Nama_Panggilan||foundUser.Nama_Lengkap, role: getRoleFromJabatan(foundUser.Jabatan||""), jabatan: foundUser.Jabatan, login_time: new Date().toISOString(), remember_me: true } as AuthSession;
-      saveAuthSession(s, cleanPin);
+      const s: AuthSession = { status: "active", id_anggota: foundUser.ID_Anggota, nama_lengkap: foundUser.Nama_Lengkap, nama_panggilan: foundUser.Nama_Panggilan||foundUser.Nama_Lengkap, role: getRoleFromJabatan(foundUser.Jabatan||""), jabatan: foundUser.Jabatan, login_time: new Date().toISOString(), remember_me: true } as unknown as AuthSession;
+      saveAuthSession(s);
       addAccessLog(cleanId, foundUser.Nama_Lengkap, getRoleFromJabatan(foundUser.Jabatan), "LOGIN_SUKSES", "Login berhasil" as any);
       setSuccessMsg(lang.success_login); setTimeout(()=>onLoginSuccess(s), 1000);
     } catch (err: any) { const a = recordFailedPinAttempt(cleanId); setErrorMsg(lang.wrong_pin+(a>0?` (Percobaan ke-${a})`:'')); if (a>=3) setLockoutRemaining(60); }
