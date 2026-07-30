@@ -52,6 +52,12 @@ export default function Galeri({
   const [selectedPhoto, setSelectedPhoto]         = useState<GaleriItem | null>(null);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState<GaleriItem | null>(null);
 
+  // Debug: log when lightbox opens/closes to diagnose unexpected auto-close
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug("[Galeri] selectedPhoto changed:", selectedPhoto);
+  }, [selectedPhoto]);
+
   // Form State
   const [judulKegiatan, setJudulKegiatan] = useState("");
   const [kategori, setKategori]           = useState<string>("Kegiatan");
@@ -472,7 +478,7 @@ export default function Galeri({
                   {fotoSrc ? (
                     isVideo ? (
                       <div className="w-full h-full relative bg-black flex items-center justify-center">
-                        <video src={fotoSrc} className="w-full h-full object-cover" />
+                                              <video src={fotoSrc} className="w-full h-full object-cover" controls muted />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                           <div className="w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg font-bold">
                             ▶
@@ -596,11 +602,10 @@ export default function Galeri({
             <div className="max-h-[70vh] bg-black flex items-center justify-center overflow-hidden">
               {selectedPhoto.Is_Video || selectedPhoto.Jenis_Media === "VIDEO" || (selectedPhoto.Foto_URL || "").startsWith("data:video/") ? (
                 <video
-                  src={selectedPhoto.Foto_URL || selectedPhoto.Link_Foto || ""}
-                  controls
-                  autoPlay
-                  className="max-h-[70vh] w-auto object-contain"
-                />
+                                  src={selectedPhoto.Foto_URL || selectedPhoto.Link_Foto || ""}
+                                  controls
+                                  className="max-h-[70vh] w-auto object-contain"
+                                />
               ) : (
                 <img
                   src={selectedPhoto.Foto_URL || selectedPhoto.Link_Foto || ""}
