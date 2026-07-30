@@ -31,6 +31,8 @@ export default function Absensi({ appData, setAppData, userRole, currentUserName
     return abs.ID_Agenda === selectedAgendaIdFilter;
   });
 
+  const NAMA_KEY = "Nama Kegiatan";
+
   const handleSubmitManualAbsen = (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetAgendaId || !targetAnggotaId) {
@@ -43,7 +45,7 @@ export default function Absensi({ appData, setAppData, userRole, currentUserName
     const newAbsen = {
       id: `ABS-${Date.now()}`,
       ID_Agenda: agendaObj.ID,
-      Nama_Kegiatan: agendaObj["Nama Kegiatan"],
+      Nama_Kegiatan: agendaObj[NAMA_KEY],
       ID_Anggota: memberObj.ID_Anggota,
       Nama_Anggota: memberObj.Nama_Lengkap,
       Tanggal: new Date().toISOString().split("T")[0],
@@ -110,7 +112,7 @@ export default function Absensi({ appData, setAppData, userRole, currentUserName
         </span>
         <select value={selectedAgendaIdFilter} onChange={e => setSelectedAgendaIdFilter(e.target.value)} className="w-full sm:w-auto p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold outline-none">
           <option value="SEMUA">Semua Agenda Kegiatan</option>
-          {agendaList.map(a => (<option key={a.ID} value={a.ID}>{a["Nama Kegiatan"]} ({a.Tanggal})</option>))}
+          {agendaList.map(a => (<option key={a.ID} value={a.ID}>{a[NAMA_KEY]} ({a.Tanggal})</option>))}
         </select>
       </div>
       {showForm && (
@@ -121,7 +123,7 @@ export default function Absensi({ appData, setAppData, userRole, currentUserName
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Pilih Agenda *</label>
               <select required value={targetAgendaId} onChange={e => setTargetAgendaId(e.target.value)} className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none">
                 <option value="">-- Pilih Agenda --</option>
-                {agendaList.map(a => (<option key={a.ID} value={a.ID}>{a["Nama Kegiatan"]}</option>))}
+                {agendaList.map(a => (<option key={a.ID} value={a.ID}>{a[NAMA_KEY]}</option>))}
               </select>
             </div>
             <div>
