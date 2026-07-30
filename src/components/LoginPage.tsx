@@ -1,89 +1,317 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Lock, CreditCard, HelpCircle, Phone, Mail, Globe, Sun, Moon, Laptop, CheckCircle2, AlertTriangle, AlertCircle, ShieldAlert, KeyRound, ArrowRight, Eye, EyeOff, ChevronRight } from "lucide-react";
+import { 
+  Lock, CreditCard, HelpCircle, Phone, Mail, Globe, Sun, Moon, Laptop,
+  CheckCircle2, AlertTriangle, AlertCircle, ShieldAlert, KeyRound, ArrowRight,
+  Eye, EyeOff, ChevronRight
+} from "lucide-react";
 import { AuthSession, AnggotaItem } from "../types";
 import { useTheme } from "../context/ThemeContext";
 import { useLocale } from "../hooks/useLocale";
 import PandawaLogo from "./PandawaLogo";
-import { saveAuthSession, checkLockoutStatus, recordFailedPinAttempt, resetPinAttempts, hashPin, addAccessLog, getRoleFromJabatan, verifikasiPINDinamis } from "../utils/auth";
+import { 
+  saveAuthSession, 
+  checkLockoutStatus, 
+  recordFailedPinAttempt, 
+  resetPinAttempts, 
+  hashPin,
+  addAccessLog,
+  getRoleFromJabatan,
+  verifikasiPINDinamis
+} from "../utils/auth";
 
-interface LoginPageProps { anggotaList: AnggotaItem[]; onLoginSuccess: (session: AuthSession) => void; onBrowseAsGuest?: () => void; }
+interface LoginPageProps {
+  anggotaList: AnggotaItem[];
+  onLoginSuccess: (session: AuthSession) => void;
+  onBrowseAsGuest?: () => void;
+}
 
 const LOGIN_I18N: Record<string, Record<string, string>> = {
   id: {
-    welcome: "Selamat Datang", subtitle: "Portal Digital Remaja Legok 03. Menuju pemuda yang produktif, transparan, dan inovatif.", tab_member: "Masuk Anggota / Pengurus", tab_admin: "Akses Khusus Super Admin", placeholder_id: "Masukkan ID Anggota", placeholder_pin: "Masukkan PIN", placeholder_confirm_pin: "Konfirmasi PIN Baru", remember_me: "Ingat Saya di perangkat ini", forgot_pin: "Lupa PIN?", btn_login: "Masuk Sesi Aman", btn_register_login: "Daftar PIN & Masuk", btn_guest: "Lanjutkan sebagai Tamu", error_empty_id: "Masukkan ID Anggota Anda!", error_empty_pin: "Masukkan PIN Anda!", error_confirm_mismatch: "Konfirmasi PIN tidak cocok!", error_pin_length: "PIN harus terdiri dari 4 hingga 8 digit angka.", error_id_format: "Format ID tidak valid (Contoh: RL03-006 atau 1234567890)", error_id_not_found: "ID anda tidak terdaftar di anggota remaja RT 03", success_login: "Login Berhasil! Mengalihkan ke Dashboard...", connection_online: "Tersambung", connection_offline: "Terputus (Mode Offline)", connection_offline_warn: "Anda sedang offline. Beberapa data mungkin diambil dari cache lokal.", organization_name: "Remaja Legok 03", organization_loc: "RT 03 RW 04, Desa Gondoriyo, Kec. Jambu, Kab. Semarang, Jawa Tengah", contact_admin: "Hubungi Admin", help_title: "Butuh Bantuan Akses?", help_desc: "Jika Anda belum terdaftar, lupa PIN, atau mengalami kendala masuk, silakan hubungi tim administrasi kami.", help_call: "Kirim Pesan WhatsApp", setup_first_pin: "Setup PIN Baru", setup_first_pin_desc: "Ini adalah login pertama Anda untuk ID ini. Silakan buat PIN baru (4-8 digit) untuk mengamankan akun Anda ke depan.", lockout_active: "Sistem Terkunci", lockout_wait: "Terlalu banyak percobaan gagal. Silakan tunggu {{time}}.", wrong_pin: "PIN yang dimasukkan salah!"
+    welcome: "Selamat Datang",
+    subtitle: "Portal Digital Remaja Legok 03. Menuju pemuda yang produktif, transparan, dan inovatif.",
+    tab_member: "Masuk Anggota / Pengurus",
+    tab_admin: "Akses Khusus Super Admin",
+    placeholder_id: "Masukkan ID Anggota",
+    placeholder_pin: "Masukkan PIN",
+    placeholder_confirm_pin: "Konfirmasi PIN Baru",
+    remember_me: "Ingat Saya di perangkat ini",
+    forgot_pin: "Lupa PIN?",
+    btn_login: "Masuk Sesi Aman",
+    btn_register_login: "Daftar PIN & Masuk",
+    btn_guest: "Lanjutkan sebagai Tamu",
+    error_empty_id: "Masukkan ID Anggota Anda!",
+    error_empty_pin: "Masukkan PIN Anda!",
+    error_confirm_mismatch: "Konfirmasi PIN tidak cocok!",
+    error_pin_length: "PIN harus terdiri dari 4 hingga 8 digit angka.",
+    error_id_format: "Format ID tidak valid (Contoh: RL03-006 atau 1234567890)",
+    error_id_not_found: "ID anda tidak terdaftar di anggota remaja RT 03",
+    success_login: "Login Berhasil! Mengalihkan ke Dashboard...",
+    connection_online: "Tersambung",
+    connection_offline: "Terputus (Mode Offline)",
+    connection_offline_warn: "Anda sedang offline. Beberapa data mungkin diambil dari cache lokal.",
+    organization_name: "Remaja Legok 03",
+    organization_loc: "RT 03 RW 04, Desa Gondoriyo, Kec. Jambu, Kab. Semarang, Jawa Tengah",
+    contact_admin: "Hubungi Admin",
+    help_title: "Butuh Bantuan Akses?",
+    help_desc: "Jika Anda belum terdaftar, lupa PIN, atau mengalami kendala masuk, silakan hubungi tim administrasi kami.",
+    help_call: "Kirim Pesan WhatsApp",
+    setup_first_pin: " Setup PIN Baru",
+    setup_first_pin_desc: "Ini adalah login pertama Anda untuk ID ini. Silakan buat PIN baru (4-8 digit) untuk mengamankan akun Anda ke depan.",
+    lockout_active: "Sistem Terkunci",
+    lockout_wait: "Terlalu banyak percobaan gagal. Silakan tunggu {{time}}.",
+    wrong_pin: "PIN yang dimasukkan salah!"
   },
   en: {
-    welcome: "Welcome Back", subtitle: "Digital Portal of Remaja Legok 03. Toward a productive, transparent, and innovative youth.", tab_member: "Member / Board Login", tab_admin: "Special Super Admin Access", placeholder_id: "Enter Member ID", placeholder_pin: "Enter PIN", placeholder_confirm_pin: "Confirm New PIN", remember_me: "Remember me on this device", forgot_pin: "Forgot PIN?", btn_login: "Secure Login", btn_register_login: "Register PIN & Login", btn_guest: "Continue as Guest", error_empty_id: "Please enter your Member ID!", error_empty_pin: "Please enter your PIN!", error_confirm_mismatch: "PIN confirmation does not match!", error_pin_length: "PIN must be between 4 and 8 digits long.", error_id_format: "Invalid ID format (Example: RL03-006)", error_id_not_found: "Member ID not found in database or archived!", success_login: "Login Successful! Redirecting to Dashboard...", connection_online: "Connected", connection_offline: "Disconnected (Offline Mode)", connection_offline_warn: "You are currently offline. Some features and live synchronization are disabled.", organization_name: "Remaja Legok 03", organization_loc: "RT 03 RW 04, Gondoriyo Village, Jambu, Semarang Regency, Central Java", contact_admin: "Contact Admin", help_title: "Need Access Assistance?", help_desc: "If you are not registered, forgot your PIN, or have login issues, please contact our administrative team.", help_call: "Send WhatsApp Message", setup_first_pin: "Setup New PIN", setup_first_pin_desc: "This is your first login for this ID. Please create a new PIN (4-8 digits) to secure your account.", lockout_active: "System Locked", lockout_wait: "Too many failed attempts. Please wait {{time}}.", wrong_pin: "The PIN entered is incorrect!"
+    welcome: "Welcome Back",
+    subtitle: "Digital Portal of Remaja Legok 03. Toward a productive, transparent, and innovative youth.",
+    tab_member: "Member / Board Login",
+    tab_admin: "Special Super Admin Access",
+    placeholder_id: "Enter Member ID",
+    placeholder_pin: "Enter PIN",
+    placeholder_confirm_pin: "Confirm New PIN",
+    remember_me: "Remember me on this device",
+    forgot_pin: "Forgot PIN?",
+    btn_login: "Secure Login",
+    btn_register_login: "Register PIN & Login",
+    btn_guest: "Continue as Guest",
+    error_empty_id: "Please enter your Member ID!",
+    error_empty_pin: "Please enter your PIN!",
+    error_confirm_mismatch: "PIN confirmation does not match!",
+    error_pin_length: "PIN must be between 4 and 8 digits long.",
+    error_id_format: "Invalid ID format (Example: RL03-006)",
+    error_id_not_found: "Member ID not found in database or archived!",
+    success_login: "Login Successful! Redirecting to Dashboard...",
+    connection_online: "Connected",
+    connection_offline: "Disconnected (Offline Mode)",
+    connection_offline_warn: "You are currently offline. Some features and live synchronization are disabled.",
+    organization_name: "Remaja Legok 03",
+    organization_loc: "RT 03 RW 04, Gondoriyo Village, Jambu, Semarang Regency, Central Java",
+    contact_admin: "Contact Admin",
+    help_title: "Need Access Assistance?",
+    help_desc: "If you are not registered, forgot your PIN, or have login issues, please contact our administrative team.",
+    help_call: "Send WhatsApp Message",
+    setup_first_pin: "Setup New PIN",
+    setup_first_pin_desc: "This is your first login for this ID. Please create a new PIN (4-8 digits) to secure your account.",
+    lockout_active: "System Locked",
+    lockout_wait: "Too many failed attempts. Please wait {{time}}.",
+    wrong_pin: "The PIN entered is incorrect!"
   },
   jv: {
-    welcome: "Sugeng Rawuh", subtitle: "Portal Digital Remaja Legok 03. Mugi dados pemuda ingkang produktif, transparan, lan inovatif.", tab_member: "Mlebet Anggota / Pengurus", tab_admin: "Akses Khusus Super Admin", placeholder_id: "Mlebetaken ID Anggota", placeholder_pin: "Mlebetaken PIN", placeholder_confirm_pin: "Konfirmasi PIN Enggal", remember_me: "Kersanipun tetep mlebet ten HP niki", forgot_pin: "Kesupen PIN?", btn_login: "Mlebet Sesi Aman", btn_register_login: "Ndaptar PIN & Mlebet", btn_guest: "Terusaken dados Tamu", error_empty_id: "Mlebetaken ID Anggota panjenengan!", error_empty_pin: "Mlebetaken PIN panjenengan!", error_confirm_mismatch: "Konfirmasi PIN mboten cocok!", error_pin_length: "PIN kedah 4 ngantos 8 digit angka.", error_id_format: "Format ID mboten sah (Contoh: RL03-006)", error_id_not_found: "ID Anggota mboten wonten ten database utawi sampun dipun-arsip!", success_login: "Login Sukses! Ngalihaken ten Dashboard...", connection_online: "Nyambung", connection_offline: "Pedhot (Mode Offline)", connection_offline_warn: "Panjenengan sakniki offline. Sawetawis fitur mboten saged dipun-ginakaken.", organization_name: "Remaja Legok 03", organization_loc: "RT 03 RW 04, Desa Gondoriyo, Kec. Jambu, Kab. Semarang, Jawa Tengah", contact_admin: "Hubungi Admin", help_title: "Mbetahaken Bantuan Mlebet?", help_desc: "Menawi panjenengan dereng kadaptar, kesupen PIN, utawi angsal masalah mlebet, sumangga hubungi tim administrasi kawulo.", help_call: "Kirim Pesen WhatsApp", setup_first_pin: "Setup PIN Enggal", setup_first_pin_desc: "Niki mlebet sepisanan kangge ID niki. Sumangga damel PIN enggal (4-8 digit) kangge njagi akun panjenengan.", lockout_active: "Sistem Dikunci", lockout_wait: "Kathahen nyobi mlebet ananging gagal mlebet. Monggo tenggo {{time}}.", wrong_pin: "PIN ingkang dipun-mlebetaken salah!"
+    welcome: "Sugeng Rawuh",
+    subtitle: "Portal Digital Remaja Legok 03. Mugi dados pemuda ingkang produktif, transparan, lan inovatif.",
+    tab_member: "Mlebet Anggota / Pengurus",
+    tab_admin: "Akses Khusus Super Admin",
+    placeholder_id: "Mlebetaken ID Anggota",
+    placeholder_pin: "Mlebetaken PIN",
+    placeholder_confirm_pin: "Konfirmasi PIN Enggal",
+    remember_me: "Kersanipun tetep mlebet ten HP niki",
+    forgot_pin: "Kesupen PIN?",
+    btn_login: "Mlebet Sesi Aman",
+    btn_register_login: "Ndaptar PIN & Mlebet",
+    btn_guest: "Terusaken dados Tamu",
+    error_empty_id: "Mlebetaken ID Anggota panjenengan!",
+    error_empty_pin: "Mlebetaken PIN panjenengan!",
+    error_confirm_mismatch: "Konfirmasi PIN mboten cocok!",
+    error_pin_length: "PIN kedah 4 ngantos 8 digit angka.",
+    error_id_format: "Format ID mboten sah (Contoh: RL03-006)",
+    error_id_not_found: "ID Anggota mboten wonten ten database utawi sampun dipun-arsip!",
+    success_login: "Login Sukses! Ngalihaken ten Dashboard...",
+    connection_online: "Nyambung",
+    connection_offline: "Pedhot (Mode Offline)",
+    connection_offline_warn: "Panjenengan sakniki offline. Sawetawis fitur mboten saged dipun-ginakaken.",
+    organization_name: "Remaja Legok 03",
+    organization_loc: "RT 03 RW 04, Desa Gondoriyo, Kec. Jambu, Kab. Semarang, Jawa Tengah",
+    contact_admin: "Hubungi Admin",
+    help_title: "Mbetahaken Bantuan Mlebet?",
+    help_desc: "Menawi panjenengan dereng kadaptar, kesupen PIN, utawi angsal masalah mlebet, sumangga hubungi tim administrasi kawulo.",
+    help_call: "Kirim Pesen WhatsApp",
+    setup_first_pin: "Setup PIN Enggal",
+    setup_first_pin_desc: "Niki mlebet sepisanan kangge ID niki. Sumangga damel PIN enggal (4-8 digit) kangge njagi akun panjenengan.",
+    lockout_active: "Sistem Dikunci",
+    lockout_wait: "Kathahen nyobi mlebet ananging gagal mlebet. Monggo tenggo {{time}}.",
+    wrong_pin: "PIN ingkang dipun-mlebetaken salah!"
   },
   slg: {
-    welcome: "Halo Bro!", subtitle: "Portal Digital Remaja Legok 03. Gas jadi pemuda produktif & inovatif.", tab_member: "Masuk Member / Pengurus", tab_admin: "Akses Spesial Super Admin", placeholder_id: "Ketik ID Anggota lo", placeholder_pin: "Ketik PIN lo", placeholder_confirm_pin: "Konfirm PIN Baru", remember_me: "Ingetin gue di HP ini", forgot_pin: "Lupa PIN?", btn_login: "Gas Masuk Aman", btn_register_login: "Bikin PIN & Masuk", btn_guest: "Lanjut jadi Tamu aja", error_empty_id: "Isi dulu ID Anggota lo!", error_empty_pin: "Isi dulu PIN lo!", error_confirm_mismatch: "Konfirm PIN ga cocok!", error_pin_length: "PIN harus 4-8 digit angka ya.", error_id_format: "Format ID ngaco (Contoh: RL03-006)", error_id_not_found: "ID Anggota ga kedaftar di database!", success_login: "Login Berhasil! Ngab ke Dashboard...", connection_online: "Nyambung", connection_offline: "Putus (Mode Offline)", connection_offline_warn: "Lo lagi offline nih. Beberapa fitur & data live ga bisa.", organization_name: "Remaja Legok 03", organization_loc: "RT 03 RW 04, Desa Gondoriyo, Kec. Jambu, Kab. Semarang, Jateng", contact_admin: "Hubungi Admin", help_title: "Butuh Bantuan Login?", help_desc: "Kalo lo belom terdaftar, lupa PIN, atau ada masalah login, langsung hubungi tim admin kita ya.", help_call: "Chat WhatsApp", setup_first_pin: "Bikin PIN Baru Nih", setup_first_pin_desc: "Ini login pertama lo pake ID ini. Bikin PIN baru (4-8 digit) buat amanin akun lo.", lockout_active: "Sistem Dikunci", lockout_wait: "Kebanyakan nyoba gagal. Tunggu {{time}} ya.", wrong_pin: "PIN yang lo masukin salah!"
+    welcome: "Halo Bro!",
+    subtitle: "Portal Digital Remaja Legok 03. Gas jadi pemuda produktif & inovatif.",
+    tab_member: "Masuk Member / Pengurus",
+    tab_admin: "Akses Spesial Super Admin",
+    placeholder_id: "Ketik ID Anggota lo",
+    placeholder_pin: "Ketik PIN lo",
+    placeholder_confirm_pin: "Konfirm PIN Baru",
+    remember_me: "Ingetin gue di HP ini",
+    forgot_pin: "Lupa PIN?",
+    btn_login: "Gas Masuk Aman",
+    btn_register_login: "Bikin PIN & Masuk",
+    btn_guest: "Lanjut jadi Tamu aja",
+    error_empty_id: "Isi dulu ID Anggota lo!",
+    error_empty_pin: "Isi dulu PIN lo!",
+    error_confirm_mismatch: "Konfirm PIN ga cocok!",
+    error_pin_length: "PIN harus 4-8 digit angka ya.",
+    error_id_format: "Format ID ngaco (Contoh: RL03-006)",
+    error_id_not_found: "ID Anggota ga kedaftar di database!",
+    success_login: "Login Berhasil! Ngab ke Dashboard...",
+    connection_online: "Nyambung",
+    connection_offline: "Putus (Mode Offline)",
+    connection_offline_warn: "Lo lagi offline nih. Beberapa fitur & data live ga bisa.",
+    organization_name: "Remaja Legok 03",
+    organization_loc: "RT 03 RW 04, Desa Gondoriyo, Kec. Jambu, Kab. Semarang, Jateng",
+    contact_admin: "Hubungi Admin",
+    help_title: "Butuh Bantuan Login?",
+    help_desc: "Kalo lo belom terdaftar, lupa PIN, atau ada masalah login, langsung hubungi tim admin kita ya.",
+    help_call: "Chat WhatsApp",
+    setup_first_pin: "Bikin PIN Baru Nih",
+    setup_first_pin_desc: "Ini login pertama lo pake ID ini. Bikin PIN baru (4-8 digit) buat amanin akun lo.",
+    lockout_active: "Sistem Dikunci",
+    lockout_wait: "Kebanyakan nyoba gagal. Tunggu {{time}} ya.",
+    wrong_pin: "PIN yang lo masukin salah!"
   }
 };
 
 export default function LoginPage({ anggotaList, onLoginSuccess, onBrowseAsGuest }: LoginPageProps) {
   const { theme, toggleTheme } = useTheme();
   const { currentLanguage, setLanguage, availableLanguages } = useLocale();
-  const [idInput, setIdInput] = useState(""); const [pinInput, setPinInput] = useState(""); const [confirmPinInput, setConfirmPinInput] = useState("");
-  const [tabMode, setTabMode] = useState<"anggota" | "admin">("anggota"); const [isNewUser, setIsNewUser] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine); const [errorMsg, setErrorMsg] = useState(""); const [successMsg, setSuccessMsg] = useState("");
-  const [isLoading, setIsLoading] = useState(false); const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const [idInput, setIdInput] = useState("");
+  const [pinInput, setPinInput] = useState("");
+  const [confirmPinInput, setConfirmPinInput] = useState("");
+  const [tabMode, setTabMode] = useState<"anggota" | "admin">("anggota");
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [showForgotPin, setShowForgotPin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
   const [setupFirstTimePin, setSetupFirstTimePin] = useState(false);
-  const idRef = useRef<HTMLInputElement>(null); const pinRef = useRef<HTMLInputElement>(null);
+  const idRef = useRef<HTMLInputElement>(null);
+  const pinRef = useRef<HTMLInputElement>(null);
+
   const lang = LOGIN_I18N[currentLanguage] || LOGIN_I18N.id;
 
-  useEffect(() => { if (idRef.current) idRef.current.focus(); const h1 = () => setIsOnline(true); const h2 = () => setIsOnline(false); window.addEventListener('online', h1); window.addEventListener('offline', h2); return () => { window.removeEventListener('online', h1); window.removeEventListener('offline', h2); }; }, []);
-  useEffect(() => { let t: any; if (lockoutRemaining > 0) t = setInterval(() => setLockoutRemaining(p => Math.max(0, p - 1)), 1000); return () => clearInterval(t); }, [lockoutRemaining]);
+  useEffect(() => {
+    if (idRef.current) idRef.current.focus();
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
-  const checkLockout = (id: string) => { const s = checkLockoutStatus(id); if (s.locked) { setLockoutRemaining(s.remainingSeconds); return true; } return false; };
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+    if (lockoutRemaining > 0) {
+      timer = setInterval(() => {
+        setLockoutRemaining(prev => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [lockoutRemaining]);
 
-  const handleLogin = async (e: React.FormEvent) => { e.preventDefault(); setErrorMsg(""); setSuccessMsg("");
-    const tid = idInput.trim(); if (!tid) { setErrorMsg(lang.error_empty_id); return; } if (checkLockout(tid)) return;
-    const m = anggotaList.find(x => x.ID_Anggota === tid && x.Status_Tampil !== "ARSIP");
-    if (!m) { const rx = /^(RL03-\d{3}|\d{10})$/; if (!rx.test(tid)) { setErrorMsg(lang.error_id_format); return; } setErrorMsg(lang.error_id_not_found); return; }
+  const checkLockout = (id: string) => {
+    const status = checkLockoutStatus(id);
+    if (status.locked) {
+      setLockoutRemaining(status.remainingSeconds);
+      return true;
+    }
+    return false;
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+    const trimmedId = idInput.trim();
+    if (!trimmedId) { setErrorMsg(lang.error_empty_id); return; }
+    if (checkLockout(trimmedId)) return;
+    const member = anggotaList.find((m) => m.ID_Anggota === trimmedId && m.Status_Tampil !== "ARSIP");
+    if (!member) {
+      const idRegex = /^(RL03-\d{3}|\d{10})$/;
+      if (!idRegex.test(trimmedId)) { setErrorMsg(lang.error_id_format); return; }
+      setErrorMsg(lang.error_id_not_found);
+      return;
+    }
     if (!pinInput.trim()) { setErrorMsg(lang.error_empty_pin); return; }
     if (isNewUser || setupFirstTimePin) {
       if (!/^\d{4,8}$/.test(pinInput)) { setErrorMsg(lang.error_pin_length); return; }
       if (pinInput !== confirmPinInput) { setErrorMsg(lang.error_confirm_mismatch); return; }
       setIsLoading(true);
-      try { const h = hashPin(pinInput); const s: AuthSession = { id_anggota: m.ID_Anggota, nama_lengkap: m.Nama_Lengkap, nama_panggilan: m.Nama_Panggilan || m.Nama_Lengkap, jabatan: m.Jabatan || "", role: getRoleFromJabatan(m.Jabatan || ""), pin_hashed: h, login_time: new Date().toISOString(), remember_me: true }; saveAuthSession(s); setSuccessMsg(lang.success_login); setTimeout(() => onLoginSuccess(s), 800); } catch { setErrorMsg("Gagal memproses PIN."); }
+      try {
+        const hashed = hashPin(pinInput);
+        const session: AuthSession = {
+          id_anggota: member.ID_Anggota, nama_lengkap: member.Nama_Lengkap,
+          nama_panggilan: member.Nama_Panggilan || member.Nama_Lengkap,
+          jabatan: member.Jabatan || "", role: getRoleFromJabatan(member.Jabatan || ""),
+          pin_hashed: hashed, login_time: new Date().toISOString(), remember_me: true,
+        };
+        saveAuthSession(session);
+        setSuccessMsg(lang.success_login);
+        setTimeout(() => onLoginSuccess(session), 800);
+      } catch { setErrorMsg("Gagal memproses PIN."); }
       setIsLoading(false); return;
     }
     setIsLoading(true);
     try {
-      if (!verifikasiPINDinamis(m, pinInput)) { recordFailedPinAttempt(tid); setErrorMsg(lang.wrong_pin); checkLockout(tid); setIsLoading(false); return; }
-      resetPinAttempts(tid); const s: AuthSession = { id_anggota: m.ID_Anggota, nama_lengkap: m.Nama_Lengkap, nama_panggilan: m.Nama_Panggilan || m.Nama_Lengkap, jabatan: m.Jabatan || "", role: getRoleFromJabatan(m.Jabatan || ""), pin_hashed: hashPin(pinInput), login_time: new Date().toISOString(), remember_me: true };
-      saveAuthSession(s); addAccessLog(m.ID_Anggota, m.Nama_Lengkap, "LOGIN", "Login berhasil"); setSuccessMsg(lang.success_login); setTimeout(() => onLoginSuccess(s), 800);
+      const valid = verifikasiPINDinamis(member, pinInput);
+      if (!valid) {
+        recordFailedPinAttempt(trimmedId);
+        setErrorMsg(lang.wrong_pin);
+        checkLockout(trimmedId);
+        setIsLoading(false); return;
+      }
+      resetPinAttempts(trimmedId);
+      const session: AuthSession = {
+        id_anggota: member.ID_Anggota, nama_lengkap: member.Nama_Lengkap,
+        nama_panggilan: member.Nama_Panggilan || member.Nama_Lengkap,
+        jabatan: member.Jabatan || "", role: getRoleFromJabatan(member.Jabatan || ""),
+        pin_hashed: hashPin(pinInput), login_time: new Date().toISOString(), remember_me: true,
+      };
+      saveAuthSession(session);
+      addAccessLog(member.ID_Anggota, member.Nama_Lengkap, "LOGIN", "Login berhasil", getRoleFromJabatan(member.Jabatan || ""));
+      setSuccessMsg(lang.success_login);
+      setTimeout(() => onLoginSuccess(session), 800);
     } catch { setErrorMsg("Gagal verifikasi. Coba lagi."); }
     setIsLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950 flex flex-col items-center justify-center p-4 relative">
-      <div className="absolute top-4 right-4 flex gap-2 z-10"><button onClick={toggleTheme} className="p-2.5 bg-white/90 dark:bg-slate-800/90 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:scale-105 transition-all">{theme==='dark'?<Sun size={18}/>:<Moon size={18}/>}</button></div>
+      <div className="absolute top-4 right-4 flex gap-2 z-10">
+        <button onClick={toggleTheme} className="p-2.5 bg-white/90 dark:bg-slate-800/90 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:scale-105 transition-all">
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+      </div>
       <div className="w-full max-w-md">
-        <div className="text-center mb-6"><PandawaLogo className="w-20 h-20 mx-auto mb-3"/><h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">{lang.welcome}</h1><p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">{lang.subtitle}</p></div>
+        <div className="text-center mb-6">
+          <PandawaLogo className="w-20 h-20 mx-auto mb-3" />
+          <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100">{lang.welcome}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">{lang.subtitle}</p>
+        </div>
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
           <div className="flex border-b border-slate-200 dark:border-slate-800">
-            <button onClick={()=>setTabMode("anggota")} className={`flex-1 py-3.5 text-xs font-bold transition-all ${tabMode==="anggota"?"bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-500":"text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>{lang.tab_member}</button>
-            <button onClick={()=>setTabMode("admin")} className={`flex-1 py-3.5 text-xs font-bold transition-all ${tabMode==="admin"?"bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-b-2 border-purple-500":"text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>{lang.tab_admin}</button>
+            <button onClick={() => setTabMode("anggota")} className={`flex-1 py-3.5 text-xs font-bold transition-all ${tabMode === "anggota" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-500" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>{lang.tab_member}</button>
+            <button onClick={() => setTabMode("admin")} className={`flex-1 py-3.5 text-xs font-bold transition-all ${tabMode === "admin" ? "bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-b-2 border-purple-500" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"}`}>{lang.tab_admin}</button>
           </div>
           <form onSubmit={handleLogin} className="p-6 space-y-4">
-            {!isOnline&&(<div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2"><AlertTriangle size={16} className="shrink-0 mt-0.5"/><span>{lang.connection_offline_warn}</span></div>)}
-            {lockoutRemaining>0&&(<div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2"><ShieldAlert size={16} className="shrink-0 mt-0.5"/><div><strong>{lang.lockout_active}</strong><p>{lang.lockout_wait.replace('{{time}}',String(lockoutRemaining)+' detik')}</p></div></div>)}
-            <div><label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{lang.placeholder_id}</label><div className="relative"><CreditCard size={16} className="absolute left-3 top-3 text-slate-400"/><input ref={idRef} type="text" value={idInput} onChange={e=>{setIdInput(e.target.value);setIsNewUser(false);setSetupFirstTimePin(false)}} placeholder={lang.placeholder_id} className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-emerald-500"/></div></div>
-            <div><label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{lang.placeholder_pin}</label><div className="relative"><Lock size={16} className="absolute left-3 top-3 text-slate-400"/><input ref={pinRef} type={showPassword?"text":"password"} value={pinInput} onChange={e=>setPinInput(e.target.value)} placeholder={lang.placeholder_pin} className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500"/><button type="button" onClick={()=>setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600">{showPassword?<EyeOff size={16}/>:<Eye size={16}/>}</button></div></div>
-            {(isNewUser||setupFirstTimePin)&&(<div><label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{lang.placeholder_confirm_pin}</label><div className="relative"><Lock size={16} className="absolute left-3 top-3 text-slate-400"/><input type={showConfirmPassword?"text":"password"} value={confirmPinInput} onChange={e=>setConfirmPinInput(e.target.value)} placeholder={lang.placeholder_confirm_pin} className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500"/><button type="button" onClick={()=>setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600">{showConfirmPassword?<EyeOff size={16}/>:<Eye size={16}/>}</button></div></div>)}
-            {errorMsg&&(<div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2"><AlertCircle size={14}/>{errorMsg}</div>)}
-            {successMsg&&(<div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2"><CheckCircle2 size={14}/>{successMsg}</div>)}
-            <button type="submit" disabled={isLoading||lockoutRemaining>0} className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white font-bold rounded-xl text-sm shadow-lg shadow-emerald-200 dark:shadow-none transition-all flex items-center justify-center gap-2">{isLoading?"⏳":<KeyRound size={16}/>}{(isNewUser||setupFirstTimePin)?lang.btn_register_login:lang.btn_login}</button>
-            {onBrowseAsGuest&&(<button type="button" onClick={onBrowseAsGuest} className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-sm transition-all">{lang.btn_guest}</button>)}
+            {!isOnline && (<div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2"><AlertTriangle size={16} className="shrink-0 mt-0.5" /><span>{lang.connection_offline_warn}</span></div>)}
+            {lockoutRemaining > 0 && (<div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2"><ShieldAlert size={16} className="shrink-0 mt-0.5" /><div><strong>{lang.lockout_active}</strong><p>{lang.lockout_wait.replace('{{time}}', String(lockoutRemaining) + ' detik')}</p></div></div>)}
+            <div><label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{lang.placeholder_id}</label><div className="relative"><CreditCard size={16} className="absolute left-3 top-3 text-slate-400" /><input ref={idRef} type="text" value={idInput} onChange={(e) => { setIdInput(e.target.value); setIsNewUser(false); setSetupFirstTimePin(false); }} placeholder={lang.placeholder_id} className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-emerald-500" /></div></div>
+            <div><label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{lang.placeholder_pin}</label><div className="relative"><Lock size={16} className="absolute left-3 top-3 text-slate-400" /><input ref={pinRef} type={showPassword ? "text" : "password"} value={pinInput} onChange={(e) => setPinInput(e.target.value)} placeholder={lang.placeholder_pin} className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500" /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></div>
+            {(isNewUser || setupFirstTimePin) && (<div><label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">{lang.placeholder_confirm_pin}</label><div className="relative"><Lock size={16} className="absolute left-3 top-3 text-slate-400" /><input type={showConfirmPassword ? "text" : "password"} value={confirmPinInput} onChange={(e) => setConfirmPinInput(e.target.value)} placeholder={lang.placeholder_confirm_pin} className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500" /><button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600">{showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></div>)}
+            {errorMsg && (<div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2"><AlertCircle size={14} />{errorMsg}</div>)}
+            {successMsg && (<div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2"><CheckCircle2 size={14} />{successMsg}</div>)}
+            <button type="submit" disabled={isLoading || lockoutRemaining > 0} className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white font-bold rounded-xl text-sm shadow-lg shadow-emerald-200 dark:shadow-none transition-all flex items-center justify-center gap-2">{isLoading ? "⏳" : <KeyRound size={16} />}{(isNewUser || setupFirstTimePin) ? lang.btn_register_login : lang.btn_login}</button>
+            {onBrowseAsGuest && (<button type="button" onClick={onBrowseAsGuest} className="w-full py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-sm transition-all">{lang.btn_guest}</button>)}
           </form>
         </div>
-        <div className="mt-4 text-center"><p className="text-[10px] text-slate-400 dark:text-slate-500">{lang.organization_name} — {lang.organization_loc}</p><a href="https://wa.me/6281234567890?text=Halo%20Admin%20Remaja%20Legok%2003,%20saya%20butuh%20bantuan%20akses." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-bold mt-2 hover:underline"><Phone size={12}/>{lang.help_call}</a></div>
+        <div className="mt-4 text-center">
+          <p className="text-[10px] text-slate-400 dark:text-slate-500">{lang.organization_name} — {lang.organization_loc}</p>
+          <a href="https://wa.me/6281234567890?text=Halo%20Admin%20Remaja%20Legok%2003,%20saya%20butuh%20bantuan%20akses." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-bold mt-2 hover:underline"><Phone size={12} />{lang.help_call}</a>
+        </div>
       </div>
     </div>
   );
