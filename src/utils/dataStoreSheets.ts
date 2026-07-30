@@ -103,6 +103,17 @@ export async function loadFromSheets(): Promise<AppData | null> {
 export async function refreshSingleSheet(table: string): Promise<Partial<AppData> | null> {
   if (!isOnline()) return null;
 
+  // Hotfix: if galeri lightbox is open in the UI, skip the automatic single-sheet refresh
+  try {
+    if (typeof window !== "undefined" && (window as any).__galeri_lightbox_open) {
+      // eslint-disable-next-line no-console
+      console.debug(`[SheetsDB] Skipping refreshSingleSheet(${table}) because galeri lightbox is open`);
+      return null;
+    }
+  } catch (err) {
+    // ignore
+  }
+
   try {
     const result = await (sheets as any).readSheet(table);
     const rawData = safeArray(result.data);

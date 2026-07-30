@@ -56,6 +56,10 @@ export default function Galeri({
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.debug("[Galeri] selectedPhoto changed:", selectedPhoto);
+    try {
+      // global flag to tell background refresh not to clobber UI when lightbox is open
+      (window as any).__galeri_lightbox_open = !!selectedPhoto;
+    } catch (err) {}
   }, [selectedPhoto]);
 
   // Form State
