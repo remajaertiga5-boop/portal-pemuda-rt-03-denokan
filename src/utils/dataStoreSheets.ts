@@ -50,17 +50,43 @@ export async function loadFromSheets(): Promise<AppData | null> {
     return null;
   }
 
-  notify("syncing", "Memuat data dari Google Sheets...");
+  notify("syncing", "Memuat data dari sumber backend...");
+
+  const SUPABASE_URL = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_URL : undefined;
+  const SUPABASE_KEY = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_ANON_KEY : undefined;
+
+  async function readFromSupabase(table: string) {
+    if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Supabase not configured');
+    const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${table}?select=*`;
+    const r = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+    if (!r.ok) throw new Error(`Supabase ${table} HTTP ${r.status}`);
+    const json = await r.json();
+    return { data: json } as DbResponse;
+  }
 
   try {
-    const [anggota, agenda, pengumuman, kas, aspirasi, galeri] = await Promise.all([
-      sheets.readSheet("anggota"),
-      sheets.readSheet("agenda"),
-      sheets.readSheet("pengumuman"),
-      sheets.readSheet("kas"),
-      sheets.readSheet("aspirasi"),
-      sheets.readSheet("galeri"),
-    ]);
+    let anggota: DbResponse, agenda: DbResponse, pengumuman: DbResponse, kas: DbResponse, aspirasi: DbResponse, galeri: DbResponse;
+
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      // Prefer Supabase if configured
+      [anggota, agenda, pengumuman, kas, aspirasi, galeri] = await Promise.all([
+        readFromSupabase('anggota'),
+        readFromSupabase('agenda'),
+        readFromSupabase('pengumuman'),
+        readFromSupabase('kas'),
+        readFromSupabase('aspirasi'),
+        readFromSupabase('galeri'),
+      ]);
+    } else {
+      [anggota, agenda, pengumuman, kas, aspirasi, galeri] = await Promise.all([
+        sheets.readSheet('anggota'),
+        sheets.readSheet('agenda'),
+        sheets.readSheet('pengumuman'),
+        sheets.readSheet('kas'),
+        sheets.readSheet('aspirasi'),
+        sheets.readSheet('galeri'),
+      ]);
+    }
 
     const existingData = loadAppData();
     const appData: AppData = {
@@ -94,7 +120,7 @@ export async function loadFromSheets(): Promise<AppData | null> {
     return appData;
 
   } catch (err: any) {
-    notify("error", `Gagal memuat dari Sheets: ${err.message}`);
+    notify("error", `Gagal memuat dari backend: ${err.message}`);
     console.error("[SheetsDB] Load error:", err);
     return null;
   }
@@ -114,8 +140,21 @@ export async function refreshSingleSheet(table: string): Promise<Partial<AppData
     // ignore
   }
 
+  const SUPABASE_URL = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_URL : undefined;
+  const SUPABASE_KEY = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_SUPABASE_ANON_KEY : undefined;
+
   try {
-    const result = await (sheets as any).readSheet(table);
+    let result: DbResponse;
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      const url = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${table}?select=*`;
+      const resp = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+      if (!resp.ok) throw new Error(`Supabase ${table} HTTP ${resp.status}`);
+      const json = await resp.json();
+      result = { data: json } as DbResponse;
+    } else {
+      result = await (sheets as any).readSheet(table);
+    }
+
     const rawData = safeArray(result.data);
 
     const keyMap: Record<string, keyof AppData> = {
@@ -126,14 +165,14 @@ export async function refreshSingleSheet(table: string): Promise<Partial<AppData
     const appKey = keyMap[table];
     if (!appKey) return null;
 
-    // Merge: Sheets + localStorage — jangan hapus data lokal kalau Sheets kosong
+    // Merge: Sheets/Supabase + localStorage — jangan hapus data lokal kalau remote kosong
     const existing = loadAppData();
     const existingData = (existing as any)[appKey] || [];
     if (rawData.length === 0) {
-      // Sheets kosong → pertahankan data lokal
+      // Remote kosong → pertahankan data lokal
       return { [appKey]: existingData } as Partial<AppData>;
     }
-    // Merge: Sheets priority, local sebagai pelengkap (hindari duplikat ID)
+    // Merge: remote priority, local sebagai pelengkap (hindari duplikat ID)
     const sheetsIds2 = new Set(rawData.map((item: any) => item.ID || item.ID_Foto || ""));
     const merged = [...rawData, ...existingData.filter((item: any) => !sheetsIds2.has(item.ID || item.ID_Foto || ""))];
     const updated = { ...existing, [appKey]: merged };
