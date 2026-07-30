@@ -128,7 +128,7 @@ export default function Absensi({ appData, setAppData, userRole, currentUserName
               onClick={() => setShowForm(!showForm)}
               className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md dark:shadow-none transition-all"
             >
-              {showForm ? t\"common.button.cancel")\" : <><Plus size={16} /> {t\"attendance.manualRecap\"\"+ Rekap Manual")}</>}
+              {showForm ? t\"common.button.cancel\")\" : <><Plus size={16} /> {t\"attendance.manualRecap\"\"+ Rekap Manual")}</>}
             </button>
           )}
         </div>
@@ -180,9 +180,9 @@ export default function Absensi({ appData, setAppData, userRole, currentUserName
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{t\"attendance.attendanceStatus\"\"Status Kehadiran")}</label>
-              <select value={statusAbsen} onChange={e => setStatusAbsen(e.target.value as any)} className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none">
+              <select value>{statusAbsen} onChange={e => setStatusAbsen(e.target.value as any)} className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none">
                 <option value="HADIR">HADIR ✅</option>
-                <option value="IZIN">IZIN 📝</option>
+                <option value="IzIN">IZIN 📝</option>
                 <option value="ALPA">ALPA ❌</option>
               </select>
             </div>
@@ -194,7 +194,7 @@ export default function Absensi({ appData, setAppData, userRole, currentUserName
           </div>
 
           <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md dark:shadow-none transition-all text-sm">
-            {t\"attendance.saveRecap\"\"💎 Simpan Rekap Absensi")}
+            {t\"attendance.saveRecap\"\"💍 Simpan Rekap Absensi")}
           </button>
         </form>
       )}
