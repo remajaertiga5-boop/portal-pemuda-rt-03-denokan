@@ -12,6 +12,32 @@ import slg from '../locales/slg';
 const SUPPORTED_LANGS = ['id', 'en', 'jv', 'slg'] as const;
 type SupportedLang = typeof SUPPORTED_LANGS[number];
 
+// ✅ ALL 20 NAMESPACES — must match top-level keys in locale files
+//    Namespace yang TIDAK terdaftar = terjemahan tidak pernah dimuat
+//    → komponen jatuh ke defaultValue (teks Indonesia hardcoded)
+const ALL_NAMESPACES = [
+  'common',        // App name, buttons, nav, time, greeting, labels, errors, confirm
+  'auth',          // Login, logout, session, errors
+  'profile',       // Profil Saya
+  'settings',      // Pengaturan
+  'finance',       // Laporan Keuangan
+  'attendance',    // Absensi Kegiatan (was: 'absensi' — typo fixed)
+  'gallery',       // Galeri Kegiatan
+  'announcement',  // Pengumuman
+  'aspiration',    // Kotak Aspirasi
+  'member',        // Daftar Anggota
+  'dashboard',     // Dashboard
+  'anggota',       // Halaman Anggota (legacy namespace)
+  'agenda',        // Agenda Kegiatan (legacy namespace)
+  'kas',           // Kas Remaja (legacy namespace)
+  'aspirasi',      // Aspirasi & Usulan (legacy namespace)
+  'pengumuman',    // Halaman Pengumuman (legacy namespace)
+  'galeri',        // Halaman Galeri Kegiatan (legacy namespace)
+  'profil',        // Profil Saya (legacy namespace)
+  'superAdmin',    // Super Admin Dashboard
+  'iuran',         // Pembayaran Iuran
+] as const;
+
 // ============================================================
 // HELPER
 // ============================================================
@@ -63,16 +89,11 @@ export const i18nInitPromise = i18n
 
     fallbackLng: 'id',
     defaultNS: 'common',
-    ns: [
-      'common',
-      'anggota',
-      'kas',
-      'agenda',
-      'pengumuman',
-      'aspirasi',
-      'galeri',
-      'absensi',
-    ],
+
+    // ✅ FIXED: Daftarkan SEMUA 20 namespace
+    //    Sebelumnya hanya 8 namespace → 12 namespace lain tidak termuat
+    //    → semua komponen yg pakai namespace tersebut JATUH ke defaultValue
+    ns: [...ALL_NAMESPACES],
 
     interpolation: {
       escapeValue: false,
