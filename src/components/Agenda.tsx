@@ -14,9 +14,9 @@ import { refreshSingleSheet } from "../utils/dataStoreSheets";
 import { useLocale } from "../hooks/useLocale";
 import { AgendaItem, UserRole, ContentVisibility } from "../types";
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // TYPES
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 interface AbsensiRecord {
   id: string;
   ID_Agenda: string;
@@ -41,15 +41,15 @@ interface AgendaProps {
   ) => void;
 }
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // KONSTANTA
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 const KATEGORI_LIST = ["Rapat", "Olahraga", "Kerja Bakti", "Lainnya"] as const;
 const FILTER_LIST   = ["SEMUA", ...KATEGORI_LIST] as const;
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // COMPONENT
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 export default function Agenda({
   appData,
   setAppData,
@@ -76,9 +76,9 @@ export default function Agenda({
   const [keterangan, setKeterangan]     = useState("");
   const [visibilitas, setVisibilitas]   = useState<ContentVisibility>("PUBLIK");
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // DATA
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
 
   // ── Refresh data Agenda dari Google Sheets tiap buka menu ──
   useEffect(() => {
@@ -107,9 +107,9 @@ export default function Agenda({
     userRole === "ADMIN" ||
     userRole === "SUPER_ADMIN";
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // HELPER - Reset form
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const resetForm = () => {
     setNamaKegiatan("");
     setTanggal("");
@@ -121,9 +121,9 @@ export default function Agenda({
     setEditingAgenda(null);
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // HELPER - Cek apakah user sudah absen
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const isUserAbsen = (agendaId: string): boolean => {
     if (!currentUserId) return false;
     return absensiList.some(
@@ -131,9 +131,9 @@ export default function Agenda({
     );
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 22. Buka Form Edit
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleOpenEdit = (agenda: AgendaItem) => {
     setEditingAgenda(agenda);
     setNamaKegiatan(agenda["Nama Kegiatan"]);
@@ -146,14 +146,14 @@ export default function Agenda({
     setShowForm(true);
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 18 & 22. Simpan / Update Agenda
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleSubmitAgenda = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!namaKegiatan.trim() || !tanggal || !lokasi.trim()) {
-      showToast("Nama kegiatan, tanggal, dan lokasi wajib diisi!", "error");
+      showToast(t("agenda.validationRequired", "Nama kegiatan, tanggal, dan lokasi wajib diisi!"), "error");
       return;
     }
 
@@ -176,15 +176,15 @@ export default function Agenda({
       const updated    = { ...appData, Agenda: updatedList };
       const loggedData = addLogAkses(
         updated,
-        currentUserName || "Pengurus",
+        currentUserName || t("member.role.pengurus", "Pengurus"),
         userRole,
         "EDIT_AGENDA",
         `Mengubah agenda ${editingAgenda.ID} (${visibilitas})`
       );
       setAppData(loggedData);
-      showToast("Agenda berhasil diperbarui!", "success");
+      showToast(t("agenda.updateSuccess", "Agenda berhasil diperbarui!"), "success");
     } else {
-      // Create mode (18) — ✅ ID lebih unik dengan full timestamp
+      // Create mode (18) — ℅ ID lebih unik dengan full timestamp
       const newAgenda: AgendaItem = {
         ID             : `AGD-${Date.now()}`,
         "Nama Kegiatan": namaKegiatan,
@@ -198,22 +198,22 @@ export default function Agenda({
       const updated    = { ...appData, Agenda: [newAgenda, ...appData.Agenda] };
       const loggedData = addLogAkses(
         updated,
-        currentUserName || "Pengurus",
+        currentUserName || t("member.role.pengurus", "Pengurus"),
         userRole,
         "TAMBAH_AGENDA",
         `Menambah agenda ${newAgenda["Nama Kegiatan"]} (${visibilitas})`
       );
       setAppData(loggedData);
-      showToast("Agenda baru berhasil ditambahkan!", "success");
+      showToast(t("agenda.createSuccess", "Agenda baru berhasil ditambahkan!"), "success");
     }
 
     setShowForm(false);
     resetForm();
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 23. Hapus Agenda
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleConfirmDelete = () => {
     if (!deleteConfirmAgenda) return;
 
@@ -229,25 +229,25 @@ export default function Agenda({
       `Menghapus agenda ${deleteConfirmAgenda.ID}`
     );
     setAppData(loggedData);
-    showToast("Agenda berhasil dihapus!", "success");
+    showToast(t("agenda.deleteSuccess", "Agenda berhasil dihapus!"), "success");
     setDeleteConfirmAgenda(null);
     setSelectedAgenda(null);
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 20. Absen Hadir
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleAbsenHadir = (agenda: AgendaItem) => {
     if (!currentUserId) {
       showToast(
-        "Silakan masuk dengan ID Anggota terlebih dahulu untuk absen!",
+        t("agenda.loginRequired", "Silakan masuk dengan ID Anggota terlebih dahulu untuk absen!"),
         "warning"
       );
       return;
     }
 
     if (isUserAbsen(agenda.ID)) {
-      showToast("Anda sudah melakukan absensi untuk kegiatan ini!", "info");
+      showToast(t("agenda.alreadyAbsentToast", "Anda sudah melakukan absensi untuk kegiatan ini!"), "info");
       return;
     }
 
@@ -274,18 +274,18 @@ export default function Agenda({
       `Absen HADIR pada ${agenda["Nama Kegiatan"]}`
     );
     setAppData(loggedData);
-    showToast("Kehadiran Anda berhasil dicatat! Terima kasih ✅", "success");
+    showToast(t("agenda.attendanceRecorded", "Kehadiran Anda berhasil dicatat! Terima kasih ✅"), "success");
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // 21. Kirim Izin
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   const handleKirimIzin = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedAgenda || !currentUserId) return;
     if (!alasanIzin.trim()) {
-      showToast("Tuliskan alasan izin Anda!", "error");
+      showToast(t("agenda.izinReasonRequired", "Tuliskan alasan izin Anda!"), "error");
       return;
     }
 
@@ -313,7 +313,7 @@ export default function Agenda({
       `Izin pada ${selectedAgenda["Nama Kegiatan"]}`
     );
     setAppData(loggedData);
-    showToast("Permohonan izin Anda berhasil terkirim!", "success");
+    showToast(t("agenda.izinSuccess", "Permohonan izin Anda berhasil terkirim!"), "success");
 
     // ✅ Reset dan tutup modal
     setShowIzinModal(false);
@@ -321,9 +321,9 @@ export default function Agenda({
     setSelectedAgenda(null);
   };
 
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   // RENDER
-  // ----------------------------------------------------------
+  // -----------------------------------------------------------
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
 
@@ -331,10 +331,10 @@ export default function Agenda({
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Calendar className="text-blue-600" /> Halaman Agenda & Kegiatan
+            <Calendar className="text-blue-600" /> {t("agenda.title", "Halaman Agenda & Kegiatan")}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Jadwal kegiatan pemuda RT 03 Legok RW 04 Denokan.
+            {t("agenda.subtitle", "Jadwal kegiatan pemuda RT 03 Legok RW 04 Denokan.")}
           </p>
         </div>
 
@@ -352,7 +352,7 @@ export default function Agenda({
             }}
             className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md dark:shadow-none transition-all"
           >
-            {showForm ? "Batal" : <><Plus size={16} /> + Tambah Agenda</>}
+            {showForm ? t\"commol.button.cancel\")\" : <><Plus size={16} /> {t\"agenda.addAgenda\"\"+ Tambah Agenda")}</>}
           </button>
         )}
       </div>
@@ -369,7 +369,7 @@ export default function Agenda({
                 : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
             }`}
           >
-            {cat === "SEMUA" ? "Semua Kategori" : cat}
+            {cat === "SEMUA" ? t\"agenda.allCategories\"\"Semua Kategori")}\" : cat}
           </button>
         ))}
       </div>
@@ -381,20 +381,20 @@ export default function Agenda({
           className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-blue-200 shadow-md dark:shadow-none space-y-4"
         >
           <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
-            {editingAgenda ? "Edit Agenda Kegiatan" : "Tambah Agenda Baru"}
+            {editingAgenda ? t\"agenda.editAgenda\"\"Edit Agenda Kegiatan")\" : t\"agenda.newAgenda\"\"Tambah Agenda Baru")}
           </h3>
 
           {/* Nama Kegiatan */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Nama Kegiatan *
+              {t\"agenda.activityName\"\"Nama Kegiatan")} *
             </label>
             <input
               required
               type="text"
               value={namaKegiatan}
               onChange={(e) => setNamaKegiatan(e.target.value)}
-              placeholder="Rapat Rutin Bulanan"
+              placeholder={t\"agenda.namePlaceholder\"\"Rapat Rutin Bulanan")}
               className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -403,7 +403,7 @@ export default function Agenda({
             {/* Tanggal */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Tanggal *
+                {t\"common.label.date\")} *
               </label>
               <input
                 required
@@ -417,7 +417,7 @@ export default function Agenda({
             {/* Waktu */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Waktu / Jam
+                {t\"agenda.timeLabel\"\"Waktu / Jam")}
               </label>
               <input
                 type="time"
@@ -427,10 +427,10 @@ export default function Agenda({
               />
             </div>
 
-            {/* Kategori */}
+            <{/* Kategori */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Kategori Agenda
+                {t\"agenda.categoryLabel\"\"Kategori Agenda")}
               </label>
               <select
                 value={kategori}
@@ -447,14 +447,14 @@ export default function Agenda({
           {/* Lokasi */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Lokasi *
+              {t\"agenda.location\"\"Lokasi")} *
             </label>
             <input
               required
               type="text"
               value={lokasi}
               onChange={(e) => setLokasi(e.target.value)}
-              placeholder="Balai RT 03 Legok"
+              placeholder={t\"agenda.locationPlaceholder\"\"Balai RT 03 Legok")}
               className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -462,12 +462,12 @@ export default function Agenda({
           {/* Keterangan */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Keterangan / Catatan
+              {t\"agenda.noteLabel\"\"Keterangan / Catatan")}
             </label>
             <textarea
               value={keterangan}
               onChange={(e) => setKeterangan(e.target.value)}
-              placeholder="Opsional: Perlengkapan yang harus dibawa"
+              placeholder={t\"agenda.notePlaceholder\"\"Opsional: Perlengkapan yang harus dibawa")}
               className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -475,7 +475,7 @@ export default function Agenda({
           {/* Visibilitas */}
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Visibilitas / Akses Konten
+              {t\"agenda.visibility\"\"Visibilitas / Akses Konten")}
             </label>
             <select
               value={visibilitas}
@@ -484,7 +484,7 @@ export default function Agenda({
             >
               <option value="PUBLIK">🌍 Publik (Dapat dilihat oleh semua warga/tamu)</option>
               <option value="ANGGOTA">👥 Anggota (Hanya anggota & pengurus)</option>
-              <option value="PENGURUS">🔒 Khusus Pengurus (Hanya pengurus & admin)</option>
+              <option value="PENGURUS">🔢 Khusus Pengurus (Hanya pengurus & admin)</option>
             </select>
           </div>
 
@@ -492,7 +492,7 @@ export default function Agenda({
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md dark:shadow-none transition-all text-sm"
           >
-            💾 Simpan Agenda
+            {t\"agenda.saveAgenda\"\"💎 Simpan Agenda")}
           </button>
         </form>
       )}
@@ -501,7 +501,7 @@ export default function Agenda({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredAgenda.length === 0 ? (
           <div className="col-span-full bg-white dark:bg-slate-900 p-12 text-center rounded-3xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-            Belum ada agenda pada kategori ini.
+            {t\"agenda.noAgendaCategory\"\"Belum ada agenda pada kategori ini.")}
           </div>
         ) : (
           filteredAgenda.map((item) => {
@@ -515,7 +515,7 @@ export default function Agenda({
                   {/* Badge Kategori & Visibilitas */}
                   <div className="flex justify-between items-start gap-2">
                     <span className="px-3 py-1 bg-blue-50 text-blue-700 font-bold rounded-full text-[10px] uppercase border border-blue-100">
-                      {item.Kategori || "Kegiatan"}
+                      {item.Kategori || t\"agenda.fallbackCategory\"\"Kegiatan")}
                     </span>
                     <div className="flex items-center gap-1.5">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase border ${
@@ -556,7 +556,7 @@ export default function Agenda({
 
                   {item.Keterangan && (
                     <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl text-xs text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-800">
-                      <strong>Info:</strong> {item.Keterangan}
+                      <strong>{t\"agenda.infoLabel\"\"Info:")}</strong> {item.Keterangan}
                     </div>
                   )}
                 </div>
@@ -568,7 +568,7 @@ export default function Agenda({
                     onClick={() => setSelectedAgenda(item)}
                     className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all"
                   >
-                    🔍 Detail Agenda
+                    {t\"agenda.detailButton\"\"🔍 Detail Agenda")}
                   </button>
 
                   {/* 20. Absen Hadir */}
@@ -581,7 +581,7 @@ export default function Agenda({
                         : "bg-emerald-600 hover:bg-emerald-700 text-white"
                     }`}
                   >
-                    {hasAbsen ? "Sudah Absen ✅" : "✅ Saya Hadir"}
+                    {hasAbsen ? t\"agenda.alreadyAbsent\"\"Sudah Absen ✅")\" : t\"agenda.imPresent\"\"✅ Saya Hadir")}
                   </button>
 
                   {/* 21. Izin Tidak Hadir */}
@@ -593,7 +593,7 @@ export default function Agenda({
                       }}
                       className="py-2 px-3 bg-amber-500 hover:bg-amber-600 text-purple-950 rounded-xl text-xs font-bold transition-all"
                     >
-                      📝 Izin
+                      {t\"agenda.izinButton\"\"📑 Izin")}
                     </button>
                   )}
 
@@ -604,14 +604,14 @@ export default function Agenda({
                         onClick={() => handleOpenEdit(item)}
                         className="flex-1 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold flex justify-center items-center gap-1"
                       >
-                        <Edit3 size={12} /> Edit
+                        <Edit3 size={12} /> {t\"common.button.edit\")}
                       </button>
                       {isAdmin && (
                         <button
                           onClick={() => setDeleteConfirmAgenda(item)}
                           className="flex-1 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-semibold flex justify-center items-center gap-1"
                         >
-                          <Trash2 size={12} /> Hapus
+                          <Trash2 size={12} /> {t\"common.button.delete\")}
                         </button>
                       )}
                     </div>
@@ -630,14 +630,14 @@ export default function Agenda({
             <button
               onClick={() => setSelectedAgenda(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-              aria-label="Tutup detail agenda"
+              aria-label={t\"agenda.closeDetail\"\"Tutup detail agenda")}
             >
               <X size={20} />
             </button>
 
             <div>
               <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-extrabold text-[10px] uppercase">
-                {selectedAgenda.Kategori || "Kegiatan"}
+                {selectedAgenda.Kategori || t\"agenda.fallbackCategory\"\"Kegiatan")}
               </span>
               <h3 className="font-black text-slate-900 dark:text-slate-100 text-xl mt-2">
                 {selectedAgenda["Nama Kegiatan"]}
@@ -645,23 +645,23 @@ export default function Agenda({
             </div>
 
             <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <p><strong>Tanggal:</strong> {selectedAgenda.Tanggal}</p>
-              <p><strong>Waktu:</strong> {selectedAgenda.Waktu} WIB</p>
-              <p><strong>Lokasi:</strong> {selectedAgenda.Lokasi}</p>
+              <p><strong>{t\"common.label.date\")}:</strong> {selectedAgenda.Tanggal}</p>
+              <p><strong>{t\"common.label.time\")}:</strong> {selectedAgenda.Waktu} WIB</p>
+              <p><strong>{t\"agenda.location\"\"Lokasi")}:</strong> {selectedAgenda.Lokasi}</p>
               {selectedAgenda.Keterangan && (
-                <p><strong>Keterangan:</strong> {selectedAgenda.Keterangan}</p>
+                <p><strong>{t\"agenda.description\"\"Keterangan")}:</strong> {selectedAgenda.Keterangan}</p>
               )}
             </div>
 
             {/* Daftar Kehadiran */}
             <div className="space-y-2">
               <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                Daftar Kehadiran
+                {t\"agenda.attendanceList\"\"Daftar Kehadiran")}
               </h4>
               <div className="max-h-36 overflow-y-auto space-y-1 text-xs">
                 {absensiList.filter((abs) => abs.ID_Agenda === selectedAgenda.ID).length === 0 ? (
                   <p className="text-slate-400 dark:text-slate-500 text-center py-3">
-                    Belum ada data kehadiran.
+                    {t\"agenda.noAttendanceData\"\"Belum ada data kehadiran.")}
                   </p>
                 ) : (
                   absensiList
@@ -694,7 +694,7 @@ export default function Agenda({
               onClick={() => setSelectedAgenda(null)}
               className="w-full py-3 bg-slate-900 dark:bg-slate-700 text-white rounded-xl font-bold text-xs"
             >
-              Tutup
+              {t\"common.button.close\")}
             </button>
           </div>
         </div>
@@ -705,7 +705,7 @@ export default function Agenda({
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
             <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-lg">
-              📝 Form Izin Tidak Hadir
+              {t\"agenda.izinFormTitle\"\"📑 Form Izin Tidak Hadir")}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Kegiatan:{" "}
@@ -717,14 +717,14 @@ export default function Agenda({
             <form onSubmit={handleKirimIzin} className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Alasan Izin *
+                  {t\"agenda.izinReason\"\"Alasan Izin")} *
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={alasanIzin}
                   onChange={(e) => setAlasanIzin(e.target.value)}
-                  placeholder="Contoh: Ada keperluan keluarga mendadak."
+                  placeholder={t\"agenda.izinReasonPlaceholder\"\"Contoh: Ada keperluan keluarga mendadak.")}
                   className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
@@ -739,13 +739,13 @@ export default function Agenda({
                   }}
                   className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs"
                 >
-                  Batal
+                  {t\"common.button.cancel\")}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-purple-950 rounded-xl font-bold text-xs"
                 >
-                  Kirim Permohonan Izin
+                  {t\"agenda.sendIzinRequest\"\"Kirim Permohonan Izin")}
                 </button>
               </div>
             </form>
@@ -762,14 +762,14 @@ export default function Agenda({
             </div>
 
             <h3 className="font-black text-slate-900 dark:text-slate-100 text-lg">
-              Yakin hapus agenda ini?
+              {t\"agenda.deleteConfirm\"\"Yakin hapus agenda ini?")}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Agenda{" "}
               <strong className="text-slate-700 dark:text-slate-300">
-                "{deleteConfirmAgenda["Nama Kegiatan"]}"
+                "\"[deleteConfirmAgenda["Nama Kegiatan"]}"
               </strong>{" "}
-              akan dihapus permanen.
+              {t\"agenda.deletePermanent\"\"akan dihapus permanen.")}
             </p>
 
             <div className="flex gap-2 pt-2">
@@ -777,13 +777,13 @@ export default function Agenda({
                 onClick={() => setDeleteConfirmAgenda(null)}
                 className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs"
               >
-                Batal
+                {t\"common.button.cancel\")}
               </button>
               <button
                 onClick={handleConfirmDelete}
                 className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow-md dark:shadow-none"
               >
-                Ya, Hapus Agenda
+                {t\"agenda.yesDeleteAgenda\"\"Ya, Hapus Agenda")}
               </button>
             </div>
           </div>
