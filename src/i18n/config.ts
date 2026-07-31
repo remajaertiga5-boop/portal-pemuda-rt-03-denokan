@@ -1,10 +1,12 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import id  from './locales/id';
-import en  from './locales/en';
-import jv  from './locales/jv';
-import slg from './locales/slg';
+// ✅ BENAR: '../locales/' karena locales ada di src/locales/
+// bukan di src/i18n/locales/
+import id  from '../locales/id';
+import en  from '../locales/en';
+import jv  from '../locales/jv';
+import slg from '../locales/slg';
 
 const SUPPORTED_LANGS = ['id', 'en', 'jv', 'slg'] as const;
 type SupportedLang = typeof SUPPORTED_LANGS[number];
