@@ -1,18 +1,12 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import i18n from '../i18n/config';
 import { availableLanguages, LanguageMetadata } from '../i18n/types';
 
 interface LanguageContextValue {
-  language          : string;
-  languageMeta      : LanguageMetadata;
-  setLanguage       : (lang: string) => void;
-  version           : number;
+  language: string;
+  languageMeta: LanguageMetadata;
+  setLanguage: (lang: string) => void;
+  version: number;
   availableLanguages: Readonly<LanguageMetadata[]>;
 }
 
@@ -22,84 +16,56 @@ function getInitialLang(): string {
   if (typeof window === 'undefined') return DEFAULT_LANG;
   try {
     const stored = localStorage.getItem('app-language');
-    if (stored && availableLanguages.some(l => l.code === stored)) {
-      return stored;
-    }
+    if (stored && availableLanguages.some(l => l.code === stored)) return stored;
   } catch {}
   return DEFAULT_LANG;
 }
 
 const LanguageContext = createContext<LanguageContextValue>({
-  language          : DEFAULT_LANG,
-  languageMeta      : availableLanguages[0],
-  setLanguage       : () => {},
-  version           : 0,
+  language: DEFAULT_LANG,
+  languageMeta: availableLanguages[0],
+  setLanguage: () => {},
+  version: 0,
   availableLanguages,
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<string>(getInitialLang);
-  const [version,  setVersion]       = useState(0);
+  const [version, setVersion] = useState(0);
 
   const setLanguage = useCallback((langCode: string) => {
     const isValid = availableLanguages.some(l => l.code === langCode);
-    if (!isValid) {
-      console.warn(`[LanguageContext] Kode bahasa tidak valid: "${langCode}"`);
-      return;
-    }
+    if (!isValid) return;
 
-    // 1. Sync ke i18next — paling penting!
+    // Sinkronisasi ke i18next engine
     i18n.changeLanguage(langCode);
 
-    // 2. Simpan ke localStorage
-    try {
-      localStorage.setItem('app-language', langCode);
-    } catch {}
+    // Simpan permanen
+    try { localStorage.setItem('app-language', langCode); } catch {}
 
-    // 3. Update React state
+    // Update state dan paksa re-render semua komponen
     setLanguageState(langCode);
+    setVersion(v => v + 1);
 
-    // 4. Increment version (functional update agar tidak stale)
-    setVersion(v => {
-      const next = v + 1;
-      console.log(`[LanguageContext] Switched to: ${langCode} (v${next})`);
-      return next;
-    });
-
-    // 5. Update atribut lang di HTML
+    // Update atribut HTML untuk aksesibilitas
     if (typeof document !== 'undefined') {
       document.documentElement.lang = langCode;
     }
   }, []);
 
-  // Sync bahasa saat pertama mount
+  // Pastikan i18n sinkron saat pertama kali aplikasi dibuka
   useEffect(() => {
-    const savedLang = getInitialLang();
-    const i18nLang  = i18n.language?.split('-')[0];
-
-    if (i18nLang !== savedLang) {
-      i18n.changeLanguage(savedLang);
-      setLanguageState(savedLang);
-    }
-
+    const startLang = getInitialLang();
+    i18n.changeLanguage(startLang);
     if (typeof document !== 'undefined') {
-      document.documentElement.lang = savedLang;
+      document.documentElement.lang = startLang;
     }
   }, []);
 
-  const meta =
-    availableLanguages.find(l => l.code === language) ?? availableLanguages[0];
+  const meta = availableLanguages.find(l => l.code === language) || availableLanguages[0];
 
   return (
-    <LanguageContext.Provider
-      value={{
-        language,
-        languageMeta      : meta,
-        setLanguage,
-        version,
-        availableLanguages,
-      }}
-    >
+    <LanguageContext.Provider value={{ language, languageMeta: meta, setLanguage, version, availableLanguages }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -109,4 +75,5 @@ export function useLanguageContext() {
   return useContext(LanguageContext);
 }
 
+// Perbaikan ekspor default yang sebelumnya terputus
 export default LanguageContext;
