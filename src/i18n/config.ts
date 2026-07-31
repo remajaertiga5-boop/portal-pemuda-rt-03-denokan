@@ -1,8 +1,10 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-// ✅ BENAR: '../locales/' karena locales ada di src/locales/
-// bukan di src/i18n/locales/
+/**
+ * PENTING: Jalur '../locales/' diasumsikan folder locales berada 
+ * sejajar dengan folder i18n di dalam folder src.
+ */
 import id  from '../locales/id';
 import en  from '../locales/en';
 import jv  from '../locales/jv';
@@ -12,13 +14,15 @@ const SUPPORTED_LANGS = ['id', 'en', 'jv', 'slg'] as const;
 type SupportedLang = typeof SUPPORTED_LANGS[number];
 
 export const ALL_NAMESPACES = [
-  'common', 'auth', 'profile', 'settings', 'finance',
-  'attendance', 'gallery', 'announcement', 'aspiration',
-  'member', 'dashboard', 'anggota', 'agenda', 'kas',
-  'aspirasi', 'pengumuman', 'galeri', 'profil',
-  'superAdmin', 'iuran',
+  'common', 'auth', 'profile', 'settings', 'finance', 'attendance', 
+  'gallery', 'announcement', 'aspiration', 'member', 'dashboard', 
+  'anggota', 'agenda', 'kas', 'aspirasi', 'pengumuman', 'galeri', 
+  'profil', 'superAdmin', 'iuran'
 ] as const;
 
+/**
+ * Mengambil bahasa awal dari localStorage atau browser
+ */
 const getInitialLanguage = (): SupportedLang => {
   if (typeof window !== 'undefined') {
     try {
@@ -28,6 +32,7 @@ const getInitialLanguage = (): SupportedLang => {
       }
     } catch {}
   }
+  
   if (typeof navigator !== 'undefined') {
     const lang = navigator.language?.split('-')[0];
     if (lang && (SUPPORTED_LANGS as readonly string[]).includes(lang)) {
@@ -40,37 +45,16 @@ const getInitialLanguage = (): SupportedLang => {
 export const i18nInitPromise = i18n
   .use(initReactI18next)
   .init({
-    resources        : { id, en, jv, slg },
-    lng              : getInitialLanguage(),
-    fallbackLng      : 'id',
-    defaultNS        : 'common',
-    ns               : [...ALL_NAMESPACES],
-    interpolation    : { escapeValue: false },
-    react: {
-      useSuspense  : false,
-      bindI18n     : 'languageChanged loaded',
-      bindI18nStore: 'added removed',
-    },
-    debug            : typeof import.meta !== 'undefined'
-                        ? (import.meta.env?.DEV ?? false) : false,
-    load             : 'languageOnly',
-    returnNull       : false,
-    returnEmptyString: false,
-    saveMissing      : typeof import.meta !== 'undefined'
-                        ? (import.meta.env?.DEV ?? false) : false,
-    missingKeyHandler: (
-      langs: readonly string[],
-      ns   : string,
-      key  : string,
-      _fallbackValue: string
-    ) => {
-      if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
-        console.warn(
-          `[i18n] Missing key: "${key}" — ns: "${ns}" — lang: ${langs.join(', ')}`
-        );
-      }
-    },
+    resources: { id, en, jv, slg },
+    lng: getInitialLanguage(),
+    fallbackLng: 'id',
+    defaultNS: 'common',
+    ns: [...ALL_NAMESPACES],
+    interpolation: { escapeValue: false },
+    react: { useSuspense: false },
+    // Matikan debug di production agar console bersih
+    debug: false,
+    load: 'languageOnly'
   });
 
 export default i18n;
-export type { SupportedLang };
