@@ -11,23 +11,23 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const app = express();
+const app  = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// Dynamic PIN Generator (WIB UTC+7) for Server
+// Dynamic PIN Generator (WIB UTC+7)
 const OFFSET_WIB_MS = 7 * 60 * 60 * 1000;
 
 function generateDynamicPinServer(offsetJam: number = 0): string {
-  const epochUTC = Date.now();
-  const epochWIB = epochUTC + OFFSET_WIB_MS + (offsetJam * 60 * 60 * 1000);
-  const wib = new Date(epochWIB);
-  const tahun  = wib.getUTCFullYear();
-  const bulan  = String(wib.getUTCMonth() + 1).padStart(2, "0");
-  const tanggal= String(wib.getUTCDate()).padStart(2, "0");
-  const jam    = String(wib.getUTCHours()).padStart(2, "0");
+  const epochUTC  = Date.now();
+  const epochWIB  = epochUTC + OFFSET_WIB_MS + offsetJam * 60 * 60 * 1000;
+  const wib       = new Date(epochWIB);
+  const tahun     = wib.getUTCFullYear();
+  const bulan     = String(wib.getUTCMonth() + 1).padStart(2, "0");
+  const tanggal   = String(wib.getUTCDate()).padStart(2, "0");
+  const jam       = String(wib.getUTCHours()).padStart(2, "0");
   return `${tahun}${bulan}${tanggal}${jam}`;
 }
 
@@ -35,10 +35,14 @@ function validasiDynamicPinServer(pinInput: string): boolean {
   if (!pinInput || typeof pinInput !== "string") return false;
   const pinBersih = pinInput.trim();
   if (!/^\d{10}$/.test(pinBersih)) return false;
-  const pinSekarang = generateDynamicPinServer(0);
-  const pinSejamLalu= generateDynamicPinServer(-1);
-  const pinSejamLagi= generateDynamicPinServer(1);
-  return pinBersih === pinSekarang || pinBersih === pinSejamLalu || pinBersih === pinSejamLagi;
+  const pinSekarang  = generateDynamicPinServer(0);
+  const pinSejamLalu = generateDynamicPinServer(-1);
+  const pinSejamLagi = generateDynamicPinServer(1);
+  return (
+    pinBersih === pinSekarang ||
+    pinBersih === pinSejamLalu ||
+    pinBersih === pinSejamLagi
+  );
 }
 
 // Health Check
@@ -49,9 +53,9 @@ app.get("/api/health", (_req, res) => {
 // Debug PIN
 app.get("/api/auth/debug-pin", (_req, res) => {
   res.json({
-    pinSekarang  : generateDynamicPinServer(0),
-    pinSejamLalu : generateDynamicPinServer(-1),
-    pinSejamLagi : generateDynamicPinServer(1),
+    pinSekarang   : generateDynamicPinServer(0),
+    pinSejamLalu  : generateDynamicPinServer(-1),
+    pinSejamLagi  : generateDynamicPinServer(1),
     waktuServerUTC: new Date().toISOString(),
   });
 });
@@ -67,14 +71,16 @@ app.post("/api/auth/login", (req, res) => {
     token         : `token_${idAnggota}_${Date.now()}`,
     perluAturSandi: !password,
     role          : idAnggota === "1000000001" ? "super_admin" : "anggota",
-    namaPanggilan : idAnggota === "1000000001" ? "Super Admin"  : "Anggota",
+    namaPanggilan : idAnggota === "1000000001" ? "Super Admin" : "Anggota",
   });
 });
 
 app.post("/api/auth/login-pin-darurat", (req, res) => {
   const { idSuperAdmin, pinDarurat } = req.body;
   if (!idSuperAdmin || !pinDarurat) {
-    return res.status(400).json({ status: "error", message: "ID Super Admin dan PIN wajib diisi" });
+    return res
+      .status(400)
+      .json({ status: "error", message: "ID Super Admin dan PIN wajib diisi" });
   }
   if (!validasiDynamicPinServer(pinDarurat)) {
     return res.status(401).json({
@@ -125,8 +131,10 @@ const TABLES: Record<string, string[]> = {
   Galeri    : ["ID", "Tanggal", "Kegiatan", "Caption", "Link Foto"],
 };
 
-async function initDB(drive: ReturnType<typeof google.drive>, sheets: ReturnType<typeof google.sheets>) {
-  // Get or create folder
+async function initDB(
+  drive : ReturnType<typeof google.drive>,
+  sheets: ReturnType<typeof google.sheets>
+) {
   let folderId: string | undefined;
   const folderRes = await drive.files.list({
     q     : `mimeType='application/vnd.google-apps.folder' and name='${FOLDER_NAME}' and trashed=false`,
@@ -143,7 +151,6 @@ async function initDB(drive: ReturnType<typeof google.drive>, sheets: ReturnType
     folderId = folder.data.id!;
   }
 
-  // Get or create spreadsheet
   let spreadsheetId: string | undefined;
   const sheetRes = await drive.files.list({
     q     : `mimeType='application/vnd.google-apps.spreadsheet' and name='${SHEET_NAME}' and '${folderId}' in parents and trashed=false`,
@@ -171,9 +178,9 @@ async function initDB(drive: ReturnType<typeof google.drive>, sheets: ReturnType
     for (const [sheetName, headers] of Object.entries(TABLES)) {
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range            : `${sheetName}!A1:Z1`,
-        valueInputOption : "USER_ENTERED",
-        requestBody      : { values: [headers] },
+        range           : `${sheetName}!A1:Z1`,
+        valueInputOption: "USER_ENTERED",
+        requestBody     : { values: [headers] },
       });
     }
   }
@@ -203,7 +210,9 @@ app.get("/api/data", async (req, res) => {
       const headers = TABLES[sheetName];
       db[sheetName] = rows.map(row => {
         const obj: Record<string, string> = {};
-        headers.forEach((header, index) => { obj[header] = row[index] || ""; });
+        headers.forEach((header, index) => {
+          obj[header] = row[index] || "";
+        });
         return obj;
       });
     }
@@ -229,13 +238,12 @@ app.post("/api/data/:table", upload.single("photo"), async (req, res) => {
     const sheets = google.sheets({ version: "v4", auth });
 
     const { folderId, spreadsheetId } = await initDB(drive, sheets);
-    const headers  = TABLES[table];
+    const headers = TABLES[table];
     const rowData: string[] = [];
     const id = Date.now().toString();
 
     let photoLink = "";
     if (req.file) {
-      // ✅ FIXED: Replaced require("stream") with ES import at top of file
       const stream = new Readable();
       stream.push(req.file.buffer);
       stream.push(null);
@@ -252,20 +260,21 @@ app.post("/api/data/:table", upload.single("photo"), async (req, res) => {
           requestBody: { role: "reader", type: "anyone" },
         });
       }
-      photoLink = uploadedFile.data.webContentLink || uploadedFile.data.webViewLink || "";
+      photoLink =
+        uploadedFile.data.webContentLink || uploadedFile.data.webViewLink || "";
     }
 
     headers.forEach(header => {
-      if (header === "ID")        rowData.push(id);
+      if (header === "ID")            rowData.push(id);
       else if (header === "Link Foto") rowData.push(photoLink);
-      else                        rowData.push(req.body[header] || "");
+      else                             rowData.push(req.body[header] || "");
     });
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range            : `${table}!A:Z`,
-      valueInputOption : "USER_ENTERED",
-      requestBody      : { values: [rowData] },
+      range           : `${table}!A:Z`,
+      valueInputOption: "USER_ENTERED",
+      requestBody     : { values: [rowData] },
     });
 
     res.json({ success: true, id });
@@ -283,39 +292,54 @@ const periksaOtorisasi = (
 ): { authorized: boolean; message: string } => {
   const userRole = (role || "TAMU").toUpperCase();
 
-  if (userRole === "SUPER_ADMIN" || userRole === "KETUA") {
+  if (userRole === "SUPER_ADMIN" || userRole === "KETUA")
     return { authorized: true, message: "" };
-  }
+
   if (action === "baca") return { authorized: true, message: "" };
 
   if (userRole === "SEKRETARIS" || userRole === "WAKIL_SEKRETARIS") {
     if (["Agenda", "Pengumuman", "Anggota", "Aspirasi"].includes(tabel))
       return { authorized: true, message: "" };
-    return { authorized: false, message: `Akses Ditolak. Role ${userRole} tidak berwenang modifikasi tabel ${tabel}.` };
+    return {
+      authorized: false,
+      message   : `Akses Ditolak. Role ${userRole} tidak berwenang modifikasi tabel ${tabel}.`,
+    };
   }
 
   if (userRole === "BENDAHARA" || userRole === "WAKIL_BENDAHARA") {
     if (["Kas", "Iuran"].includes(tabel)) return { authorized: true, message: "" };
-    return { authorized: false, message: `Akses Ditolak. Role ${userRole} tidak berwenang modifikasi tabel ${tabel}.` };
+    return {
+      authorized: false,
+      message   : `Akses Ditolak. Role ${userRole} tidak berwenang modifikasi tabel ${tabel}.`,
+    };
   }
 
   if (userRole === "HUMAS" || userRole === "KEPALA_HUMAS") {
-    if (["Agenda", "Pengumuman", "Aspirasi"].includes(tabel)) return { authorized: true, message: "" };
-    return { authorized: false, message: `Akses Ditolak. Role ${userRole} tidak berwenang modifikasi tabel ${tabel}.` };
+    if (["Agenda", "Pengumuman", "Aspirasi"].includes(tabel))
+      return { authorized: true, message: "" };
+    return {
+      authorized: false,
+      message   : `Akses Ditolak. Role ${userRole} tidak berwenang modifikasi tabel ${tabel}.`,
+    };
   }
 
-  if (tabel === "Aspirasi" && action === "tambah") return { authorized: true, message: "" };
+  if (tabel === "Aspirasi" && action === "tambah")
+    return { authorized: true, message: "" };
 
-  return { authorized: false, message: `Akses Ditolak. Role (${userRole}) tidak memiliki wewenang administratif.` };
+  return {
+    authorized: false,
+    message   : `Akses Ditolak. Role (${userRole}) tidak memiliki wewenang administratif.`,
+  };
 };
 
-// AI endpoints
+// AI Chat Endpoint
 app.post("/api/chat", async (req, res) => {
   try {
     const { message, history, appData, userRole } = req.body;
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({ error: "Gemini API key is not configured." });
     }
+
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const contents = history.map((msg: any) => ({
@@ -351,18 +375,30 @@ app.post("/api/chat", async (req, res) => {
                 data  : {
                   type      : Type.OBJECT,
                   properties: {
-                    Nama_Lengkap: { type: Type.STRING }, Nama_Panggilan: { type: Type.STRING },
-                    Jabatan: { type: Type.STRING }, Alamat: { type: Type.STRING },
-                    No_HP: { type: Type.STRING }, Jenis_Kelamin: { type: Type.STRING },
-                    Tanggal_Lahir: { type: Type.STRING }, Tanggal: { type: Type.STRING },
-                    Waktu: { type: Type.STRING }, Nama_Kegiatan: { type: Type.STRING },
-                    Lokasi: { type: Type.STRING }, Keterangan: { type: Type.STRING },
-                    Judul: { type: Type.STRING }, Isi: { type: Type.STRING },
-                    Jenis: { type: Type.STRING }, Nominal: { type: Type.NUMBER },
-                    ID_Anggota: { type: Type.STRING }, Nama_Anggota: { type: Type.STRING },
-                    Bulan: { type: Type.STRING }, Tahun: { type: Type.NUMBER },
-                    Jumlah: { type: Type.NUMBER }, Status: { type: Type.STRING },
-                    Usulan: { type: Type.STRING }, Pengirim: { type: Type.STRING },
+                    Nama_Lengkap   : { type: Type.STRING },
+                    Nama_Panggilan : { type: Type.STRING },
+                    Jabatan        : { type: Type.STRING },
+                    Alamat         : { type: Type.STRING },
+                    No_HP          : { type: Type.STRING },
+                    Jenis_Kelamin  : { type: Type.STRING },
+                    Tanggal_Lahir  : { type: Type.STRING },
+                    Tanggal        : { type: Type.STRING },
+                    Waktu          : { type: Type.STRING },
+                    Nama_Kegiatan  : { type: Type.STRING },
+                    Lokasi         : { type: Type.STRING },
+                    Keterangan     : { type: Type.STRING },
+                    Judul          : { type: Type.STRING },
+                    Isi            : { type: Type.STRING },
+                    Jenis          : { type: Type.STRING },
+                    Nominal        : { type: Type.NUMBER },
+                    ID_Anggota     : { type: Type.STRING },
+                    Nama_Anggota   : { type: Type.STRING },
+                    Bulan          : { type: Type.STRING },
+                    Tahun          : { type: Type.NUMBER },
+                    Jumlah         : { type: Type.NUMBER },
+                    Status         : { type: Type.STRING },
+                    Usulan         : { type: Type.STRING },
+                    Pengirim       : { type: Type.STRING },
                   },
                 },
               },
@@ -422,37 +458,51 @@ app.post("/api/chat", async (req, res) => {
             const { tabel, filterKeyword } = args as any;
             const list: any[] = updatedAppData[tabel] || [];
             const filtered = filterKeyword
-              ? list.filter(item => JSON.stringify(item).toLowerCase().includes((filterKeyword as string).toLowerCase()))
+              ? list.filter(item =>
+                  JSON.stringify(item)
+                    .toLowerCase()
+                    .includes((filterKeyword as string).toLowerCase())
+                )
               : list;
             result = { status: "success", count: filtered.length, data: filtered.slice(0, 30) };
 
           } else if (name === "tambah_atau_update_item") {
             const { tabel, action, idItem, data } = args as any;
+
             if (action === "tambah") {
               const auth = periksaOtorisasi(userRole, tabel, "tambah");
               if (!auth.authorized) {
                 result = { error: auth.message };
               } else {
-                const uniqueId = `${tabel.slice(0,3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
-                const newItem  = { ...data, ID: uniqueId, Tanggal: data.Tanggal || new Date().toISOString().split("T")[0] };
+                const uniqueId = `${tabel.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+                const newItem  = {
+                  ...data,
+                  ID     : uniqueId,
+                  Tanggal: data.Tanggal || new Date().toISOString().split("T")[0],
+                };
                 if (tabel === "Anggota") newItem.ID_Anggota = uniqueId;
                 updatedAppData[tabel] = [...(updatedAppData[tabel] || []), newItem];
                 appDataChanged = true;
                 result = { status: "success", id: uniqueId, message: `Berhasil menambahkan ke ${tabel}.` };
               }
             } else if (action === "edit") {
-              if (!idItem) { result = { error: "ID Item wajib diisi untuk edit." }; }
-              else {
+              if (!idItem) {
+                result = { error: "ID Item wajib diisi untuk edit." };
+              } else {
                 const auth = periksaOtorisasi(userRole, tabel, "edit");
-                if (!auth.authorized) { result = { error: auth.message }; }
-                else {
-                  const list = updatedAppData[tabel] || [];
-                  const idx  = list.findIndex((item: any) => item.ID === idItem || item.ID_Anggota === idItem);
-                  if (idx === -1) { result = { error: `Item ID ${idItem} tidak ditemukan.` }; }
-                  else {
-                    list[idx] = { ...list[idx], ...data };
+                if (!auth.authorized) {
+                  result = { error: auth.message };
+                } else {
+                  const list = [...(updatedAppData[tabel] || [])];
+                  const idx  = list.findIndex(
+                    (item: any) => item.ID === idItem || item.ID_Anggota === idItem
+                  );
+                  if (idx === -1) {
+                    result = { error: `Item ID ${idItem} tidak ditemukan.` };
+                  } else {
+                    list[idx]             = { ...list[idx], ...data };
                     updatedAppData[tabel] = list;
-                    appDataChanged = true;
+                    appDataChanged        = true;
                     result = { status: "success", message: `Berhasil update ${tabel}.` };
                   }
                 }
@@ -462,15 +512,20 @@ app.post("/api/chat", async (req, res) => {
           } else if (name === "hapus_item") {
             const { tabel, idItem } = args as any;
             const auth = periksaOtorisasi(userRole, tabel, "hapus");
-            if (!auth.authorized) { result = { error: auth.message }; }
-            else {
-              const before = updatedAppData[tabel]?.length || 0;
+            if (!auth.authorized) {
+              result = { error: auth.message };
+            } else {
+              const before          = updatedAppData[tabel]?.length || 0;
               updatedAppData[tabel] = (updatedAppData[tabel] || []).filter(
                 (item: any) => item.ID !== idItem && item.ID_Anggota !== idItem
               );
               const found = updatedAppData[tabel].length < before;
-              if (!found) { result = { error: `ID ${idItem} tidak ditemukan.` }; }
-              else { appDataChanged = true; result = { status: "success", message: `Berhasil hapus dari ${tabel}.` }; }
+              if (!found) {
+                result = { error: `ID ${idItem} tidak ditemukan.` };
+              } else {
+                appDataChanged = true;
+                result = { status: "success", message: `Berhasil hapus dari ${tabel}.` };
+              }
             }
           }
         } catch (err: any) {
@@ -486,19 +541,24 @@ app.post("/api/chat", async (req, res) => {
         model  : "gemini-2.0-flash",
         contents,
         config : {
-          systemInstruction: `Kamu adalah asisten AI ramah bernama "Asisten Pemuda". Jelaskan hasil eksekusi tool di atas secara jelas kepada pengguna.`,
+          systemInstruction:
+            `Kamu adalah asisten AI ramah bernama "Asisten Pemuda". Jelaskan hasil eksekusi tool di atas secara jelas kepada pengguna.`,
         },
       });
       replyText = secondResponse.text || "";
     }
 
-    res.json({ reply: replyText, updatedAppData: appDataChanged ? updatedAppData : undefined });
+    res.json({
+      reply          : replyText,
+      updatedAppData : appDataChanged ? updatedAppData : undefined,
+    });
   } catch (error: any) {
     console.error("Chat error:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
+// AI Draft Endpoint
 app.post("/api/ai/draft", async (req, res) => {
   try {
     const { prompt, type } = req.body;
@@ -510,7 +570,8 @@ app.post("/api/ai/draft", async (req, res) => {
       model   : "gemini-2.0-flash",
       contents: `Buatkan draft untuk ${type} dengan detail berikut: ${prompt}`,
       config  : {
-        systemInstruction: "Kamu adalah asisten pengurus Remaja RT 03 RW 04 Denokan. Buatkan teks yang siap pakai.",
+        systemInstruction:
+          "Kamu adalah asisten pengurus Remaja RT 03 RW 04 Denokan. Buatkan teks yang siap pakai.",
       },
     });
     res.json({ result: response.text });
@@ -525,9 +586,9 @@ let s3Client: S3Client | null = null;
 
 function getS3Client(): S3Client {
   if (!s3Client) {
-    const accountId      = process.env.VITE_R2_ACCOUNT_ID;
-    const accessKeyId    = process.env.VITE_R2_ACCESS_KEY_ID;
-    const secretAccessKey= process.env.VITE_R2_SECRET_ACCESS_KEY;
+    const accountId       = process.env.VITE_R2_ACCOUNT_ID;
+    const accessKeyId     = process.env.VITE_R2_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.VITE_R2_SECRET_ACCESS_KEY;
     if (!accountId || !accessKeyId || !secretAccessKey) {
       throw new Error("Missing Cloudflare R2 environment credentials");
     }
@@ -547,19 +608,23 @@ app.post("/api/upload-r2", upload.single("file"), async (req, res) => {
     const folder     = req.body.folder || "umum";
     const s3         = getS3Client();
     const bucketName = process.env.VITE_R2_BUCKET_NAME || "remaja-legok-03";
-    const publicUrl  = process.env.VITE_R2_PUBLIC_URL  || "";
+    const publicUrl  = process.env.VITE_R2_PUBLIC_URL   || "";
 
-    if (!publicUrl) return res.status(500).json({ error: "R2 public domain is not configured." });
+    if (!publicUrl) {
+      return res.status(500).json({ error: "R2 public domain is not configured." });
+    }
 
     const cleanFileName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
     const fileKey       = `${folder}/${Date.now()}-${cleanFileName}`;
 
-    await s3.send(new PutObjectCommand({
-      Bucket     : bucketName,
-      Key        : fileKey,
-      Body       : req.file.buffer,
-      ContentType: req.file.mimetype,
-    }));
+    await s3.send(
+      new PutObjectCommand({
+        Bucket     : bucketName,
+        Key        : fileKey,
+        Body       : req.file.buffer,
+        ContentType: req.file.mimetype,
+      })
+    );
 
     res.status(200).json({
       success : true,
@@ -574,10 +639,13 @@ app.post("/api/upload-r2", upload.single("file"), async (req, res) => {
   }
 });
 
+// Sheets Proxy
 app.post("/api/sheets-proxy", async (req, res) => {
   const scriptUrl = process.env.VITE_GOOGLE_SCRIPT_URL;
   if (!scriptUrl) {
-    return res.status(500).json({ error: "VITE_GOOGLE_SCRIPT_URL is not configured." });
+    return res
+      .status(500)
+      .json({ error: "VITE_GOOGLE_SCRIPT_URL is not configured." });
   }
   try {
     const bodyData = {
@@ -595,44 +663,67 @@ app.post("/api/sheets-proxy", async (req, res) => {
     res.status(200).json(data);
   } catch (error: any) {
     console.error("Sheets Proxy error:", error);
-    res.status(500).json({ error: "Failed to communicate with Google Sheets: " + error.message });
+    res
+      .status(500)
+      .json({ error: "Failed to communicate with Google Sheets: " + error.message });
   }
 });
 
+// Telegram Send Media
 app.post("/api/telegram/send-media", async (req, res) => {
   try {
     const { botToken, chatId, mediaUrl, caption, isVideo } = req.body;
     if (!botToken || !chatId || !mediaUrl) {
-      return res.status(400).json({ status: "error", message: "Bot Token, Chat ID, dan Media URL wajib diisi" });
+      return res
+        .status(400)
+        .json({ status: "error", message: "Bot Token, Chat ID, dan Media URL wajib diisi" });
     }
 
-    const method        = isVideo ? "sendVideo" : "sendPhoto";
-    const fieldName     = isVideo ? "video"     : "photo";
-    const telegramApiUrl= `https://api.telegram.org/bot${botToken}/${method}`;
+    const method         = isVideo ? "sendVideo" : "sendPhoto";
+    const fieldName      = isVideo ? "video"     : "photo";
+    const telegramApiUrl = `https://api.telegram.org/bot${botToken}/${method}`;
 
     if (mediaUrl.startsWith("data:")) {
       const matches = mediaUrl.match(/^data:([^;]+);base64,(.+)$/);
-      if (!matches) return res.status(400).json({ status: "error", message: "Format Data URL tidak valid" });
-
+      if (!matches) {
+        return res
+          .status(400)
+          .json({ status: "error", message: "Format Data URL tidak valid" });
+      }
       const mimeType = matches[1];
       const buffer   = Buffer.from(matches[2], "base64");
       const formData = new FormData();
       formData.append("chat_id", chatId);
       if (caption) formData.append("caption", caption);
-      formData.append(fieldName, new Blob([buffer], { type: mimeType }), isVideo ? "upload.mp4" : "upload.jpg");
-
+      formData.append(
+        fieldName,
+        new Blob([buffer], { type: mimeType }),
+        isVideo ? "upload.mp4" : "upload.jpg"
+      );
       const tgRes  = await fetch(telegramApiUrl, { method: "POST", body: formData });
-      const tgData = await tgRes.json() as any;
-      if (!tgData.ok) return res.status(400).json({ status: "error", message: tgData.description || "Gagal kirim ke Telegram" });
+      const tgData = (await tgRes.json()) as any;
+      if (!tgData.ok) {
+        return res
+          .status(400)
+          .json({ status: "error", message: tgData.description || "Gagal kirim ke Telegram" });
+      }
       return res.json({ status: "success", result: tgData.result });
     } else {
       const tgRes  = await fetch(telegramApiUrl, {
         method : "POST",
         headers: { "Content-Type": "application/json" },
-        body   : JSON.stringify({ chat_id: chatId, [fieldName]: mediaUrl, caption: caption || "" }),
+        body   : JSON.stringify({
+          chat_id: chatId,
+          [fieldName]: mediaUrl,
+          caption    : caption || "",
+        }),
       });
-      const tgData = await tgRes.json() as any;
-      if (!tgData.ok) return res.status(400).json({ status: "error", message: tgData.description || "Gagal kirim URL ke Telegram" });
+      const tgData = (await tgRes.json()) as any;
+      if (!tgData.ok) {
+        return res
+          .status(400)
+          .json({ status: "error", message: tgData.description || "Gagal kirim URL ke Telegram" });
+      }
       return res.json({ status: "success", result: tgData.result });
     }
   } catch (err: any) {
@@ -641,6 +732,7 @@ app.post("/api/telegram/send-media", async (req, res) => {
   }
 });
 
+// Start Server
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
